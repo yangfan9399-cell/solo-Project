@@ -1,0 +1,31 @@
+<% warnings = Rubbing.all.select { |r| r.has_warnings? } %>
+<% if warnings.any? %>
+  <div class="card">
+    <div class="card-header">
+      <h2>异常数据提示</h2>
+    </div>
+    <div style="max-height: 300px; overflow-y: auto;">
+      <% warnings.each do |rubbing| %>
+        <div style="padding: 12px; border-bottom: 1px solid #eee;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div>
+              <strong><%= link_to rubbing.no, rubbing %></strong> - <%= rubbing.title %>
+            </div>
+            <span class="badge badge-warning"><%= rubbing.broken_count %> 处断字</span>
+          </div>
+          <div style="font-size: 13px; color: #666;">
+            <% if rubbing.inscriptions.empty? %>
+              <span class="badge badge-info" style="margin-right: 8px;">未添加释文</span>
+            <% end %>
+            <% if rubbing.character_boxes.empty? %>
+              <span class="badge badge-info" style="margin-right: 8px;">未添加字框</span>
+            <% end %>
+            <% if rubbing.footnotes.empty? %>
+              <span class="badge badge-info">未添加脚注</span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

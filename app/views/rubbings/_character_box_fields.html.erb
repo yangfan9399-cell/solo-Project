@@ -1,0 +1,42 @@
+<div class="nested-fields" style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 4px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <span style="font-weight: 600; font-size: 14px;">字框</span>
+    <%= f.hidden_field :_destroy %>
+    <%= link_to_remove_fields '删除', f, class: 'btn btn-danger', style: 'font-size: 12px; padding: 4px 8px;' %>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :char_index %>
+      <%= f.number_field :char_index, class: 'form-control', placeholder: '序号' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :char %>
+      <%= f.text_field :char, class: 'form-control', placeholder: '字符', maxlength: 1 %>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :x %>
+      <%= f.number_field :x, class: 'form-control', placeholder: 'X坐标' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :y %>
+      <%= f.number_field :y, class: 'form-control', placeholder: 'Y坐标' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :width %>
+      <%= f.number_field :width, class: 'form-control', placeholder: '宽度' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :height %>
+      <%= f.number_field :height, class: 'form-control', placeholder: '高度' %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :note %>
+    <%= f.text_area :note, class: 'form-control', placeholder: '备注' %>
+  </div>
+</div>

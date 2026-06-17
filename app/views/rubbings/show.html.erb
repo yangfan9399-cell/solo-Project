@@ -1,0 +1,195 @@
+<div class="card">
+  <div class="card-header">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h2><%= @rubbing.no %> - <%= @rubbing.title %></h2>
+        <span class="badge <%= status_badge_class(@rubbing.status) %>" style="margin-top: 8px; display: inline-block;">
+          <%= @rubbing.status %>
+        </span>
+      </div>
+      <div>
+        <%= link_to '编辑', edit_rubbing_path(@rubbing), class: 'btn btn-primary' %>
+        <%= link_to '返回', rubbings_path, class: 'btn btn-secondary' %>
+      </div>
+    </div>
+  </div>
+
+  <%= render partial: 'warnings' %>
+
+  <div class="tab-nav">
+    <a href="#basic" class="active" onclick="switchTab('basic')">基本信息</a>
+    <a href="#inscriptions" onclick="switchTab('inscriptions')">释文整理</a>
+    <a href="#characters" onclick="switchTab('characters')">字框标注</a>
+    <a href="#footnotes" onclick="switchTab('footnotes')">脚注引用</a>
+    <a href="#versions" onclick="switchTab('versions')">版本历史</a>
+  </div>
+
+  <div id="basic" class="tab-content">
+    <div class="form-row">
+      <div class="form-group">
+        <label>编号</label>
+        <input type="text" value="<%= @rubbing.no %>" disabled>
+      </div>
+      <div class="form-group">
+        <label>标题</label>
+        <input type="text" value="<%= @rubbing.title %>" disabled>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>朝代</label>
+        <input type="text" value="<%= @rubbing.dynasty %>" disabled>
+      </div>
+      <div class="form-group">
+        <label>出土地点</label>
+        <input type="text" value="<%= @rubbing.location %>" disabled>
+      </div>
+      <div class="form-group">
+        <label>年代</label>
+        <input type="text" value="<%= @rubbing.dating %>" disabled>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>备注</label>
+      <textarea disabled><%= @rubbing.remarks %></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>创建人</label>
+        <input type="text" value="<%= @rubbing.created_by %>" disabled>
+      </div>
+      <div class="form-group">
+        <label>创建时间</label>
+        <input type="text" value="<%= @rubbing.created_at.strftime('%Y-%m-%d %H:%M') %>" disabled>
+      </div>
+      <div class="form-group">
+        <label>最后更新</label>
+        <input type="text" value="<%= @rubbing.updated_at.strftime('%Y-%m-%d %H:%M') %>" disabled>
+      </div>
+    </div>
+  </div>
+
+  <div id="inscriptions" class="tab-content" style="display: none;">
+    <h3 style="margin-bottom: 16px; font-size: 16px;">释文内容</h3>
+    <div style="max-height: 400px; overflow-y: auto;">
+      <% @inscriptions.each do |inscription| %>
+        <div style="margin-bottom: 16px; padding: 12px; background: #f8f9fa; border-radius: 4px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <div>
+              <span class="line-number"><%= inscription.line_number %></span>
+              <% if inscription.position.present? %>
+                <span class="badge badge-info" style="font-size: 10px;"><%= inscription.position %></span>
+              <% end %>
+              <% if inscription.is_broken %>
+                <span class="badge badge-danger broken-tag">断字</span>
+              <% end %>
+            </div>
+          </div>
+          <div class="content-area">
+            <%= inscription.content %>
+          </div>
+          <% if inscription.broken_note.present? %>
+            <div style="margin-top: 8px; padding: 8px; background: #fff3cd; border-radius: 4px; font-size: 13px; color: #856404;">
+              <strong>断字说明:</strong> <%= inscription.broken_note %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    <% if @inscriptions.empty? %>
+      <div class="alert alert-warning">尚未添加释文内容</div>
+    <% end %>
+  </div>
+
+  <div id="characters" class="tab-content" style="display: none;">
+    <h3 style="margin-bottom: 16px; font-size: 16px;">字框标注</h3>
+    <div style="margin-bottom: 20px;">
+      <div style="width: 600px; height: 400px; border: 2px solid #ddd; position: relative; background: #f8f9fa; overflow: hidden;">
+        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ancient%20chinese%20stone%20inscription%20rubbing%20texture%20background%20with%20seal%20script%20characters&image_size=landscape_16_9" 
+             style="width: 100%; height: 100%; object-fit: cover; opacity: 0.3;">
+        <% @character_boxes.each do |box| %>
+          <div style="position: absolute; border: 2px solid #3498db; background: rgba(52,152,219,0.2); cursor: pointer;"
+               style="left: <%= box.x %>px; top: <%= box.y %>px; width: <%= box.width %>px; height: <%= box.height %>px;">
+            <div style="position: absolute; top: -20px; left: 0; background: #3498db; color: #fff; padding: 2px 6px; font-size: 10px; border-radius: 2px;">
+              <%= box.char %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>字符</th>
+          <th>坐标(X,Y)</th>
+          <th>尺寸(W×H)</th>
+          <th>备注</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @character_boxes.each do |box| %>
+          <tr>
+            <td><%= box.char_index %></td>
+            <td><span class="character-box"><%= box.char %></span></td>
+            <td>(<%= box.x %>, <%= box.y %>)</td>
+            <td><%= box.width %> × <%= box.height %></td>
+            <td><%= box.note %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% if @character_boxes.empty? %>
+      <div class="alert alert-info">尚未添加字框标注</div>
+    <% end %>
+  </div>
+
+  <div id="footnotes" class="tab-content" style="display: none;">
+    <h3 style="margin-bottom: 16px; font-size: 16px;">脚注引用</h3>
+    <% @footnotes.each_with_index do |footnote, index| %>
+      <div style="margin-bottom: 16px; padding: 12px; border-left: 4px solid #27ae60; background: #f8f9fa; border-radius: 0 4px 4px 0;">
+        <div style="font-weight: 600; color: #27ae60; margin-bottom: 8px;">[<%= index + 1 %>] <%= footnote.source %></div>
+        <div style="margin-bottom: 8px;"><%= footnote.content %></div>
+        <% if footnote.page.present? %>
+          <div style="font-size: 13px; color: #666;">页码: <%= footnote.page %></div>
+        <% end %>
+        <% if footnote.note.present? %>
+          <div style="font-size: 13px; color: #666; margin-top: 4px;">备注: <%= footnote.note %></div>
+        <% end %>
+      </div>
+    <% end %>
+    <% if @footnotes.empty? %>
+      <div class="alert alert-warning">尚未添加脚注引用</div>
+    <% end %>
+  </div>
+
+  <div id="versions" class="tab-content" style="display: none;">
+    <h3 style="margin-bottom: 16px; font-size: 16px;">版本历史</h3>
+    <% @versions.each do |version| %>
+      <div class="version-item">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="version">v<%= version.version %></span>
+          <span class="badge badge-default"><%= version.batch %></span>
+        </div>
+        <div class="date"><%= version.created_at.strftime('%Y-%m-%d %H:%M') %> by <%= version.changed_by %></div>
+        <div class="changelog"><%= version.changelog %></div>
+      </div>
+    <% end %>
+    <% if @versions.empty? %>
+      <div class="alert alert-info">暂无版本记录</div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tab-nav a').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabName).style.display = 'block';
+    event.target.classList.add('active');
+  }
+</script>

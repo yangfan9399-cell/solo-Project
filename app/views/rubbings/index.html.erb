@@ -1,0 +1,100 @@
+<div class="card">
+  <div class="card-header">
+    <h2>项目台账</h2>
+  </div>
+
+  <div class="grid" style="margin-bottom: 24px;">
+    <div class="stat-card">
+      <div class="number"><%= Rubbing.count %></div>
+      <div class="label">总拓片数</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+      <div class="number"><%= Rubbing.where(status: '整理中').count %></div>
+      <div class="label">整理中</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+      <div class="number"><%= Rubbing.sum { |r| r.char_count } %></div>
+      <div class="label">总字数</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+      <div class="number"><%= Rubbing.where(status: '已审核').count %></div>
+      <div class="label">已审核</div>
+    </div>
+  </div>
+
+  <div class="search-form">
+    <%= search_form_for @search do |f| %>
+      <%= f.text_field :no_cont, placeholder: '编号', class: 'search-input' %>
+      <%= f.text_field :title_cont, placeholder: '标题', class: 'search-input' %>
+      <%= f.text_field :dynasty_cont, placeholder: '朝代', class: 'search-input' %>
+      <%= f.select :status_eq, Rubbing::STATUS_OPTIONS, include_blank: '状态', class: 'search-input' %>
+      <%= f.text_field :location_cont, placeholder: '出土地点', class: 'search-input' %>
+      <%= f.submit '搜索', class: 'btn btn-primary' %>
+      <%= link_to '重置', rubbings_path, class: 'btn btn-secondary' %>
+    <% end %>
+  </div>
+
+  <div class="export-links">
+    <%= link_to '导出CSV', export_rubbings_path(format: 'csv'), class: 'btn btn-secondary' %>
+    <%= link_to '导出PDF', export_rubbings_path(format: 'pdf'), class: 'btn btn-secondary' %>
+    <%= link_to '导出摘要PDF', export_summary_rubbings_path(format: 'pdf'), class: 'btn btn-success' %>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>编号</th>
+        <th>标题</th>
+        <th>朝代</th>
+        <th>出土地点</th>
+        <th>状态</th>
+        <th>释文</th>
+        <th>断字</th>
+        <th>字框</th>
+        <th>脚注</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @rubbings.each do |rubbing| %>
+        <tr>
+          <td><%= link_to rubbing.no, rubbing %></td>
+          <td><%= rubbing.title %></td>
+          <td><%= rubbing.dynasty %></td>
+          <td><%= rubbing.location %></td>
+          <td>
+            <span class="badge <%= status_badge_class(rubbing.status) %>">
+              <%= rubbing.status %>
+            </span>
+          </td>
+          <td><%= rubbing.inscriptions.count %></td>
+          <td>
+            <% if rubbing.broken_count > 0 %>
+              <span class="badge badge-danger"><%= rubbing.broken_count %></span>
+            <% else %>
+              <%= rubbing.broken_count %>
+            <% end %>
+          </td>
+          <td><%= rubbing.char_count %></td>
+          <td><%= rubbing.footnotes.count %></td>
+          <td>
+            <%= link_to '详情', rubbing, class: 'btn btn-primary', style: 'padding: 4px 8px; font-size: 12px;' %>
+            <%= link_to '编辑', edit_rubbing_path(rubbing), class: 'btn btn-secondary', style: 'padding: 4px 8px; font-size: 12px;' %>
+            <%= link_to '版本', versions_rubbing_path(rubbing), class: 'btn btn-info', style: 'padding: 4px 8px; font-size: 12px;' %>
+            <%= link_to '删除', rubbing, method: :delete, data: { confirm: '确定删除此记录？' }, class: 'btn btn-danger', style: 'padding: 4px 8px; font-size: 12px;' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= paginate @rubbings %>
+</div>
+
+<%= render partial: 'warnings_list' %>
+
+<script>
+  function toggleSearch() {
+    document.querySelector('.advanced-search').classList.toggle('hidden');
+  }
+</script>

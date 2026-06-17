@@ -1,0 +1,28 @@
+<div class="nested-fields" style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 4px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <span style="font-weight: 600; font-size: 14px;">脚注</span>
+    <%= f.hidden_field :_destroy %>
+    <%= link_to_remove_fields '删除', f, class: 'btn btn-danger', style: 'font-size: 12px; padding: 4px 8px;' %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :content %>
+    <%= f.text_area :content, class: 'form-control', placeholder: '脚注内容' %>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :source %>
+      <%= f.text_field :source, class: 'form-control', placeholder: '来源' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :page %>
+      <%= f.text_field :page, class: 'form-control', placeholder: '页码' %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :note %>
+    <%= f.text_area :note, class: 'form-control', placeholder: '备注' %>
+  </div>
+</div>

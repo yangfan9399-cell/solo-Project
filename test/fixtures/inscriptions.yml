@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  rubbing: one
+  content: MyText
+  line_number: 1
+  column_number: 1
+  position: MyString
+  is_broken: false
+  broken_note: MyText
+
+two:
+  rubbing: two
+  content: MyText
+  line_number: 1
+  column_number: 1
+  position: MyString
+  is_broken: false
+  broken_note: MyText

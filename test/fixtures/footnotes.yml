@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  rubbing: one
+  content: MyText
+  source: MyString
+  page: MyString
+  note: MyText
+
+two:
+  rubbing: two
+  content: MyText
+  source: MyString
+  page: MyString
+  note: MyText

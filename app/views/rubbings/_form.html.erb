@@ -1,0 +1,206 @@
+<%= form_for(rubbing) do |f| %>
+  <% if rubbing.errors.any? %>
+    <div class="alert alert-danger">
+      <h4>保存失败:</h4>
+      <ul>
+        <% rubbing.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">基本信息</h3>
+
+    <div class="form-row">
+      <div class="form-group">
+        <%= f.label :no %>
+        <%= f.text_field :no, class: 'form-control', required: true %>
+      </div>
+      <div class="form-group">
+        <%= f.label :title %>
+        <%= f.text_field :title, class: 'form-control', required: true %>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <%= f.label :dynasty %>
+        <%= f.text_field :dynasty, class: 'form-control' %>
+      </div>
+      <div class="form-group">
+        <%= f.label :location %>
+        <%= f.text_field :location, class: 'form-control' %>
+      </div>
+      <div class="form-group">
+        <%= f.label :dating %>
+        <%= f.text_field :dating, class: 'form-control' %>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <%= f.label :status %>
+        <%= f.select :status, Rubbing::STATUS_OPTIONS, include_blank: false, class: 'form-control' %>
+      </div>
+      <div class="form-group">
+        <%= f.label :created_by %>
+        <%= f.text_field :created_by, class: 'form-control' %>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :remarks %>
+      <%= f.text_area :remarks, class: 'form-control' %>
+    </div>
+  </div>
+
+  <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 16px; font-weight: 600;">释文整理</h3>
+      <%= link_to_add_fields '添加释文', f, :inscriptions, class: 'btn btn-primary', style: 'font-size: 12px; padding: 4px 8px;' %>
+    </div>
+
+    <%= f.fields_for :inscriptions do |inscription_fields| %>
+      <div class="nested-fields" style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 4px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-weight: 600; font-size: 14px;">释文 #<%= inscription_fields.index + 1 %></span>
+          <%= inscription_fields.hidden_field :_destroy %>
+          <%= link_to_remove_fields '删除', inscription_fields, class: 'btn btn-danger', style: 'font-size: 12px; padding: 4px 8px;' %>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <%= inscription_fields.label :line_number %>
+            <%= inscription_fields.number_field :line_number, class: 'form-control', placeholder: '行号' %>
+          </div>
+          <div class="form-group">
+            <%= inscription_fields.label :column_number %>
+            <%= inscription_fields.number_field :column_number, class: 'form-control', placeholder: '列号' %>
+          </div>
+          <div class="form-group">
+            <%= inscription_fields.label :position %>
+            <%= inscription_fields.select :position, Inscription::POSITION_OPTIONS, include_blank: true, class: 'form-control' %>
+          </div>
+          <div class="form-group">
+            <%= inscription_fields.label :is_broken %>
+            <%= inscription_fields.check_box :is_broken %>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <%= inscription_fields.label :content %>
+          <%= inscription_fields.text_area :content, class: 'form-control', placeholder: '释文内容' %>
+        </div>
+
+        <%= inscription_fields.fields_for :is_broken do %>
+          <div class="form-group">
+            <%= inscription_fields.label :broken_note %>
+            <%= inscription_fields.text_area :broken_note, class: 'form-control', placeholder: '断字说明' %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 16px; font-weight: 600;">字框标注</h3>
+      <%= link_to_add_fields '添加字框', f, :character_boxes, class: 'btn btn-primary', style: 'font-size: 12px; padding: 4px 8px;' %>
+    </div>
+
+    <%= f.fields_for :character_boxes do |box_fields| %>
+      <div class="nested-fields" style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 4px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-weight: 600; font-size: 14px;">字框 #<%= box_fields.index + 1 %></span>
+          <%= box_fields.hidden_field :_destroy %>
+          <%= link_to_remove_fields '删除', box_fields, class: 'btn btn-danger', style: 'font-size: 12px; padding: 4px 8px;' %>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <%= box_fields.label :char_index %>
+            <%= box_fields.number_field :char_index, class: 'form-control', placeholder: '序号' %>
+          </div>
+          <div class="form-group">
+            <%= box_fields.label :char %>
+            <%= box_fields.text_field :char, class: 'form-control', placeholder: '字符', maxlength: 1 %>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <%= box_fields.label :x %>
+            <%= box_fields.number_field :x, class: 'form-control', placeholder: 'X坐标' %>
+          </div>
+          <div class="form-group">
+            <%= box_fields.label :y %>
+            <%= box_fields.number_field :y, class: 'form-control', placeholder: 'Y坐标' %>
+          </div>
+          <div class="form-group">
+            <%= box_fields.label :width %>
+            <%= box_fields.number_field :width, class: 'form-control', placeholder: '宽度' %>
+          </div>
+          <div class="form-group">
+            <%= box_fields.label :height %>
+            <%= box_fields.number_field :height, class: 'form-control', placeholder: '高度' %>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <%= box_fields.label :note %>
+          <%= box_fields.text_area :note, class: 'form-control', placeholder: '备注' %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 16px; font-weight: 600;">脚注引用</h3>
+      <%= link_to_add_fields '添加脚注', f, :footnotes, class: 'btn btn-primary', style: 'font-size: 12px; padding: 4px 8px;' %>
+    </div>
+
+    <%= f.fields_for :footnotes do |footnote_fields| %>
+      <div class="nested-fields" style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 4px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-weight: 600; font-size: 14px;">脚注 #<%= footnote_fields.index + 1 %></span>
+          <%= footnote_fields.hidden_field :_destroy %>
+          <%= link_to_remove_fields '删除', footnote_fields, class: 'btn btn-danger', style: 'font-size: 12px; padding: 4px 8px;' %>
+        </div>
+
+        <div class="form-group">
+          <%= footnote_fields.label :content %>
+          <%= footnote_fields.text_area :content, class: 'form-control', placeholder: '脚注内容' %>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <%= footnote_fields.label :source %>
+            <%= footnote_fields.text_field :source, class: 'form-control', placeholder: '来源' %>
+          </div>
+          <div class="form-group">
+            <%= footnote_fields.label :page %>
+            <%= footnote_fields.text_field :page, class: 'form-control', placeholder: '页码' %>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <%= footnote_fields.label :note %>
+          <%= footnote_fields.text_area :note, class: 'form-control', placeholder: '备注' %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :changelog %>
+    <%= f.text_area :changelog, class: 'form-control', placeholder: '更新说明（用于版本记录）' %>
+  </div>
+
+  <div style="display: flex; gap: 12px;">
+    <%= f.submit '保存', class: 'btn btn-success' %>
+    <%= link_to '取消', rubbings_path, class: 'btn btn-secondary' %>
+  </div>
+<% end %>

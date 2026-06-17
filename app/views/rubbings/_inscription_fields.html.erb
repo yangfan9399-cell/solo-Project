@@ -1,0 +1,36 @@
+<div class="nested-fields" style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 4px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <span style="font-weight: 600; font-size: 14px;">释文</span>
+    <%= f.hidden_field :_destroy %>
+    <%= link_to_remove_fields '删除', f, class: 'btn btn-danger', style: 'font-size: 12px; padding: 4px 8px;' %>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <%= f.label :line_number %>
+      <%= f.number_field :line_number, class: 'form-control', placeholder: '行号' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :column_number %>
+      <%= f.number_field :column_number, class: 'form-control', placeholder: '列号' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :position %>
+      <%= f.select :position, Inscription::POSITION_OPTIONS, include_blank: true, class: 'form-control' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :is_broken %>
+      <%= f.check_box :is_broken %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :content %>
+    <%= f.text_area :content, class: 'form-control', placeholder: '释文内容' %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :broken_note %>
+    <%= f.text_area :broken_note, class: 'form-control', placeholder: '断字说明' %>
+  </div>
+</div>
