@@ -1,0 +1,359 @@
+import { create } from 'zustand';
+import type { Call, Extension, Action, Shift, PlayerProfile, LevelConfig, Priority } from '@/types/game';
+import { CALLERS, EXTENSIONS, LEVEL_CONFIGS, DEFAULT_PLAYER } from '@/data/mockData';
+
+interface GameStore {
+  player: PlayerProfile;
+  currentLevel: LevelConfig;
+  shifts: Shift[];
+  calls: Call[];
+  extensions: Extension[];
+  selectedCall: Call | null;
+  isPlaying: boolean;
+  timeRemaining: number;
+  score: number;
+  actions: Action[];
+  initPlayer: (profile?: PlayerProfile) => void;
+  selectLevel: (level: number) => void;
+  startShift: () => void;
+  endShift: () => void;
+  generateCall: () => void;
+  connectCall: (callId: string, extensionId: string) => void;
+  disconnectCall: (callId: string) => void;
+  interruptCall: (targetCallId: string) => void;
+  selectCall: (call: Call | null) => void;
+  updateTimers: () => void;
+  loadPlayerFromStorage: () => void;
+  savePlayerToStorage: () => void;
+  getAvailableExtensions: () => Extension[];
+  getWaitingCalls: () => Call[];
+  getConnectedCalls: () => Call[];
+  calculateScore: (shift: Shift) => number;
+}
+
+const STORAGE_KEY = 'telephone-operator-player';
+
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 11);
+}
+
+function getRandomPriority(config: LevelConfig): Priority {
+  const rand = Math.random();
+  if (rand < config.emergencyChance) return 'emergency';
+  if (rand < config.emergencyChance + config.importantChance) return 'important';
+  if (rand < config.emergencyChance + config.importantChance + config.lowChance) return 'low';
+  return 'normal';
+}
+
+function getRandomExtension(extensions: Extension[]): string {
+  const available = extensions.filter(e => e.status === 'available');
+  if (available.length > 0) {
+    return available[Math.floor(Math.random() * available.length)].id;
+  }
+  return extensions[Math.floor(Math.random() * extensions.length)].id;
+}
+
+export const useGameStore = create<GameStore>((set, get) => ({
+  player: DEFAULT_PLAYER,
+  currentLevel: LEVEL_CONFIGS[0],
+  shifts: [],
+  calls: [],
+  extensions: [...EXTENSIONS],
+  selectedCall: null,
+  isPlaying: false,
+  timeRemaining: 0,
+  score: 0,
+  actions: [],
+
+  initPlayer: (profile) => {
+    set({ player: profile || DEFAULT_PLAYER });
+  },
+
+  selectLevel: (level) => {
+    const config = LEVEL_CONFIGS.find(c => c.level === level) || LEVEL_CONFIGS[0];
+    set({ 
+      currentLevel: config,
+      extensions: EXTENSIONS.slice(0, config.maxExtensions).map(e => ({ ...e, status: 'available' as const }))
+    });
+  },
+
+  startShift: () => {
+    const { currentLevel, player } = get();
+    const newShift: Shift = {
+      id: generateId(),
+      level: currentLevel.level,
+      startTime: Date.now(),
+      duration: currentLevel.duration,
+      callsHandled: 0,
+      callsMissed: 0,
+      emergencyCallsHandled: 0,
+      averageWaitTime: 0,
+      totalScore: 0,
+      actions: [],
+      status: 'in-progress',
+    };
+    
+    set({
+      isPlaying: true,
+      timeRemaining: currentLevel.duration,
+      score: 0,
+      calls: [],
+      actions: [],
+      extensions: EXTENSIONS.slice(0, currentLevel.maxExtensions).map(e => ({ ...e, status: 'available' as const })),
+      player: { ...player, currentShift: newShift },
+    });
+  },
+
+  endShift: () => {
+    const { player, calls, actions, currentLevel, score } = get();
+    const handled = calls.filter(c => c.status === 'completed').length;
+    const missed = calls.filter(c => c.status === 'missed').length;
+    const emergencyHandled = calls.filter(c => c.status === 'completed' && c.priority === 'emergency').length;
+    const totalWaitTime = calls.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.waitTime || 0), 0);
+    const avgWaitTime = handled > 0 ? totalWaitTime / handled : 0;
+    
+    const shift: Shift = {
+      id: player.currentShift?.id || generateId(),
+      level: currentLevel.level,
+      startTime: player.currentShift?.startTime || Date.now(),
+      endTime: Date.now(),
+      duration: currentLevel.duration,
+      callsHandled: handled,
+      callsMissed: missed,
+      emergencyCallsHandled: emergencyHandled,
+      averageWaitTime: avgWaitTime,
+      totalScore: score,
+      actions: actions,
+      status: missed > handled * 0.5 ? 'failed' : 'completed',
+    };
+
+    const newHistory = [...player.history, shift];
+    const newTotalScore = player.totalScore + score;
+    const newHighestScore = Math.max(player.highestScore, score);
+    const newLevel = Math.min(Math.max(1, Math.floor(newTotalScore / 1000) + 1), LEVEL_CONFIGS.length);
+
+    set({
+      isPlaying: false,
+      player: {
+        ...player,
+        totalScore: newTotalScore,
+        highestScore: newHighestScore,
+        shiftsCompleted: player.shiftsCompleted + 1,
+        level: newLevel,
+        history: newHistory,
+        currentShift: undefined,
+        bestShiftId: newHighestScore === score ? shift.id : player.bestShiftId,
+      },
+    });
+
+    get().savePlayerToStorage();
+  },
+
+  generateCall: () => {
+    const { currentLevel, extensions } = get();
+    const caller = CALLERS[Math.floor(Math.random() * CALLERS.length)];
+    const targetExt = getRandomExtension(extensions);
+    const priority = getRandomPriority(currentLevel);
+
+    const newCall: Call = {
+      id: generateId(),
+      caller,
+      targetExtension: targetExt,
+      priority,
+      arrivalTime: Date.now(),
+      waitTime: 0,
+      status: 'waiting',
+    };
+
+    set(state => ({ calls: [...state.calls, newCall] }));
+  },
+
+  connectCall: (callId: string, extensionId: string) => {
+    const { calls, extensions, currentLevel, actions, score } = get();
+    const call = calls.find(c => c.id === callId);
+    const extension = extensions.find(e => e.id === extensionId);
+
+    if (!call || !extension || call.status !== 'waiting' || extension.status !== 'available') {
+      return;
+    }
+
+    const waitScore = Math.max(0, Math.floor((currentLevel.maxWaitTime - call.waitTime) * 2));
+    const priorityMultiplier = call.priority === 'emergency' ? 3 : call.priority === 'important' ? 2 : 1;
+    const baseScore = 10;
+    const totalScoreChange = (baseScore + waitScore) * priorityMultiplier * currentLevel.scoreMultiplier;
+
+    const action: Action = {
+      id: generateId(),
+      type: 'connect',
+      timestamp: Date.now(),
+      callId,
+      toExtension: extension.number,
+      scoreChange: totalScoreChange,
+      reason: `接通 ${call.caller.name} 到 ${extension.name}`,
+    };
+
+    set(state => ({
+      calls: state.calls.map(c => 
+        c.id === callId ? { ...c, status: 'connected', connectedAt: Date.now() } : c
+      ),
+      extensions: state.extensions.map(e => 
+        e.id === extensionId ? { ...e, status: 'busy' as const, currentCall: call } : e
+      ),
+      score: score + totalScoreChange,
+      actions: [...actions, action],
+    }));
+
+    setTimeout(() => {
+      get().disconnectCall(callId);
+    }, 8000 + Math.random() * 7000);
+  },
+
+  disconnectCall: (callId: string) => {
+    const { calls, extensions, actions } = get();
+    const call = calls.find(c => c.id === callId);
+    const extension = extensions.find(e => e.currentCall?.id === callId);
+
+    if (!call || call.status !== 'connected') return;
+
+    const duration = call.connectedAt ? (Date.now() - call.connectedAt) / 1000 : 0;
+
+    const action: Action = {
+      id: generateId(),
+      type: 'disconnect',
+      timestamp: Date.now(),
+      callId,
+      fromExtension: extension?.number,
+      duration,
+      scoreChange: 0,
+      reason: `${extension?.name} 通话结束`,
+    };
+
+    set(state => ({
+      calls: state.calls.map(c => 
+        c.id === callId ? { ...c, status: 'completed', disconnectedAt: Date.now() } : c
+      ),
+      extensions: state.extensions.map(e => 
+        e.currentCall?.id === callId ? { ...e, status: 'available' as const, currentCall: undefined } : e
+      ),
+      actions: [...actions, action],
+    }));
+  },
+
+  interruptCall: (targetCallId: string) => {
+    const { calls, extensions, actions, score, currentLevel } = get();
+    const targetCall = calls.find(c => c.id === targetCallId);
+    const targetExtension = extensions.find(e => e.currentCall?.id === targetCallId);
+
+    if (!targetCall || !targetExtension || targetCall.status !== 'connected') return;
+
+    const isEmergency = calls.some(c => c.status === 'waiting' && c.priority === 'emergency');
+    if (!isEmergency) return;
+
+    const interruptedCall = targetExtension.currentCall;
+
+    const penalty = -10 * currentLevel.scoreMultiplier;
+
+    const action: Action = {
+      id: generateId(),
+      type: 'interrupt',
+      timestamp: Date.now(),
+      callId: targetCallId,
+      fromExtension: targetExtension.number,
+      scoreChange: penalty,
+      reason: `打断 ${targetExtension.name} 的通话`,
+    };
+
+    set(state => ({
+      calls: state.calls.map(c => {
+        if (c.id === targetCallId) {
+          return { ...c, status: 'completed', isInterrupted: true };
+        }
+        if (c.status === 'waiting' && c.priority === 'emergency') {
+          return { ...c, status: 'connected', connectedAt: Date.now() };
+        }
+        return c;
+      }),
+      extensions: state.extensions.map(e => {
+        if (e.id === targetExtension.id) {
+          const emergencyCall = state.calls.find(c => c.status === 'waiting' && c.priority === 'emergency');
+          return { 
+            ...e, 
+            currentCall: emergencyCall ? { ...emergencyCall, status: 'connected' } : undefined,
+          };
+        }
+        return e;
+      }),
+      score: score + penalty,
+      actions: [...actions, action],
+    }));
+  },
+
+  selectCall: (call) => {
+    set({ selectedCall: call });
+  },
+
+  updateTimers: () => {
+    const { calls, timeRemaining, isPlaying, currentLevel } = get();
+
+    if (!isPlaying) return;
+
+    const newTimeRemaining = Math.max(0, timeRemaining - 1);
+    
+    const updatedCalls = calls.map(call => {
+      if (call.status === 'waiting') {
+        const newWaitTime = call.waitTime + 1;
+        if (newWaitTime >= currentLevel.maxWaitTime) {
+          return { ...call, status: 'missed' as const, waitTime: newWaitTime };
+        }
+        return { ...call, waitTime: newWaitTime };
+      }
+      return call;
+    });
+
+    set({ calls: updatedCalls, timeRemaining: newTimeRemaining });
+
+    if (newTimeRemaining === 0) {
+      get().endShift();
+    }
+  },
+
+  loadPlayerFromStorage: () => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const profile = JSON.parse(stored);
+        set({ player: profile });
+      }
+    } catch {
+      console.error('Failed to load player from storage');
+    }
+  },
+
+  savePlayerToStorage: () => {
+    try {
+      const { player } = get();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(player));
+    } catch {
+      console.error('Failed to save player to storage');
+    }
+  },
+
+  getAvailableExtensions: () => {
+    return get().extensions.filter(e => e.status === 'available');
+  },
+
+  getWaitingCalls: () => {
+    return get().calls.filter(c => c.status === 'waiting').sort((a, b) => {
+      const priorityOrder = { emergency: 0, important: 1, normal: 2, low: 3 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
+  },
+
+  getConnectedCalls: () => {
+    return get().calls.filter(c => c.status === 'connected');
+  },
+
+  calculateScore: (shift) => {
+    return shift.actions.reduce((sum, action) => sum + action.scoreChange, 0);
+  },
+}));
