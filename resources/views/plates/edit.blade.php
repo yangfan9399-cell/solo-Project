@@ -10,18 +10,46 @@
         </div>
         <div class="page-subtitle">
             修改信息并可选生成版本快照 · 当前版本 {{ $plate->versionHistories->first()->version_code ?? 'V1.0' }}
+            · 最后更新于 {{ $plate->updated_at->format('Y-m-d H:i') }}
             · <a href="{{ route('plates.show', $plate) }}" class="text-gold fw-bold">← 返回详情页</a>
         </div>
     </div>
     <a href="{{ route('plates.show', $plate) }}" class="btn btn-secondary">取消</a>
 </div>
 
-<form method="POST" action="{{ route('plates.update', $plate) }}">
+@if($errors->has('conflict_warning'))
+<div class="alert alert-danger mb-20">
+    <span>⚠️</span>
+    <div>
+        <div class="fw-bold mb-4">版本冲突检测</div>
+        <div>{{ $errors->first('conflict_warning') }}</div>
+        <div class="mt-8" style="padding:12px; background:#FEF2F2; border-radius:6px; border:1px solid #FECACA;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" name="_force_update" value="1" form="edit-form" style="width:18px; height:18px;">
+                <span class="fw-bold">我已确认变更内容，强制保存并生成「冲突保留」版本记录</span>
+            </label>
+        </div>
+    </div>
+</div>
+@endif
+
+@if($errors->has('error'))
+<div class="alert alert-danger mb-20">
+    <span>❌</span>
+    <div>{{ $errors->first('error') }}</div>
+</div>
+@endif
+
+<form id="edit-form" method="POST" action="{{ route('plates.update', $plate) }}">
     @csrf @method('PUT')
+    <input type="hidden" name="_lock_updated_at" value="{{ old('_lock_updated_at', $plate->updated_at->format('Y-m-d H:i:s')) }}">
 
     <div class="card mb-20">
         <div class="card-header">
             <div class="card-title">📋 基本信息</div>
+            <span class="text-sm text-muted">
+                版本锁定：{{ $plate->updated_at->format('Y-m-d H:i') }} · 编辑期间如有他人修改将触发冲突检测
+            </span>
         </div>
         <div class="card-body">
             <div class="form-row">

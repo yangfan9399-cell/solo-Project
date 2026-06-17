@@ -9,22 +9,10 @@
             <span style="vertical-align:middle;">{{ $plate->pattern_name }}</span>
         </div>
         <div class="page-subtitle">
-            @php
-                $stClass = match($plate->status) {
-                    '正常' => 'badge-success',
-                    '待保养' => 'badge-warning',
-                    '维修中' => 'badge-info',
-                    '已报废' => 'badge-secondary',
-                    default => 'badge-secondary',
-                };
-            @endphp
-            <span class="badge {{ $stClass }}">{{ $plate->status }}</span>
-            @if($plate->is_high_usage && $plate->status !== '已报废')
-                <span class="badge badge-warning" style="margin-left:6px;">🔥 高频使用</span>
-            @endif
-            @if($plate->is_overdue_maintenance && $plate->status !== '已报废')
-                <span class="badge badge-danger" style="margin-left:6px;">⏰ 保养逾期</span>
-            @endif
+            <span class="badge {{ $plate->status_badge_class }}">{{ $plate->status }}</span>
+            @foreach($plate->warning_tags as $tag)
+                <span class="badge badge-{{ $tag[1] }}" style="margin-left:6px;">{{ $tag[0] }}</span>
+            @endforeach
             <span style="margin-left:8px;">
                 版本: <span class="fw-bold">{{ $currentVersion->version_code ?? 'V1.0' }}</span>
                 · 创建于 {{ $plate->created_at->format('Y-m-d') }}
@@ -33,12 +21,62 @@
         </div>
     </div>
     <div class="d-flex gap-8 flex-wrap">
-        <button type="button" class="btn btn-secondary" onclick="togglePanel('usagePanel')">📝 登记使用</button>
-        <a href="{{ route('plates.edit', $plate) }}" class="btn btn-primary">✏️ 编辑信息</a>
+        @if($plate->can_edit)
+            <button type="button" class="btn btn-secondary" onclick="togglePanel('usagePanel')">📝 登记使用</button>
+            <a href="{{ route('plates.edit', $plate) }}" class="btn btn-primary">✏️ 编辑信息</a>
+        @endif
+        <a href="{{ route('plates.compare', $plate) }}" class="btn btn-secondary">🔍 版本对比</a>
         <a href="{{ route('plates.export') }}" class="btn btn-secondary">📥 导出</a>
         <a href="{{ route('plates.index') }}" class="btn btn-secondary">← 返回台账</a>
     </div>
 </div>
+
+@if($plate->next_status_transitions && $plate->can_edit)
+<div class="card mb-20">
+    <div class="card-header">
+        <div class="card-title">📋 流程操作 · 当前状态：{{ $plate->status }}</div>
+        <span class="text-muted text-sm">点击下方按钮变更烫金版状态，变更会自动记录到版本历史</span>
+    </div>
+    <div class="card-body">
+        <div class="d-flex gap-8 flex-wrap">
+            <form id="status-transition-form-global" method="POST" action="{{ route('plates.status', $plate) }}" class="status-transition-form" onsubmit="return confirm('确认变更状态？此操作会自动生成版本记录。');">
+                @csrf
+                <input type="hidden" id="target_status_input" name="target_status" value="">
+            </form>
+            @foreach($plate->next_status_transitions as $trans)
+                <button type="submit" form="status-transition-form-global" class="btn {{ $trans['class'] }}"
+                    onclick="document.getElementById('target_status_input').value='{{ $trans['target'] }}';">
+                    {{ $trans['label'] }}
+                </button>
+            @endforeach
+        </div>
+        <div class="mt-12">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('statusRemarkInput').style.display = document.getElementById('statusRemarkInput').style.display === 'none' ? 'block' : 'none';">
+                {{ count($plate->next_status_transitions) > 0 ? '+ 添加变更备注（可选）' : '— 该状态暂无可用流转' }}
+            </button>
+            <div id="statusRemarkInput" style="display:none; margin-top:8px;">
+                <textarea name="remark" form="status-transition-form-global" class="form-textarea" rows="2" placeholder="输入状态变更的备注说明..."></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+@if(!$plate->can_edit)
+<div class="alert alert-info mb-20">
+    <span>ℹ️</span>
+    <div>
+        当前烫金版状态为「{{ $plate->status }}」，已被锁定，不允许编辑或修改。如需修改请先
+        @if($plate->can_reactivate)
+            <form method="POST" action="{{ route('plates.status', $plate) }}" style="display:inline;" onsubmit="return confirm('确认启封该烫金版吗？');">
+                @csrf
+                <input type="hidden" name="target_status" value="正常">
+                <button type="submit" class="btn btn-sm btn-primary" style="padding:2px 10px; font-size:12px;">↩️ 启封复用</button>
+            </form>
+        @endif
+    </div>
+</div>
+@endif
 
 @if($plate->is_warning)
 <div class="alert alert-warning mb-20">
@@ -147,7 +185,7 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">当前状态</div>
-                            <div class="detail-value"><span class="badge {{ $stClass }}">{{ $plate->status }}</span></div>
+                            <div class="detail-value"><span class="badge {{ $plate->status_badge_class }}">{{ $plate->status }}</span></div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">存放位置</div>
@@ -350,6 +388,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">🔄 版本与批次历史时间线</div>
+                    <a href="{{ route('plates.compare', $plate) }}" class="btn btn-sm btn-primary">🔍 版本对比</a>
                 </div>
                 <div class="card-body">
                     @if($plate->versionHistories->count() > 0)
@@ -359,6 +398,9 @@
                             <div class="timeline-date">
                                 {{ $vh->changed_at->format('Y-m-d H:i') }}
                                 <span class="text-muted">· 第 {{ $plate->versionHistories->count() - $i }} 版</span>
+                                @if($vh->snapshot_data['conflict'] ?? false)
+                                    <span class="badge badge-danger" style="margin-left:8px;">⚠️ 冲突版本</span>
+                                @endif
                             </div>
                             <div class="timeline-title">
                                 <span style="font-size:18px;">{{ $vh->change_type_icon }}</span>
@@ -377,10 +419,20 @@
                                 @if($vh->material)
                                     <span>⚙️ {{ $vh->material }}</span>
                                 @endif
-                                @if($vh->snapshot_data && is_array($vh->snapshot_data) && isset($vh->snapshot_data['changed_fields']))
-                                    <span>📝 变更: {{ implode(', ', $vh->snapshot_data['changed_fields']) }}</span>
-                                @endif
                             </div>
+                            @if($vh->changes_summary && count($vh->changes_summary) > 0)
+                            <div class="mt-8" style="padding:8px 12px; background:#FFFBF2; border-radius:6px; border-left:3px solid #DAA520;">
+                                <div class="text-sm text-muted mb-4">变更明细：</div>
+                                @foreach($vh->changes_summary as $change)
+                                <div class="text-sm mb-2">
+                                    <span class="fw-bold">{{ $change['label'] }}：</span>
+                                    <span style="color:#9CA3AF; text-decoration:line-through;">{{ $change['before'] === null ? '(空)' : e($change['before']) }}</span>
+                                    <span style="margin:0 6px;">→</span>
+                                    <span style="color:#15803d; font-weight:500;">{{ $change['after'] === null ? '(空)' : e($change['after']) }}</span>
+                                </div>
+                                @endforeach
+                            </div>
+                            @endif
                         </div>
                         @endforeach
                     </div>

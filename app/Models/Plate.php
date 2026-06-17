@@ -96,12 +96,37 @@ class Plate extends Model
 
     public function getIsWarningAttribute(): bool
     {
-        return $this->is_overdue_maintenance || $this->is_high_usage || in_array($this->status, ['待保养', '维修中']);
+        return $this->is_overdue_maintenance || $this->is_high_usage || in_array($this->status, ['待保养', '维修中', '待审批', '已驳回']);
     }
 
     public function getIsRetiredAttribute(): bool
     {
-        return $this->status === '已报废';
+        return in_array($this->status, ['已报废', '已归档']);
+    }
+
+    public function getCanEditAttribute(): bool
+    {
+        return !in_array($this->status, ['已报废', '已归档']);
+    }
+
+    public function getCanSubmitApprovalAttribute(): bool
+    {
+        return $this->status === '正常';
+    }
+
+    public function getCanApproveAttribute(): bool
+    {
+        return $this->status === '待审批';
+    }
+
+    public function getCanArchiveAttribute(): bool
+    {
+        return in_array($this->status, ['正常', '待保养']);
+    }
+
+    public function getCanReactivateAttribute(): bool
+    {
+        return $this->status === '已归档';
     }
 
     public function getStatusBadgeClassAttribute(): string
@@ -110,6 +135,10 @@ class Plate extends Model
             '正常' => 'badge-success',
             '待保养' => 'badge-warning',
             '维修中' => 'badge-info',
+            '待审批' => 'badge-primary',
+            '已驳回' => 'badge-danger',
+            '待归档' => 'badge-info',
+            '已归档' => 'badge-secondary',
             '已报废' => 'badge-secondary',
             default => 'badge-secondary',
         };
@@ -124,6 +153,8 @@ class Plate extends Model
         elseif ($this->is_high_usage) $tags[] = ['⚡ 高频使用', 'warning'];
         if ($this->status === '待保养') $tags[] = ['🔧 待保养', 'warning'];
         if ($this->status === '维修中') $tags[] = ['🛠 维修中', 'info'];
+        if ($this->status === '待审批') $tags[] = ['📝 待审批', 'primary'];
+        if ($this->status === '已驳回') $tags[] = ['❌ 已驳回', 'danger'];
         return $tags;
     }
 
@@ -168,11 +199,51 @@ class Plate extends Model
 
     public static function getStatusOptions(): array
     {
-        return ['正常', '待保养', '维修中', '已报废'];
+        return ['正常', '待保养', '维修中', '待审批', '已驳回', '待归档', '已归档', '已报废'];
+    }
+
+    public static function getEditableStatusOptions(): array
+    {
+        return ['正常', '待保养', '维修中', '待审批', '已驳回', '待归档'];
     }
 
     public static function getMaterialOptions(): array
     {
         return ['黄铜', '锌版', '镁版', '铜锌合金', '不锈钢'];
+    }
+
+    public function getNextStatusTransitionsAttribute(): array
+    {
+        $transitions = [
+            '正常' => [
+                ['target' => '待审批', 'label' => '📝 提交审批', 'class' => 'btn-primary'],
+                ['target' => '待保养', 'label' => '🔧 标记待保养', 'class' => 'btn-warning'],
+                ['target' => '待归档', 'label' => '📦 申请归档', 'class' => 'btn-info'],
+            ],
+            '待审批' => [
+                ['target' => '正常', 'label' => '✅ 审批通过', 'class' => 'btn-success'],
+                ['target' => '已驳回', 'label' => '❌ 审批驳回', 'class' => 'btn-danger'],
+            ],
+            '已驳回' => [
+                ['target' => '正常', 'label' => '🔄 修改后重提', 'class' => 'btn-primary'],
+            ],
+            '待保养' => [
+                ['target' => '正常', 'label' => '✅ 保养完成', 'class' => 'btn-success'],
+                ['target' => '维修中', 'label' => '🛠 送修', 'class' => 'btn-info'],
+            ],
+            '维修中' => [
+                ['target' => '正常', 'label' => '✅ 修复完成', 'class' => 'btn-success'],
+                ['target' => '已报废', 'label' => '🗑 报废处理', 'class' => 'btn-danger'],
+            ],
+            '待归档' => [
+                ['target' => '已归档', 'label' => '📦 确认归档', 'class' => 'btn-secondary'],
+                ['target' => '正常', 'label' => '↩️ 撤回归档', 'class' => 'btn-secondary'],
+            ],
+            '已归档' => [
+                ['target' => '正常', 'label' => '↩️ 启封复用', 'class' => 'btn-primary'],
+            ],
+            '已报废' => [],
+        ];
+        return $transitions[$this->status] ?? [];
     }
 }

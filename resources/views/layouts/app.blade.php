@@ -230,6 +230,12 @@
             line-height: 1.2;
         }
         .stat-value small { font-size: 14px; font-weight: 400; color: var(--text-muted); margin-left: 4px; }
+        .stat-card-sm {
+            padding: 12px 16px;
+            margin: 0;
+        }
+        .stat-card-sm .stat-label { font-size: 11px; margin-bottom: 4px; text-transform: none; letter-spacing: 0; }
+        .stat-card-sm .stat-value { font-size: 22px; }
         .stat-foot { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
         .stat-icon {
             position: absolute;
@@ -291,6 +297,9 @@
         .badge-info { background: #DBEAFE; color: #1E40AF; }
         .badge-secondary { background: #F3F4F6; color: #374151; }
         .badge-gold { background: linear-gradient(135deg, #FEF3C7, #FDE68A); color: #78350F; border: 1px solid #FCD34D;}
+        .badge-primary { background: #DBEAFE; color: #1D4ED8; }
+        .badge-purple { background: #F3E8FF; color: #7C3AED; }
+        .badge-teal { background: #CCFBF1; color: #0F766E; }
 
         /* 状态进度条 */
         .progress-bar {
@@ -487,8 +496,9 @@
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .grid-3-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
         @media (max-width: 900px) {
-            .grid-2, .grid-3, .grid-2-1 { grid-template-columns: 1fr; }
+            .grid-2, .grid-3, .grid-2-1, .grid-3-3 { grid-template-columns: 1fr; }
         }
 
         /* 分页 */
@@ -620,6 +630,7 @@
             <div class="nav-links">
                 <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">工作台</a>
                 <a href="{{ route('plates.index') }}" class="nav-link {{ request()->routeIs('plates.index') ? 'active' : '' }}">项目台账</a>
+                <a href="{{ route('review') }}" class="nav-link {{ request()->routeIs('review') ? 'active' : '' }}">复盘聚合</a>
                 <a href="{{ route('plates.create') }}" class="nav-link {{ request()->routeIs('plates.create') ? 'active' : '' }}">新增烫金版</a>
                 <a href="{{ route('plates.export') }}" class="nav-link">导出摘要</a>
             </div>

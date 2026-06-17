@@ -289,7 +289,26 @@ class PlateController extends Controller
             'change_type' => 'nullable|max:30',
             'change_description' => 'nullable|string',
             'version_note' => 'nullable|boolean',
+            '_lock_updated_at' => 'required|date_format:Y-m-d H:i:s',
+            '_force_update' => 'nullable|boolean',
         ]);
+
+        if (!$plate->can_edit) {
+            return back()->withInput()->withErrors(['error' => "当前版本状态为「{$plate->status}」，不允许编辑修改。如需修改请先启封或修改状态。"]);
+        }
+
+        $lockUpdatedAt = Carbon::createFromFormat('Y-m-d H:i:s', $validated['_lock_updated_at']);
+        $dbUpdatedAt = $plate->updated_at;
+        $hasConflict = $dbUpdatedAt->gt($lockUpdatedAt);
+        $forceUpdate = $request->boolean('_force_update', false);
+
+        if ($hasConflict && !$forceUpdate) {
+            $conflictVersion = $plate->versionHistories()->where('changed_at', '>', $lockUpdatedAt)->first();
+            $message = "⚠️ 版本冲突：该烫金版已于 {$dbUpdatedAt->format('Y-m-d H:i')} 被";
+            $message .= $conflictVersion ? "「{$conflictVersion->operator}」修改（{$conflictVersion->change_type}）" : "其他操作修改";
+            $message .= "，您的编辑基于旧版本数据。请确认变更内容后勾选「强制保存并生成冲突版本」继续，或取消刷新后重试。";
+            return back()->withInput()->withErrors(['conflict_warning' => $message]);
+        }
 
         $createVersion = $request->boolean('version_note', false);
         $changeType = $request->get('change_type');
@@ -297,7 +316,7 @@ class PlateController extends Controller
 
         $changedFields = [];
         foreach ($validated as $key => $value) {
-            if (in_array($key, ['change_type', 'change_description', 'version_note', 'last_used_at'])) continue;
+            if (in_array($key, ['change_type', 'change_description', 'version_note', 'last_used_at', '_lock_updated_at', '_force_update'])) continue;
             if ($plate->$key != $value) {
                 $changedFields[] = $key;
             }
@@ -308,7 +327,7 @@ class PlateController extends Controller
             $oldSnapshot = $plate->toArray();
             $plate->update($validated);
 
-            if ($createVersion || !empty($changedFields)) {
+            if ($createVersion || !empty($changedFields) || $hasConflict) {
                 $lastVersion = $plate->versionHistories()->first();
                 $lastVerNum = 0;
                 if ($lastVersion && preg_match('/V(\d+)\.(\d+)/', $lastVersion->version_code, $m)) {
@@ -320,7 +339,9 @@ class PlateController extends Controller
                 $batchSuffix = chr(65 + ($plate->versionHistories()->count() % 26));
 
                 if (!$changeType) {
-                    if (in_array('plate_width', $changedFields) || in_array('plate_height', $changedFields) || in_array('plate_thickness', $changedFields)) {
+                    if ($hasConflict) {
+                        $changeType = '冲突保留';
+                    } elseif (in_array('plate_width', $changedFields) || in_array('plate_height', $changedFields) || in_array('plate_thickness', $changedFields)) {
                         $changeType = '尺寸调整';
                     } elseif (in_array('material', $changedFields)) {
                         $changeType = '材质更换';
@@ -336,7 +357,7 @@ class PlateController extends Controller
                     'version_code' => "V{$major}.{$minor}",
                     'batch_number' => 'B' . date('Ymd') . '-' . $batchSuffix,
                     'change_type' => $changeType,
-                    'change_description' => $changeDescription ?: ("更新字段: " . implode(', ', $changedFields)),
+                    'change_description' => $hasConflict ? ("[冲突保留] " . ($changeDescription ?: "更新字段: " . implode(', ', $changedFields))) : ($changeDescription ?: ("更新字段: " . implode(', ', $changedFields))),
                     'operator' => auth()->check() ? auth()->user()->name : '系统管理员',
                     'changed_at' => Carbon::now(),
                     'plate_width' => $plate->plate_width,
@@ -346,13 +367,15 @@ class PlateController extends Controller
                         'before' => $oldSnapshot,
                         'after' => $plate->toArray(),
                         'changed_fields' => $changedFields,
+                        'conflict' => $hasConflict,
+                        'conflict_with' => $dbUpdatedAt->toDateTimeString(),
                     ],
                 ]);
             }
 
             DB::commit();
             return redirect()->route('plates.show', $plate)
-                ->with('success', '烫金版信息已更新！');
+                ->with('success', $hasConflict ? '烫金版信息已更新（冲突版本已保留）！' : '烫金版信息已更新！');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->withErrors(['error' => '更新失败：' . $e->getMessage()]);
@@ -581,5 +604,184 @@ class PlateController extends Controller
     {
         $histories = $plate->versionHistories()->orderBy('changed_at', 'desc')->get();
         return view('plates.versions', compact('plate', 'histories'));
+    }
+
+    public function changeStatus(Request $request, Plate $plate)
+    {
+        $validated = $request->validate([
+            'target_status' => 'required|max:20',
+            'remark' => 'nullable|string|max:500',
+        ]);
+
+        $target = $validated['target_status'];
+        $transitions = $plate->next_status_transitions;
+        $allowed = collect($transitions)->pluck('target')->contains($target);
+
+        if (!$allowed) {
+            return back()->withErrors(['error' => "无法从当前状态「{$plate->status}」变更为「{$target}」"]);
+        }
+
+        $changeTypeMap = [
+            '待审批' => '提交审批',
+            '已驳回' => '审批驳回',
+            '待归档' => '申请归档',
+            '已归档' => '确认归档',
+            '正常' => in_array($plate->status, ['待审批']) ? '审批通过' : (in_array($plate->status, ['已归档']) ? '启封复用' : '维护记录'),
+        ];
+
+        DB::beginTransaction();
+        try {
+            $oldSnapshot = $plate->toArray();
+            $changeType = $changeTypeMap[$target] ?? '状态变更';
+
+            $plate->update(['status' => $target]);
+
+            $lastVersion = $plate->versionHistories()->first();
+            $lastVerNum = 0;
+            if ($lastVersion && preg_match('/V(\d+)\.(\d+)/', $lastVersion->version_code, $m)) {
+                $lastVerNum = intval($m[1]) * 10 + intval($m[2]);
+            }
+            $newVerNum = $lastVerNum + 1;
+            $major = intval($newVerNum / 10);
+            $minor = $newVerNum % 10;
+            $batchSuffix = chr(65 + ($plate->versionHistories()->count() % 26));
+
+            $changeDescription = "状态变更：{$plate->status} → {$target}";
+            if (!empty($validated['remark'])) {
+                $changeDescription .= "。备注：{$validated['remark']}";
+            }
+
+            VersionHistory::create([
+                'plate_id' => $plate->id,
+                'version_code' => "V{$major}.{$minor}",
+                'batch_number' => 'B' . date('Ymd') . '-' . $batchSuffix,
+                'change_type' => $changeType,
+                'change_description' => $changeDescription,
+                'operator' => auth()->check() ? auth()->user()->name : '系统管理员',
+                'changed_at' => Carbon::now(),
+                'plate_width' => $plate->plate_width,
+                'plate_height' => $plate->plate_height,
+                'material' => $plate->material,
+                'snapshot_data' => [
+                    'before' => $oldSnapshot,
+                    'after' => $plate->toArray(),
+                    'changed_fields' => ['status'],
+                    'remark' => $validated['remark'] ?? null,
+                ],
+            ]);
+
+            DB::commit();
+            return back()->with('success', "状态已变更为「{$target}」");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => '状态变更失败：' . $e->getMessage()]);
+        }
+    }
+
+    public function compareVersions(Request $request, Plate $plate)
+    {
+        $vh1Id = $request->get('vh1');
+        $vh2Id = $request->get('vh2');
+        $histories = $plate->versionHistories()->orderBy('changed_at', 'desc')->get();
+
+        if (!$vh1Id || !$vh2Id) {
+            return view('plates.compare', [
+                'plate' => $plate,
+                'histories' => $histories,
+                'vh1' => null,
+                'vh2' => null,
+                'changes' => null,
+            ]);
+        }
+
+        $vh1 = $plate->versionHistories()->findOrFail($vh1Id);
+        $vh2 = $plate->versionHistories()->findOrFail($vh2Id);
+
+        if ($vh1->changed_at->gt($vh2->changed_at)) {
+            [$vh1, $vh2] = [$vh2, $vh1];
+        }
+
+        $changes = [];
+        $fields = [
+            'plate_code' => '版号',
+            'pattern_name' => '图案名称',
+            'pattern_description' => '图案描述',
+            'applicable_books' => '适用书名',
+            'plate_width' => '宽度(mm)',
+            'plate_height' => '高度(mm)',
+            'plate_thickness' => '厚度(mm)',
+            'material' => '材质',
+            'usage_count' => '使用次数',
+            'max_usage' => '寿命上限',
+            'status' => '状态',
+            'location' => '存放位置',
+            'manufacture_date' => '制作日期',
+            'next_maintenance_date' => '下次保养',
+            'remark' => '备注',
+        ];
+
+        $data1 = $vh1->snapshot_data['after'] ?? $vh1->snapshot_data['before'] ?? [];
+        $data2 = $vh2->snapshot_data['after'] ?? [];
+
+        foreach ($fields as $field => $label) {
+            $v1 = $data1[$field] ?? null;
+            $v2 = $data2[$field] ?? null;
+            if ($v1 != $v2) {
+                $changes[] = [
+                    'field' => $field,
+                    'label' => $label,
+                    'before' => $v1,
+                    'after' => $v2,
+                ];
+            }
+        }
+
+        return view('plates.compare', compact('plate', 'histories', 'vh1', 'vh2', 'changes'));
+    }
+
+    public function review()
+    {
+        $totalPlates = Plate::count();
+        $statusStats = Plate::selectRaw('status, count(*) as count')->groupBy('status')->pluck('count', 'status')->toArray();
+        $activePlates = Plate::active()->count();
+        $warningPlates = Plate::warning()->count();
+        $retiredPlates = Plate::whereIn('status', ['已报废', '已归档'])->count();
+        $pendingApproval = Plate::where('status', '待审批')->count();
+        $pendingArchive = Plate::where('status', '待归档')->count();
+
+        $totalUsage = Plate::sum('usage_count');
+        $totalVersions = \App\Models\VersionHistory::count();
+        $totalMaintenances = \App\Models\Maintenance::count();
+        $totalMaintenanceCost = \App\Models\Maintenance::sum('cost');
+        $totalOrders = \App\Models\Order::count();
+        $totalOrderQty = \App\Models\Order::sum('quantity');
+
+        $versionTypeStats = \App\Models\VersionHistory::selectRaw('change_type, count(*) as count')
+            ->groupBy('change_type')->orderBy('count', 'desc')->pluck('count', 'change_type')->toArray();
+
+        $recentChanges = \App\Models\VersionHistory::with('plate')
+            ->orderBy('changed_at', 'desc')->limit(10)->get();
+
+        $highValuePlates = Plate::withCount('orders')
+            ->orderBy('orders_count', 'desc')->limit(5)->get();
+
+        return view('review', compact(
+            'totalPlates',
+            'statusStats',
+            'activePlates',
+            'warningPlates',
+            'retiredPlates',
+            'pendingApproval',
+            'pendingArchive',
+            'totalUsage',
+            'totalVersions',
+            'totalMaintenances',
+            'totalMaintenanceCost',
+            'totalOrders',
+            'totalOrderQty',
+            'versionTypeStats',
+            'recentChanges',
+            'highValuePlates'
+        ));
     }
 }
