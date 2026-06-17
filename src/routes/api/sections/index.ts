@@ -255,10 +255,49 @@ export const useUpdateSection = routeAction$(async (data, requestEvent) => {
     if (validated.associations) {
       const existingAssocs = await associationDao.listBySection(sectionId);
       const newValidAssocs = validated.associations.filter(a => a.associatedMineral);
+
       if (existingAssocs.length !== newValidAssocs.length) {
         hasRelatedChanges = true;
         changeDescriptions.push(`伴生矿物: ${existingAssocs.length}种 → ${newValidAssocs.length}种`);
+      } else if (existingAssocs.length > 0) {
+        const sortedExisting = [...existingAssocs].sort((a, b) =>
+          (a.associatedMineral || '').localeCompare(b.associatedMineral || '')
+        );
+        const sortedNew = [...newValidAssocs].sort((a, b) =>
+          (a.associatedMineral || '').localeCompare(b.associatedMineral || '')
+        );
+
+        const changedFields: string[] = [];
+        for (let i = 0; i < sortedExisting.length; i++) {
+          const oldA = sortedExisting[i];
+          const newA = sortedNew[i];
+          const newAData: Omit<Association, 'id'> = {
+            sectionId,
+            associatedMineral: newA.associatedMineral || '',
+            relationshipType: newA.relationshipType || '共生',
+            texturalRelation: newA.texturalRelation || '',
+            abundancePercent: newA.abundancePercent ?? 0,
+            grainSizeMm: newA.grainSizeMm,
+            parageneticStage: newA.parageneticStage || '',
+            notes: newA.notes || '',
+          };
+
+          const fieldsToCheck = ['associatedMineral', 'relationshipType', 'texturalRelation', 'abundancePercent', 'grainSizeMm', 'parageneticStage', 'notes'];
+          for (const field of fieldsToCheck) {
+            const oldVal = String((oldA as any)[field] ?? '');
+            const newVal = String((newAData as any)[field] ?? '');
+            if (oldVal !== newVal && !changedFields.includes(field)) {
+              changedFields.push(field);
+            }
+          }
+        }
+
+        if (changedFields.length > 0) {
+          hasRelatedChanges = true;
+          changeDescriptions.push(`伴生关系更新: ${changedFields.join(', ')}`);
+        }
       }
+
       for (const ea of existingAssocs) {
         await associationDao.delete(ea.id);
       }
