@@ -149,29 +149,28 @@ function findCompatibleNode() {
     return current
   }
 
-  const systemNodes = searchSystemNodes()
-  log('candidate system nodes:', systemNodes)
-  for (const np of systemNodes) {
-    if (testNode(np)) {
-      log('system node works:', np)
-      return np
+  const bundled = findBundledNode()
+  if (bundled) {
+    log('testing bundled repo node:', bundled)
+    if (testNode(bundled)) {
+      log('bundled repo node works')
+      return bundled
     }
   }
 
-  const bundled = findBundledNode()
-  if (bundled) {
-    log('testing bundled node:', bundled)
-    tryCodesignFix(nm)
-    if (testNode(bundled)) {
-      log('bundled node works')
-      return bundled
+  const systemNodes = searchSystemNodes()
+  log('candidate system nodes (fallback):', systemNodes)
+  for (const np of systemNodes) {
+    if (testNode(np)) {
+      log('system node works (fallback):', np)
+      return np
     }
   }
 
   console.error('\n⚠  无法找到可正常加载原生模块的 Node.js 解释器。')
   console.error('   当前 Node 可能启用了 hardened runtime，导致无法加载 rollup/esbuild 的原生绑定。')
-  console.error('   请安装标准的 Node.js LTS（https://nodejs.org/）后重试，或执行：')
-  console.error('   npm install node@20 --save-dev  # 将作为项目依赖自动下载备用 Node\n')
+  console.error('   项目已自带 node@20 作为依赖，如未正确安装请执行：')
+  console.error('   cd node_modules/node && node installArchSpecificPackage.js\n')
   process.exit(1)
 }
 

@@ -7,6 +7,7 @@ import { platform } from 'node:os'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 const IS_MACOS = platform() === 'darwin'
+const IS_WINDOWS = platform() === 'win32'
 const NM = join(ROOT, 'node_modules')
 
 function tryCodesignAll() {
@@ -22,10 +23,39 @@ function tryCodesignAll() {
       } catch (_) { fail++ }
     }
     if (ok > 0) {
-      process.stderr.write(`[postinstall] 已重新签名 ${ok} 个原生模块${fail > 0 ? `（失败 ${fail}` : ''}\n`)
+      process.stderr.write(`[postinstall] 已重新签名 ${ok} 个原生模块${fail > 0 ? `（失败 ${fail}）` : ''}\n`)
     }
   } catch (e) {
     process.stderr.write(`[postinstall] codesign 跳过: ${e.message}\n`)
+  }
+}
+
+function ensureNodeBinary() {
+  const nodeBin = IS_WINDOWS
+    ? join(NM, 'node', 'node.exe')
+    : join(NM, 'node', 'bin', 'node')
+  if (existsSync(nodeBin)) {
+    try {
+      const v = execSync(`"${nodeBin}" --version`, { encoding: 'utf8' }).trim()
+      process.stderr.write(`[postinstall] 内置 Node 就绪: ${v}\n`)
+      return
+    } catch (_) {}
+  }
+  const installer = join(NM, 'node', 'installArchSpecificPackage.js')
+  if (!existsSync(installer)) {
+    process.stderr.write('[postinstall] node 包未安装，跳过内置 Node 部署。\n')
+    return
+  }
+  process.stderr.write('[postinstall] 正在部署内置 Node 二进制...\n')
+  try {
+    execSync(`node "${installer}"`, {
+      cwd: join(NM, 'node'),
+      stdio: 'inherit',
+      env: process.env
+    })
+    process.stderr.write('[postinstall] 内置 Node 部署完成。\n')
+  } catch (e) {
+    process.stderr.write(`[postinstall] 内置 Node 部署失败: ${e.message}\n`)
   }
 }
 
@@ -46,5 +76,6 @@ function runPrepare() {
   }
 }
 
+ensureNodeBinary()
 tryCodesignAll()
 runPrepare()
