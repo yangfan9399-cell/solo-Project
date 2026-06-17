@@ -4,15 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
+    "dev": "vinxi dev",
+    "build": "vinxi build",
+    "start": "vinxi start",
     "seed": "tsx scripts/seed.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@solidjs/router": "^0.14.0",
+    "@solidjs/start": "^0.7.0",
     "solid-js": "^1.8.0",
+    "vinxi": "^0.3.14",
     "uuid": "^9.0.1",
     "xlsx": "^0.18.5",
     "date-fns": "^3.6.0"
@@ -22,11 +24,12 @@
     "@types/uuid": "^9.0.8",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
-    "solid-devtools": "^0.30.0",
     "tailwindcss": "^3.4.3",
     "tsx": "^4.7.2",
-    "typescript": "^5.4.5",
-    "vite": "^4.5.0",
-    "vite-plugin-solid": "^2.10.0"
+    "typescript": "^5.4.5"
+  },
+  "overrides": {
+    "vite": "4.5.14",
+    "rollup": "3.29.5"
   }
 }
