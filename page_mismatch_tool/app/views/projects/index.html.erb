@@ -1,0 +1,79 @@
+<% content_for :title, "项目台账" %>
+<% content_for :header_actions do %>
+  <%= link_to new_project_path, class: "inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors" do %>
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    新建项目
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <%= form_with url: projects_path, method: :get, class: "flex flex-col sm:flex-row gap-3", data: { turbo_frame: "projects_list", controller: "form", action: "input->form#submit" } do |f| %>
+      <div class="flex-1">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <%= f.text_field :q, value: params[:q], placeholder: "搜索项目名称或描述...", class: "w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+        </div>
+      </div>
+      <div>
+        <%= f.select :status, options_for_select([["全部状态", ""], ["草稿", "draft"], ["进行中", "in_progress"], ["已完成", "completed"]], params[:status]), {}, class: "w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+      <%= f.submit "搜索", class: "px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors" %>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-200">
+            <th class="px-6 py-3 text-left font-semibold text-gray-600">项目名称</th>
+            <th class="px-6 py-3 text-left font-semibold text-gray-600">PDF文件</th>
+            <th class="px-6 py-3 text-center font-semibold text-gray-600">总页数</th>
+            <th class="px-6 py-3 text-center font-semibold text-gray-600">状态</th>
+            <th class="px-6 py-3 text-center font-semibold text-gray-600">异常数</th>
+            <th class="px-6 py-3 text-left font-semibold text-gray-600">创建时间</th>
+            <th class="px-6 py-3 text-center font-semibold text-gray-600">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% if @projects.any? %>
+            <% @projects.each do |project| %>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4">
+                  <%= link_to project.name, project, class: "font-medium text-gray-900 hover:text-blue-600" %>
+                  <% if project.description.present? %>
+                    <p class="text-xs text-gray-400 mt-0.5 truncate max-w-xs"><%= project.description %></p>
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 text-gray-600"><%= project.pdf_filename.presence || "—" %></td>
+                <td class="px-6 py-4 text-center text-gray-600"><%= project.total_pages.presence || "—" %></td>
+                <td class="px-6 py-4 text-center"><%= project_status_badge(project.status) %></td>
+                <td class="px-6 py-4 text-center">
+                  <% count = project.anomaly_count %>
+                  <% if count > 0 %>
+                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700"><%= count %></span>
+                  <% else %>
+                    <span class="text-gray-400">0</span>
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 text-gray-500 text-xs"><%= l(project.created_at, format: :short) rescue project.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+                <td class="px-6 py-4 text-center">
+                  <div class="flex items-center justify-center space-x-2">
+                    <%= link_to "查看", project, class: "text-blue-600 hover:text-blue-800 font-medium" %>
+                    <%= link_to "编辑", edit_project_path(project), class: "text-gray-600 hover:text-gray-800 font-medium" %>
+                    <%= button_to "删除", project, method: :delete, form: { class: "inline" }, class: "text-red-600 hover:text-red-800 font-medium cursor-pointer", data: { turbo_confirm: "确定要删除该项目吗？" } %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center text-gray-500">暂无项目数据</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

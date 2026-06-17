@@ -1,0 +1,33 @@
+zh-CN:
+  activerecord:
+    models:
+      project: 项目
+      page_mapping: 页码映射
+      batch: 批次
+      export_record: 导出记录
+      anomaly: 异常
+    attributes:
+      project:
+        name: 项目名称
+        description: 描述
+        pdf_filename: PDF文件名
+        total_pages: 总页数
+        status: 状态
+      page_mapping:
+        pdf_page_index: PDF物理页码
+        actual_page_number: 实际页码
+        status: 状态
+        notes: 备注
+      batch:
+        name: 批次名称
+        description: 描述
+      export_record:
+        format: 格式
+        filename: 文件名
+      anomaly:
+        anomaly_type: 异常类型
+        description: 描述
+        resolved: 已解决
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"

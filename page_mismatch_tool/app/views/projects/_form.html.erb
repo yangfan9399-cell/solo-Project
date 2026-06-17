@@ -1,0 +1,44 @@
+<%= form_with(model: [@project], class: "space-y-5") do |form| %>
+  <% if project.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <h3 class="text-sm font-medium text-red-800"><%= project.errors.count %> 个错误导致保存失败：</h3>
+      <ul class="mt-2 list-disc list-inside text-sm text-red-700">
+        <% project.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :name, "项目名称", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= form.text_field :name, placeholder: "请输入项目名称", class: "block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 #{project.errors[:name].any? ? 'border-red-400' : 'border-gray-300'}" %>
+  </div>
+
+  <div>
+    <%= form.label :description, "项目描述", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= form.textarea :description, rows: 3, placeholder: "可选，简要描述项目内容", class: "block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 #{project.errors[:description].any? ? 'border-red-400' : 'border-gray-300'}" %>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+    <div>
+      <%= form.label :pdf_filename, "PDF文件名", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= form.text_field :pdf_filename, placeholder: "如：example.pdf", class: "block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 #{project.errors[:pdf_filename].any? ? 'border-red-400' : 'border-gray-300'}" %>
+    </div>
+
+    <div>
+      <%= form.label :total_pages, "总页数", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= form.number_field :total_pages, placeholder: "PDF总页数", class: "block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 #{project.errors[:total_pages].any? ? 'border-red-400' : 'border-gray-300'}" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :status, "状态", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= form.select :status, [["草稿", "draft"], ["进行中", "in_progress"], ["已完成", "completed"]], {}, class: "block w-full sm:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+  </div>
+
+  <div class="flex items-center space-x-3 pt-2">
+    <%= form.submit class: "px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer" %>
+    <%= link_to "取消", projects_path, class: "px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors" %>
+  </div>
+<% end %>

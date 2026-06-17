@@ -1,0 +1,184 @@
+<% content_for :title, @project.name %>
+<% content_for :header_actions do %>
+  <%= link_to edit_project_path(@project), class: "inline-flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" do %>
+    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+    编辑
+  <% end %>
+  <%= button_to "删除项目", @project, method: :delete, form: { class: "inline" }, class: "inline-flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer", data: { turbo_confirm: "确定要删除该项目吗？此操作不可撤销。" } %>
+<% end %>
+
+<div class="space-y-6">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div class="flex items-center space-x-3">
+          <h3 class="text-lg font-bold text-gray-900"><%= @project.name %></h3>
+          <%= project_status_badge(@project.status) %>
+        </div>
+        <% if @project.description.present? %>
+          <p class="mt-1 text-sm text-gray-500"><%= @project.description %></p>
+        <% end %>
+      </div>
+      <div class="mt-3 sm:mt-0 flex items-center space-x-6 text-sm text-gray-500">
+        <div class="flex items-center">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <%= @project.pdf_filename.presence || "未上传PDF" %>
+        </div>
+        <div class="flex items-center">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <%= @project.total_pages.present? ? "#{@project.total_pages} 页" : "未设置" %>
+        </div>
+        <div class="flex items-center">
+          <svg class="w-4 h-4 mr-1.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+          <span class="<%= @anomalies.count > 0 ? 'text-red-600 font-semibold' : '' %>"><%= @anomalies.count %> 异常</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-controller="tabs">
+    <div class="border-b border-gray-200">
+      <nav class="flex space-x-8 px-1" role="tablist">
+        <button data-tabs-target="tab" data-action="click->tabs#switch" class="tab-btn border-b-2 border-blue-600 text-blue-600 py-3 px-1 text-sm font-medium whitespace-nowrap" data-tab="mappings">页码映射</button>
+        <button data-tabs-target="tab" data-action="click->tabs#switch" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-3 px-1 text-sm font-medium whitespace-nowrap" data-tab="anomalies">异常提示</button>
+        <button data-tabs-target="tab" data-action="click->tabs#switch" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-3 px-1 text-sm font-medium whitespace-nowrap" data-tab="batches">批次历史</button>
+        <button data-tabs-target="tab" data-action="click->tabs#switch" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-3 px-1 text-sm font-medium whitespace-nowrap" data-tab="exports">导出记录</button>
+      </nav>
+    </div>
+
+    <div data-tabs-target="panel" data-panel="mappings" class="mt-6">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h4 class="text-sm font-semibold text-gray-900">页码映射表 (<%= @page_mappings.count %>)</h4>
+          <div class="flex items-center space-x-2">
+            <%= button_to "生成映射", generate_mappings_project_page_mappings_path(@project), method: :post, class: "inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer", data: { turbo_confirm: "将清除现有映射并重新生成，确定继续？" } %>
+            <%= link_to "批量编号", project_page_mappings_path(@project), class: "inline-flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-md transition-colors" %>
+            <%= button_to "检测异常", detect_anomalies_project_path(@project), method: :post, class: "inline-flex items-center px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer" %>
+          </div>
+        </div>
+        <% if @page_mappings.any? %>
+          <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 sticky top-0">
+                <tr>
+                  <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">PDF页码</th>
+                  <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">实际页码</th>
+                  <th class="px-4 py-2.5 text-center font-semibold text-gray-600 text-xs">状态</th>
+                  <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">备注</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% @page_mappings.each do |mapping| %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 font-mono text-gray-700"><%= mapping.pdf_page_index %></td>
+                    <td class="px-4 py-2 font-mono text-gray-900 font-medium"><%= mapping.actual_page_number.presence || "—" %></td>
+                    <td class="px-4 py-2 text-center"><%= page_mapping_status_badge(mapping.status) %></td>
+                    <td class="px-4 py-2 text-gray-500 text-xs"><%= mapping.notes.presence || "" %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="px-6 py-12 text-center">
+            <p class="text-gray-500 text-sm">暂无页码映射数据</p>
+            <p class="text-gray-400 text-xs mt-1">点击"生成映射"按钮自动创建映射</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div data-tabs-target="panel" data-panel="anomalies" class="mt-6 hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h4 class="text-sm font-semibold text-gray-900">异常列表 (<%= @anomalies.count %>)</h4>
+          <%= link_to "查看全部异常", project_anomalies_path(@project), class: "text-xs text-blue-600 hover:text-blue-800 font-medium" %>
+        </div>
+        <% if @anomalies.any? %>
+          <ul class="divide-y divide-gray-100">
+            <% @anomalies.each do |anomaly| %>
+              <li class="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center space-x-3 min-w-0 flex-1">
+                  <%= anomaly_type_badge(anomaly.anomaly_type) %>
+                  <span class="text-sm text-gray-700 truncate"><%= anomaly.description %></span>
+                </div>
+                <%= button_to "标记已解决", resolve_project_anomaly_path(@project, anomaly), method: :patch, class: "ml-4 px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 text-xs font-medium rounded-md transition-colors cursor-pointer flex-shrink-0" %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <div class="px-6 py-12 text-center">
+            <svg class="mx-auto w-12 h-12 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p class="mt-2 text-sm text-gray-500">暂无未解决异常</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div data-tabs-target="panel" data-panel="batches" class="mt-6 hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h4 class="text-sm font-semibold text-gray-900">批次历史 (<%= @batches.count %>)</h4>
+          <%= link_to "查看全部批次", project_batches_path(@project), class: "text-xs text-blue-600 hover:text-blue-800 font-medium" %>
+        </div>
+        <% if @batches.any? %>
+          <ul class="divide-y divide-gray-100">
+            <% @batches.each do |batch| %>
+              <li class="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium text-gray-900"><%= batch.name %></p>
+                  <% if batch.description.present? %>
+                    <p class="text-xs text-gray-500 mt-0.5"><%= batch.description %></p>
+                  <% end %>
+                  <p class="text-xs text-gray-400 mt-0.5"><%= batch.created_at.strftime("%Y-%m-%d %H:%M") %></p>
+                </div>
+                <div class="ml-4 flex items-center space-x-2 flex-shrink-0">
+                  <%= link_to "查看", project_batch_path(@project, batch), class: "text-blue-600 hover:text-blue-800 text-xs font-medium" %>
+                  <%= button_to "恢复", restore_project_batch_path(@project, batch), method: :post, class: "text-orange-600 hover:text-orange-800 text-xs font-medium cursor-pointer", data: { turbo_confirm: "恢复将覆盖当前页码映射，确定继续？" } %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <div class="px-6 py-12 text-center">
+            <p class="text-sm text-gray-500">暂无批次历史</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div data-tabs-target="panel" data-panel="exports" class="mt-6 hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h4 class="text-sm font-semibold text-gray-900">导出记录</h4>
+          <div class="flex items-center space-x-2">
+            <%= button_to "导出 CSV", project_export_records_path(@project, format_type: "csv"), method: :post, class: "inline-flex items-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer" %>
+            <%= button_to "导出书签JSON", project_export_records_path(@project, format_type: "bookmark_json"), method: :post, class: "inline-flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer" %>
+            <%= link_to "查看全部", project_export_records_path(@project), class: "text-xs text-blue-600 hover:text-blue-800 font-medium" %>
+          </div>
+        </div>
+        <% export_records = @project.export_records.order(created_at: :desc).limit(5) %>
+        <% if export_records.any? %>
+          <ul class="divide-y divide-gray-100">
+            <% export_records.each do |record| %>
+              <li class="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center space-x-3">
+                  <%= export_format_badge(record.format) %>
+                  <span class="text-sm text-gray-700"><%= record.filename %></span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <span class="text-xs text-gray-400"><%= record.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+                  <%= link_to "下载", download_project_export_record_path(@project, record), class: "text-blue-600 hover:text-blue-800 text-xs font-medium" %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <div class="px-6 py-12 text-center">
+            <p class="text-sm text-gray-500">暂无导出记录</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

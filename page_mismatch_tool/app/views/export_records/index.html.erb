@@ -1,0 +1,57 @@
+<% content_for :title, "导出记录 - #{@project.name}" %>
+<% content_for :header_actions do %>
+  <%= link_to "← 返回项目", @project, class: "inline-flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" %>
+<% end %>
+
+<div class="space-y-6">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      <span class="text-sm font-medium text-gray-700">导出新文件：</span>
+      <div class="flex items-center space-x-2">
+        <%= button_to "导出 CSV", project_export_records_path(@project, format_type: "csv"), method: :post, class: "inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer" %>
+        <%= button_to "导出书签JSON", project_export_records_path(@project, format_type: "bookmark_json"), method: :post, class: "inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h4 class="text-sm font-semibold text-gray-900">导出记录 (<%= @export_records.count %>)</h4>
+    </div>
+    <% if @export_records.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left font-semibold text-gray-600">格式</th>
+              <th class="px-6 py-3 text-left font-semibold text-gray-600">文件名</th>
+              <th class="px-6 py-3 text-left font-semibold text-gray-600">创建时间</th>
+              <th class="px-6 py-3 text-center font-semibold text-gray-600">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <% @export_records.each do |record| %>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4"><%= export_format_badge(record.format) %></td>
+                <td class="px-6 py-4 text-gray-900 font-medium"><%= record.filename %></td>
+                <td class="px-6 py-4 text-gray-500 text-xs"><%= record.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+                <td class="px-6 py-4 text-center">
+                  <div class="flex items-center justify-center space-x-3">
+                    <%= link_to "下载", download_project_export_record_path(@project, record), class: "text-blue-600 hover:text-blue-800 font-medium" %>
+                    <%= button_to "删除", project_export_record_path(@project, record), method: :delete, form: { class: "inline" }, class: "text-red-600 hover:text-red-800 font-medium cursor-pointer", data: { turbo_confirm: "确定删除此导出记录？" } %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="px-6 py-12 text-center">
+        <svg class="mx-auto w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p class="mt-2 text-sm text-gray-500">暂无导出记录</p>
+        <p class="text-xs text-gray-400 mt-1">使用上方按钮导出页码映射数据</p>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,61 @@
+<% content_for :title, "批次历史 - #{@project.name}" %>
+<% content_for :header_actions do %>
+  <%= link_to "← 返回项目", @project, class: "inline-flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" %>
+<% end %>
+
+<div class="space-y-6">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <h4 class="text-sm font-semibold text-gray-900 mb-4">创建新批次快照</h4>
+    <%= form_with model: [@project, Batch.new], url: project_batches_path(@project), class: "flex flex-col sm:flex-row gap-3" do |f| %>
+      <div class="flex-1">
+        <%= f.text_field :name, placeholder: "批次名称（如：第一次校对）", required: true, class: "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+      <div class="flex-1">
+        <%= f.text_field :description, placeholder: "描述（可选）", class: "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+      <%= f.submit "创建快照", class: "px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer flex-shrink-0" %>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h4 class="text-sm font-semibold text-gray-900">批次历史 (<%= @batches.count %>)</h4>
+    </div>
+    <% if @batches.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left font-semibold text-gray-600">批次名</th>
+              <th class="px-6 py-3 text-left font-semibold text-gray-600">描述</th>
+              <th class="px-6 py-3 text-left font-semibold text-gray-600">创建时间</th>
+              <th class="px-6 py-3 text-center font-semibold text-gray-600">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <% @batches.each do |batch| %>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 font-medium text-gray-900"><%= batch.name %></td>
+                <td class="px-6 py-4 text-gray-500"><%= batch.description.presence || "—" %></td>
+                <td class="px-6 py-4 text-gray-500 text-xs"><%= batch.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+                <td class="px-6 py-4 text-center">
+                  <div class="flex items-center justify-center space-x-3">
+                    <%= link_to "查看", project_batch_path(@project, batch), class: "text-blue-600 hover:text-blue-800 font-medium" %>
+                    <%= button_to "恢复", restore_project_batch_path(@project, batch), method: :post, class: "text-orange-600 hover:text-orange-800 font-medium cursor-pointer", data: { turbo_confirm: "恢复将覆盖当前页码映射，确定继续？" } %>
+                    <%= button_to "删除", project_batch_path(@project, batch), method: :delete, form: { class: "inline" }, class: "text-red-600 hover:text-red-800 font-medium cursor-pointer", data: { turbo_confirm: "确定删除此批次快照？" } %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="px-6 py-12 text-center">
+        <svg class="mx-auto w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p class="mt-2 text-sm text-gray-500">暂无批次历史</p>
+        <p class="text-xs text-gray-400 mt-1">创建快照以保存当前页码映射状态</p>
+      </div>
+    <% end %>
+  </div>
+</div>

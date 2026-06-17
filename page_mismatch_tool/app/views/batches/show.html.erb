@@ -1,0 +1,58 @@
+<% content_for :title, "批次详情 - #{@batch.name}" %>
+<% content_for :header_actions do %>
+  <%= link_to "← 返回批次列表", project_batches_path(@project), class: "inline-flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" %>
+  <%= button_to "恢复此快照", restore_project_batch_path(@project, @batch), method: :post, class: "inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer", data: { turbo_confirm: "恢复将覆盖当前页码映射，确定继续？" } %>
+<% end %>
+
+<div class="space-y-6">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">批次名称</p>
+        <p class="mt-1 text-sm font-semibold text-gray-900"><%= @batch.name %></p>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">描述</p>
+        <p class="mt-1 text-sm text-gray-700"><%= @batch.description.presence || "无" %></p>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</p>
+        <p class="mt-1 text-sm text-gray-700"><%= @batch.created_at.strftime("%Y-%m-%d %H:%M:%S") %></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h4 class="text-sm font-semibold text-gray-900">快照数据 (<%= @snapshot_data.count %> 条映射)</h4>
+    </div>
+    <% if @snapshot_data.any? %>
+      <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 sticky top-0">
+            <tr>
+              <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">PDF页码</th>
+              <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">实际页码</th>
+              <th class="px-4 py-2.5 text-center font-semibold text-gray-600 text-xs">状态</th>
+              <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">备注</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <% @snapshot_data.each do |data| %>
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-2 font-mono text-gray-700"><%= data["pdf_page_index"] %></td>
+                <td class="px-4 py-2 font-mono text-gray-900 font-medium"><%= data["actual_page_number"].presence || "—" %></td>
+                <td class="px-4 py-2 text-center"><%= page_mapping_status_badge(data["status"]) %></td>
+                <td class="px-4 py-2 text-gray-500 text-xs"><%= data["notes"].presence || "" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="px-6 py-12 text-center">
+        <p class="text-sm text-gray-500">快照数据为空</p>
+      </div>
+    <% end %>
+  </div>
+</div>

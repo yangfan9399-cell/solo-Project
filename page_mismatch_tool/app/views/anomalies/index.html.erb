@@ -1,0 +1,75 @@
+<% content_for :title, "异常列表 - #{@project.name}" %>
+<% content_for :header_actions do %>
+  <%= link_to "← 返回项目", @project, class: "inline-flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" %>
+  <%= button_to "检测异常", detect_anomalies_project_path(@project), method: :post, class: "inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer" %>
+<% end %>
+
+<div class="space-y-6">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <%= form_with url: project_anomalies_path(@project), method: :get, class: "flex flex-col sm:flex-row gap-3" do |f| %>
+      <div>
+        <%= f.select :anomaly_type, options_for_select([["全部类型", ""], ["缺页", "missing"], ["重复", "duplicate"], ["插入", "inserted"], ["错码", "misnumbered"]], params[:anomaly_type]), {}, class: "w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+      <div>
+        <%= f.select :resolved, options_for_select([["全部状态", ""], ["未解决", "false"], ["已解决", "true"]], params[:resolved]), {}, class: "w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+      <%= f.submit "筛选", class: "px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors cursor-pointer" %>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h4 class="text-sm font-semibold text-gray-900">异常列表 (<%= @anomalies.count %>)</h4>
+    </div>
+    <% if @anomalies.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-center font-semibold text-gray-600">类型</th>
+              <th class="px-6 py-3 text-left font-semibold text-gray-600">描述</th>
+              <th class="px-6 py-3 text-center font-semibold text-gray-600">页码</th>
+              <th class="px-6 py-3 text-center font-semibold text-gray-600">解决状态</th>
+              <th class="px-6 py-3 text-center font-semibold text-gray-600">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <% @anomalies.each do |anomaly| %>
+              <tr id="<%= dom_id anomaly %>" class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 text-center"><%= anomaly_type_badge(anomaly.anomaly_type) %></td>
+                <td class="px-6 py-4 text-gray-700"><%= anomaly.description %></td>
+                <td class="px-6 py-4 text-center font-mono text-gray-600">
+                  <% if anomaly.page_mapping.present? %>
+                    <%= anomaly.page_mapping.pdf_page_index %>
+                  <% else %>
+                    —
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <% if anomaly.resolved %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">已解决</span>
+                  <% else %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">未解决</span>
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <% unless anomaly.resolved %>
+                    <%= button_to "标记已解决", resolve_project_anomaly_path(@project, anomaly), method: :patch, class: "px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 text-xs font-medium rounded-md transition-colors cursor-pointer" %>
+                  <% else %>
+                    <span class="text-xs text-gray-400">—</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="px-6 py-12 text-center">
+        <svg class="mx-auto w-12 h-12 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p class="mt-2 text-sm text-gray-500">暂无异常记录</p>
+        <p class="text-xs text-gray-400 mt-1">点击"检测异常"按钮扫描页码映射中的问题</p>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,19 @@
+<%= turbo_stream.replace dom_id(@anomaly) do %>
+  <tr id="<%= dom_id @anomaly %>" class="hover:bg-gray-50 transition-colors">
+    <td class="px-6 py-4 text-center"><%= anomaly_type_badge(@anomaly.anomaly_type) %></td>
+    <td class="px-6 py-4 text-gray-700"><%= @anomaly.description %></td>
+    <td class="px-6 py-4 text-center font-mono text-gray-600">
+      <% if @anomaly.page_mapping.present? %>
+        <%= @anomaly.page_mapping.pdf_page_index %>
+      <% else %>
+        —
+      <% end %>
+    </td>
+    <td class="px-6 py-4 text-center">
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">已解决</span>
+    </td>
+    <td class="px-6 py-4 text-center">
+      <span class="text-xs text-gray-400">—</span>
+    </td>
+  </tr>
+<% end %>

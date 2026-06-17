@@ -1,0 +1,11 @@
+<tr id="<%= dom_id mapping %>" class="hover:bg-gray-50">
+  <td class="px-4 py-2 font-mono text-gray-700"><%= mapping.pdf_page_index %></td>
+  <td class="px-4 py-2 font-mono text-gray-900 font-medium"><%= mapping.actual_page_number.presence || "—" %></td>
+  <td class="px-4 py-2 text-center"><%= page_mapping_status_badge(mapping.status) %></td>
+  <td class="px-4 py-2 text-gray-500 text-xs"><%= mapping.notes.presence || "" %></td>
+  <td class="px-4 py-2 text-center">
+    <div class="flex items-center justify-center space-x-1">
+      <%= button_to "删除", project_page_mapping_path(project, mapping), method: :delete, form: { class: "inline" }, class: "text-red-600 hover:text-red-800 text-xs font-medium cursor-pointer", data: { turbo_confirm: "确定删除此映射？" } %>
+    </div>
+  </td>
+</tr>
