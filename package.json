@@ -1,0 +1,41 @@
+{
+  "name": "compass-deviation-ledger",
+  "version": "1.0.0",
+  "description": "旧船舶罗经自差校正台账 - Maritime Compass Deviation Correction Ledger",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build": "remix build",
+    "dev": "PORT=6876 REMIX_DEV_SERVER_WS_PORT=6877 remix dev",
+    "start": "remix-serve build",
+    "typecheck": "tsc",
+    "db:init": "npx tsx scripts/setup-db.ts init-only",
+    "db:seed": "npx tsx scripts/setup-db.ts",
+    "db:reset": "npx tsx scripts/setup-db.ts reset",
+    "setup": "npm install && npm run db:reset"
+  },
+  "dependencies": {
+    "@remix-run/node": "^2.8.0",
+    "@remix-run/react": "^2.8.0",
+    "@remix-run/serve": "^2.8.0",
+    "sql.js": "^1.10.3",
+    "isbot": "^4.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "date-fns": "^3.3.1",
+    "clsx": "^2.1.0"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.8.0",
+    "@types/sql.js": "^1.4.9",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
