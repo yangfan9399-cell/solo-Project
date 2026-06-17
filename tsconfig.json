@@ -9,14 +9,12 @@
       "@/*": ["src/*"]
     },
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowJs": true
   },
   "include": [
     "src/**/*",
+    "scripts/**/*",
     "astro.config.mjs"
-  ],
-  "exclude": [
-    "scripts/init-data.mjs",
-    "scripts/init-data.ts"
   ]
 }

@@ -1,5 +1,6 @@
 import { getDb, saveDb } from './db';
 import { generateId, now } from './utils';
+import { addVersionHistory } from './versionHistory';
 import type { StratigraphicRelation } from '../types';
 
 export function createRelation(data: Omit<StratigraphicRelation, 'id' | 'createdAt'>): StratigraphicRelation {
@@ -15,6 +16,17 @@ export function createRelation(data: Omit<StratigraphicRelation, 'id' | 'created
   
   db.relations.push(relation);
   saveDb(db);
+
+  addVersionHistory(
+    data.projectId,
+    'relation',
+    id,
+    'create',
+    { relationType: { old: null, new: data.relationType }, fromUnitId: { old: null, new: data.fromUnitId }, toUnitId: { old: null, new: data.toUnitId } },
+    'system',
+    '系统',
+    `创建层位关系: ${data.relationType}`
+  );
   
   return relation;
 }
@@ -41,6 +53,16 @@ export function updateRelation(id: string, data: Partial<StratigraphicRelation>)
   if (index === -1) return null;
   
   const existing = db.relations[index];
+  const changes: Record<string, { old: unknown; new: unknown }> = {};
+  for (const key of Object.keys(data)) {
+    if (key !== 'id' && key !== 'createdAt') {
+      const k = key as keyof StratigraphicRelation;
+      if (existing[k] !== data[k]) {
+        changes[key] = { old: existing[k], new: data[k] };
+      }
+    }
+  }
+
   const updated: StratigraphicRelation = {
     ...existing,
     ...data
@@ -48,6 +70,19 @@ export function updateRelation(id: string, data: Partial<StratigraphicRelation>)
   
   db.relations[index] = updated;
   saveDb(db);
+
+  if (Object.keys(changes).length > 0) {
+    addVersionHistory(
+      existing.projectId,
+      'relation',
+      id,
+      'update',
+      changes,
+      'system',
+      '系统',
+      `更新层位关系: ${existing.relationType}`
+    );
+  }
   
   return updated;
 }
@@ -58,8 +93,20 @@ export function deleteRelation(id: string): boolean {
   
   if (index === -1) return false;
   
+  const existing = db.relations[index];
   db.relations.splice(index, 1);
   saveDb(db);
+
+  addVersionHistory(
+    existing.projectId,
+    'relation',
+    id,
+    'delete',
+    { relationType: { old: existing.relationType, new: null } },
+    'system',
+    '系统',
+    `删除层位关系: ${existing.relationType}`
+  );
   
   return true;
 }

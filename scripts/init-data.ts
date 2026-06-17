@@ -1,10 +1,9 @@
-import { getDb } from '../src/lib/db';
 import { createProject, getProjectByCode } from '../src/lib/projects';
 import { createUnit, getUnitByNumber } from '../src/lib/units';
-import { createBidirectionalRelation, createRelation } from '../src/lib/relations';
+import { createRelation } from '../src/lib/relations';
 import { createArtifact } from '../src/lib/artifacts';
 import { createPhoto } from '../src/lib/photos';
-import type { Project, StratigraphicUnit, Artifact, Photo } from '../src/types';
+import type { StratigraphicRelation, Artifact, Photo } from '../src/types';
 
 const sampleProjects = [
   {
@@ -595,8 +594,6 @@ const samplePhotos = {
 };
 
 export function initSampleData() {
-  const db = getDb();
-  
   console.log('开始初始化样例数据...');
   
   for (const projectData of sampleProjects) {
@@ -633,7 +630,7 @@ export function initSampleData() {
             projectId,
             fromUnitId: fromUnit.id,
             toUnitId: toUnit.id,
-            relationType: relType,
+            relationType: relType as StratigraphicRelation['relationType'],
             confirmed: true,
             notes: ''
           });
@@ -648,7 +645,7 @@ export function initSampleData() {
         const unit = getUnitByNumber(projectId, artifactData.unitNumber);
         if (unit) {
           const { unitNumber, ...rest } = artifactData;
-          createArtifact({ ...rest, projectId, unitId: unit.id });
+          createArtifact({ ...rest, projectId, unitId: unit.id, condition: null, recordedBy: null, recordedDate: null } as Omit<Artifact, 'photos' | 'id' | 'createdAt' | 'updatedAt'>);
         }
       }
       console.log(`    创建 ${artifacts.length} 件出土物`);
@@ -657,7 +654,7 @@ export function initSampleData() {
     const photos = samplePhotos[projectData.code as keyof typeof samplePhotos];
     if (photos) {
       for (const photoData of photos) {
-        createPhoto({ ...photoData, projectId, unitId: null, artifactId: null });
+        createPhoto({ ...photoData, projectId, unitId: null, artifactId: null, notes: null } as Omit<Photo, 'id' | 'createdAt'>);
       }
       console.log(`    创建 ${photos.length} 张照片`);
     }
@@ -668,6 +665,4 @@ export function initSampleData() {
   console.log('样例数据初始化完成！');
 }
 
-if (require.main === module) {
-  initSampleData();
-}
+initSampleData();
