@@ -411,6 +411,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           const remaining = Math.max(0, state.timeRemaining - elapsed);
           
           const now = Date.now();
+          const newActions: Action[] = [...state.actions];
+          
           const updatedCalls = state.calls.map((call: Call) => {
             if (call.status === 'waiting') {
               const waitElapsed = Math.floor((Date.now() - call.arrivalTime) / 1000);
@@ -421,6 +423,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
               return { ...call, waitTime: newWaitTime };
             } else if (call.status === 'connected' && call.expectedDisconnectTime) {
               if (now >= call.expectedDisconnectTime) {
+                const ext = state.extensions.find((e: Extension) => e.currentCall?.id === call.id);
+                const disconnectAction: Action = {
+                  id: generateId(),
+                  type: 'disconnect',
+                  timestamp: now,
+                  callId: call.id,
+                  fromExtension: ext?.number,
+                  duration: call.connectedAt ? (now - call.connectedAt) / 1000 : 0,
+                  scoreChange: 0,
+                  reason: `${ext?.name || '未知分机'} 通话结束（已到期）`,
+                };
+                newActions.push(disconnectAction);
                 return { ...call, status: 'completed' as const, disconnectedAt: now };
               }
               return call;
@@ -444,7 +458,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             score: state.score,
             calls: updatedCalls,
             extensions: updatedExtensions,
-            actions: state.actions,
+            actions: newActions,
             currentLevel: state.currentLevel,
             startTime: Date.now(),
           });

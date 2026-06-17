@@ -15,7 +15,6 @@
 ```bash
 pnpm install    # 安装依赖
 pnpm run dev    # 启动开发服务器
-pnpm run build  # 构建生产版本
 ```
 
 ## 项目结构
