@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { CallCard } from './CallCard';
 import { ExtensionCard } from './ExtensionCard';
@@ -22,13 +22,26 @@ export function GameBoard() {
     extensions,
     currentLevel,
     loadPlayerFromStorage,
+    loadGameState,
   } = useGameStore();
+
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const timerRef = useRef<number | null>(null);
   const callTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    loadPlayerFromStorage();
+    const initGame = async () => {
+      setIsLoading(true);
+      await loadPlayerFromStorage();
+      const hasSavedGame = await loadGameState();
+      if (hasSavedGame) {
+        setShowResumePrompt(true);
+      }
+      setIsLoading(false);
+    };
+    initGame();
   }, []);
 
   useEffect(() => {
@@ -48,6 +61,15 @@ export function GameBoard() {
     }
   }, [isPlaying, currentLevel.callInterval]);
 
+  const handleResumeGame = () => {
+    setShowResumePrompt(false);
+  };
+
+  const handleStartNewGame = () => {
+    useGameStore.getState().clearGameState();
+    setShowResumePrompt(false);
+  };
+
   const waitingCalls = getWaitingCalls();
   const connectedCalls = getConnectedCalls();
   const availableExtensions = extensions.filter(e => e.status === 'available');
@@ -65,6 +87,14 @@ export function GameBoard() {
 
   const hasEmergencyWaiting = waitingCalls.some(c => c.priority === 'emergency');
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="text-white text-xl">加载中...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
       <div className="max-w-7xl mx-auto">
@@ -72,6 +102,29 @@ export function GameBoard() {
           <h1 className="text-3xl font-bold text-white mb-2">📞 手摇电话交换台接线游戏</h1>
           <p className="text-gray-400">接听来电，连接分机，成为最优秀的接线员！</p>
         </div>
+
+        {showResumePrompt && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">发现未完成的当班</h2>
+              <p className="text-gray-600 mb-6 text-center">您有一个正在进行的当班，是否继续？</p>
+              <div className="flex gap-4">
+                <button
+                  onClick={handleStartNewGame}
+                  className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-xl transition-colors"
+                >
+                  开始新当班
+                </button>
+                <button
+                  onClick={handleResumeGame}
+                  className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl transition-colors"
+                >
+                  继续当班
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-3 space-y-4">
@@ -158,10 +211,7 @@ export function GameBoard() {
                   {connectedCalls.map((call) => {
                     const ext = extensions.find(e => e.currentCall?.id === call.id);
                     return (
-                      <div 
-                        key={call.id} 
-                        className="p-3 bg-blue-50 rounded-lg border border-blue-200"
-                      >
+                      <div key={call.id} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span>{call.caller.avatar}</span>

@@ -1,11 +1,10 @@
 import type { APIRoute } from 'astro';
-import { DEFAULT_PLAYER } from '@/data/mockData';
-import type { PlayerProfile } from '@/types/game';
+import type { Call, Extension, Action, LevelConfig } from '@/types/game';
 import fs from 'node:fs';
 import path from 'node:path';
 
 const STORAGE_DIR = path.join(process.cwd(), '.data');
-const PLAYER_FILE = path.join(STORAGE_DIR, 'player.json');
+const GAME_STATE_FILE = path.join(STORAGE_DIR, 'game-state.json');
 
 function ensureStorageDir() {
   if (!fs.existsSync(STORAGE_DIR)) {
@@ -13,24 +12,35 @@ function ensureStorageDir() {
   }
 }
 
-export const GET: APIRoute = ({ request }) => {
+interface GameState {
+  isPlaying: boolean;
+  timeRemaining: number;
+  score: number;
+  calls: Call[];
+  extensions: Extension[];
+  actions: Action[];
+  currentLevel: LevelConfig;
+  startTime: number;
+}
+
+export const GET: APIRoute = () => {
   ensureStorageDir();
   
-  if (fs.existsSync(PLAYER_FILE)) {
+  if (fs.existsSync(GAME_STATE_FILE)) {
     try {
-      const content = fs.readFileSync(PLAYER_FILE, 'utf-8');
-      const profile = JSON.parse(content);
-      return new Response(JSON.stringify(profile), {
+      const content = fs.readFileSync(GAME_STATE_FILE, 'utf-8');
+      const state = JSON.parse(content);
+      return new Response(JSON.stringify(state), {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch {
-      return new Response(JSON.stringify(DEFAULT_PLAYER), {
+      return new Response(JSON.stringify({ isPlaying: false }), {
         headers: { 'Content-Type': 'application/json' },
       });
     }
   }
   
-  return new Response(JSON.stringify(DEFAULT_PLAYER), {
+  return new Response(JSON.stringify({ isPlaying: false }), {
     headers: { 'Content-Type': 'application/json' },
   });
 };
@@ -39,8 +49,8 @@ export const POST: APIRoute = async ({ request }) => {
   ensureStorageDir();
   
   try {
-    const profile = await request.json() as PlayerProfile;
-    fs.writeFileSync(PLAYER_FILE, JSON.stringify(profile, null, 2));
+    const state = await request.json() as GameState;
+    fs.writeFileSync(GAME_STATE_FILE, JSON.stringify(state, null, 2));
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' },
     });
@@ -55,8 +65,8 @@ export const POST: APIRoute = async ({ request }) => {
 export const DELETE: APIRoute = () => {
   ensureStorageDir();
   
-  if (fs.existsSync(PLAYER_FILE)) {
-    fs.unlinkSync(PLAYER_FILE);
+  if (fs.existsSync(GAME_STATE_FILE)) {
+    fs.unlinkSync(GAME_STATE_FILE);
   }
   
   return new Response(JSON.stringify({ success: true }), {

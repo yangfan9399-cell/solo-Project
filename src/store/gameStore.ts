@@ -13,6 +13,7 @@ interface GameStore {
   timeRemaining: number;
   score: number;
   actions: Action[];
+  startTime: number;
   initPlayer: (profile?: PlayerProfile) => void;
   selectLevel: (level: number) => void;
   startShift: () => void;
@@ -25,13 +26,14 @@ interface GameStore {
   updateTimers: () => void;
   loadPlayerFromStorage: () => void;
   savePlayerToStorage: () => void;
+  saveGameState: () => void;
+  loadGameState: () => Promise<boolean>;
+  clearGameState: () => void;
   getAvailableExtensions: () => Extension[];
   getWaitingCalls: () => Call[];
   getConnectedCalls: () => Call[];
   calculateScore: (shift: Shift) => number;
 }
-
-const STORAGE_KEY = 'telephone-operator-player';
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 11);
@@ -64,6 +66,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   timeRemaining: 0,
   score: 0,
   actions: [],
+  startTime: 0,
 
   initPlayer: (profile) => {
     set({ player: profile || DEFAULT_PLAYER });
@@ -79,10 +82,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   startShift: () => {
     const { currentLevel, player } = get();
+    const startTime = Date.now();
     const newShift: Shift = {
       id: generateId(),
       level: currentLevel.level,
-      startTime: Date.now(),
+      startTime,
       duration: currentLevel.duration,
       callsHandled: 0,
       callsMissed: 0,
@@ -101,7 +105,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       actions: [],
       extensions: EXTENSIONS.slice(0, currentLevel.maxExtensions).map(e => ({ ...e, status: 'available' as const })),
       player: { ...player, currentShift: newShift },
+      startTime,
     });
+
+    get().saveGameState();
   },
 
   endShift: () => {
@@ -147,6 +154,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     get().savePlayerToStorage();
+    get().clearGameState();
   },
 
   generateCall: () => {
@@ -166,6 +174,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
 
     set(state => ({ calls: [...state.calls, newCall] }));
+    get().saveGameState();
   },
 
   connectCall: (callId: string, extensionId: string) => {
@@ -203,6 +212,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       actions: [...actions, action],
     }));
 
+    get().saveGameState();
+
     setTimeout(() => {
       get().disconnectCall(callId);
     }, 8000 + Math.random() * 7000);
@@ -237,6 +248,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ),
       actions: [...actions, action],
     }));
+
+    get().saveGameState();
   },
 
   interruptCall: (targetCallId: string) => {
@@ -286,6 +299,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       score: score + penalty,
       actions: [...actions, action],
     }));
+
+    get().saveGameState();
   },
 
   selectCall: (call) => {
@@ -314,14 +329,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     if (newTimeRemaining === 0) {
       get().endShift();
+    } else {
+      get().saveGameState();
     }
   },
 
-  loadPlayerFromStorage: () => {
+  loadPlayerFromStorage: async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const profile = JSON.parse(stored);
+      const response = await fetch('/api/player');
+      if (response.ok) {
+        const profile = await response.json();
         set({ player: profile });
       }
     } catch {
@@ -329,12 +346,87 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  savePlayerToStorage: () => {
+  savePlayerToStorage: async () => {
     try {
       const { player } = get();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(player));
+      await fetch('/api/player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(player),
+      });
     } catch {
       console.error('Failed to save player to storage');
+    }
+  },
+
+  saveGameState: async () => {
+    try {
+      const { isPlaying, timeRemaining, score, calls, extensions, actions, currentLevel, startTime } = get();
+      await fetch('/api/game-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isPlaying,
+          timeRemaining,
+          score,
+          calls,
+          extensions,
+          actions,
+          currentLevel,
+          startTime,
+        }),
+      });
+    } catch {
+      console.error('Failed to save game state');
+    }
+  },
+
+  loadGameState: async () => {
+    try {
+      const response = await fetch('/api/game-state');
+      if (response.ok) {
+        const state = await response.json();
+        if (state.isPlaying && state.timeRemaining > 0) {
+          const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+          const remaining = Math.max(0, state.timeRemaining - elapsed);
+          
+          const updatedCalls = state.calls.map((call: Call) => {
+            if (call.status === 'waiting') {
+              const waitElapsed = Math.floor((Date.now() - call.arrivalTime) / 1000);
+              const newWaitTime = call.waitTime + waitElapsed;
+              if (newWaitTime >= state.currentLevel.maxWaitTime) {
+                return { ...call, status: 'missed' as const, waitTime: newWaitTime };
+              }
+              return { ...call, waitTime: newWaitTime };
+            }
+            return call;
+          });
+
+          set({
+            isPlaying: true,
+            timeRemaining: remaining,
+            score: state.score,
+            calls: updatedCalls,
+            extensions: state.extensions,
+            actions: state.actions,
+            currentLevel: state.currentLevel,
+            startTime: Date.now(),
+          });
+
+          return true;
+        }
+      }
+    } catch {
+      console.error('Failed to load game state');
+    }
+    return false;
+  },
+
+  clearGameState: async () => {
+    try {
+      await fetch('/api/game-state', { method: 'DELETE' });
+    } catch {
+      console.error('Failed to clear game state');
     }
   },
 
