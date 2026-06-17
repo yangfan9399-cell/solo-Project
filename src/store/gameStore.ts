@@ -111,13 +111,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     get().saveGameState();
   },
 
-  endShift: () => {
+  endShift: async () => {
     const { player, calls, actions, currentLevel, score } = get();
     const handled = calls.filter(c => c.status === 'completed').length;
     const missed = calls.filter(c => c.status === 'missed').length;
     const emergencyHandled = calls.filter(c => c.status === 'completed' && c.priority === 'emergency').length;
     const totalWaitTime = calls.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.waitTime || 0), 0);
     const avgWaitTime = handled > 0 ? totalWaitTime / handled : 0;
+    
+    let finalScore = score;
+    try {
+      const response = await fetch('/api/calculate-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actions, levelConfig: currentLevel }),
+      });
+      const result = await response.json();
+      if (result.finalScore !== undefined) {
+        finalScore = result.finalScore;
+      }
+    } catch {
+      console.error('Failed to calculate score from server, using local score');
+    }
     
     const shift: Shift = {
       id: player.currentShift?.id || generateId(),
@@ -129,18 +144,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       callsMissed: missed,
       emergencyCallsHandled: emergencyHandled,
       averageWaitTime: avgWaitTime,
-      totalScore: score,
+      totalScore: finalScore,
       actions: actions,
       status: missed > handled * 0.5 ? 'failed' : 'completed',
     };
 
     const newHistory = [...player.history, shift];
-    const newTotalScore = player.totalScore + score;
-    const newHighestScore = Math.max(player.highestScore, score);
+    const newTotalScore = player.totalScore + finalScore;
+    const newHighestScore = Math.max(player.highestScore, finalScore);
     const newLevel = Math.min(Math.max(1, Math.floor(newTotalScore / 1000) + 1), LEVEL_CONFIGS.length);
 
     set({
       isPlaying: false,
+      score: finalScore,
       player: {
         ...player,
         totalScore: newTotalScore,
@@ -149,7 +165,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         level: newLevel,
         history: newHistory,
         currentShift: undefined,
-        bestShiftId: newHighestScore === score ? shift.id : player.bestShiftId,
+        bestShiftId: newHighestScore === finalScore ? shift.id : player.bestShiftId,
       },
     });
 
@@ -201,12 +217,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       reason: `接通 ${call.caller.name} 到 ${extension.name}`,
     };
 
+    const now = Date.now();
+    const callDuration = 8000 + Math.random() * 7000;
+    const expectedDisconnectTime = now + callDuration;
+
     set(state => ({
       calls: state.calls.map(c => 
-        c.id === callId ? { ...c, status: 'connected', connectedAt: Date.now() } : c
+        c.id === callId ? { ...c, status: 'connected', connectedAt: now, expectedDisconnectTime } : c
       ),
       extensions: state.extensions.map(e => 
-        e.id === extensionId ? { ...e, status: 'busy' as const, currentCall: call } : e
+        e.id === extensionId ? { ...e, status: 'busy' as const, currentCall: { ...call, status: 'connected', connectedAt: now, expectedDisconnectTime } } : e
       ),
       score: score + totalScoreChange,
       actions: [...actions, action],
@@ -216,7 +236,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     setTimeout(() => {
       get().disconnectCall(callId);
-    }, 8000 + Math.random() * 7000);
+    }, callDuration);
   },
 
   disconnectCall: (callId: string) => {
@@ -390,6 +410,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
           const remaining = Math.max(0, state.timeRemaining - elapsed);
           
+          const now = Date.now();
           const updatedCalls = state.calls.map((call: Call) => {
             if (call.status === 'waiting') {
               const waitElapsed = Math.floor((Date.now() - call.arrivalTime) / 1000);
@@ -398,8 +419,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 return { ...call, status: 'missed' as const, waitTime: newWaitTime };
               }
               return { ...call, waitTime: newWaitTime };
+            } else if (call.status === 'connected' && call.expectedDisconnectTime) {
+              if (now >= call.expectedDisconnectTime) {
+                return { ...call, status: 'completed' as const, disconnectedAt: now };
+              }
+              return call;
             }
             return call;
+          });
+
+          const updatedExtensions = state.extensions.map((ext: Extension) => {
+            if (ext.status === 'busy' && ext.currentCall?.expectedDisconnectTime) {
+              if (now >= ext.currentCall.expectedDisconnectTime) {
+                return { ...ext, status: 'available' as const, currentCall: undefined };
+              }
+              return ext;
+            }
+            return ext;
           });
 
           set({
@@ -407,10 +443,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
             timeRemaining: remaining,
             score: state.score,
             calls: updatedCalls,
-            extensions: state.extensions,
+            extensions: updatedExtensions,
             actions: state.actions,
             currentLevel: state.currentLevel,
             startTime: Date.now(),
+          });
+
+          const store = get();
+          updatedCalls.forEach((call: Call) => {
+            if (call.status === 'connected' && call.expectedDisconnectTime) {
+              const remainingTime = call.expectedDisconnectTime - now;
+              if (remainingTime > 0) {
+                setTimeout(() => {
+                  store.disconnectCall(call.id);
+                }, remainingTime);
+              }
+            }
           });
 
           return true;

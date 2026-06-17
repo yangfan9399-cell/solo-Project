@@ -17,6 +17,7 @@ export interface Call {
   status: 'waiting' | 'connected' | 'completed' | 'missed';
   connectedAt?: number;
   disconnectedAt?: number;
+  expectedDisconnectTime?: number;
   isInterrupted?: boolean;
 }
 
