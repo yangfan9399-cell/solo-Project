@@ -69,50 +69,59 @@
             </div>
         </div>
         <div class="card-body" style="padding: 0;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>批次编号</th>
-                        <th>油料种类</th>
-                        <th>生产日期</th>
-                        <th>原料重量</th>
-                        <th>出油率</th>
-                        <th>操作员</th>
-                        <th>异常</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($stats['recent_batches'] as $batch)
+            @if($stats['recent_batches']->isEmpty())
+                <div class="text-center py-8">
+                    <div style="font-size: 48px; color: #d4c4a8; margin-bottom: 12px;">🏺</div>
+                    <div class="text-muted mb-2">暂无批次记录</div>
+                    <div class="text-sm text-muted mb-4">点击下方按钮录入第一条压榨生产记录</div>
+                    <a href="{{ route('batches.create') }}" class="btn btn-primary">📝 新建批次记录</a>
+                </div>
+            @else
+                <table>
+                    <thead>
                         <tr>
-                            <td>
-                                <span class="fw-bold">{{ $batch->batch_code }}</span>
-                                <div class="text-xs text-muted">v{{ $batch->version }}</div>
-                            </td>
-                            <td>{{ $batch->seed_type }}</td>
-                            <td>{{ $batch->production_date->format('Y-m-d') }}</td>
-                            <td>{{ $batch->seed_weight }} kg</td>
-                            <td class="fw-bold">{{ $batch->oil_yield_rate }}%</td>
-                            <td>{{ $batch->operator ?? '-' }}</td>
-                            <td>
-                                @if($batch->unresolvedAnomalies->count() > 0)
-                                    @php($highAnomalies = $batch->unresolvedAnomalies->where('anomaly_type', 'high')->count())
-                                    @if($highAnomalies > 0)
-                                        <span class="badge badge-danger">{{ $highAnomalies }} 严重</span>
-                                    @else
-                                        <span class="badge badge-warning">{{ $batch->unresolvedAnomalies->count() }} 异常</span>
-                                    @endif
-                                @else
-                                    <span class="badge badge-success">正常</span>
-                                @endif
-                            </td>
-                            <td>
-                                <a href="{{ route('batches.show', $batch) }}" class="btn btn-secondary btn-sm">详情</a>
-                            </td>
+                            <th>批次编号</th>
+                            <th>油料种类</th>
+                            <th>生产日期</th>
+                            <th>原料重量</th>
+                            <th>出油率</th>
+                            <th>操作员</th>
+                            <th>异常</th>
+                            <th>操作</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($stats['recent_batches'] as $batch)
+                            <tr>
+                                <td>
+                                    <span class="fw-bold">{{ $batch->batch_code }}</span>
+                                    <div class="text-xs text-muted">v{{ $batch->version }}</div>
+                                </td>
+                                <td>{{ $batch->seed_type }}</td>
+                                <td>{{ $batch->production_date->format('Y-m-d') }}</td>
+                                <td>{{ $batch->seed_weight }} kg</td>
+                                <td class="fw-bold">{{ $batch->oil_yield_rate }}%</td>
+                                <td>{{ $batch->operator ?? '-' }}</td>
+                                <td>
+                                    @if($batch->unresolvedAnomalies->count() > 0)
+                                        @php($highAnomalies = $batch->unresolvedAnomalies->where('anomaly_type', 'high')->count())
+                                        @if($highAnomalies > 0)
+                                            <span class="badge badge-danger">{{ $highAnomalies }} 严重</span>
+                                        @else
+                                            <span class="badge badge-warning">{{ $batch->unresolvedAnomalies->count() }} 异常</span>
+                                        @endif
+                                    @else
+                                        <span class="badge badge-success">正常</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <a href="{{ route('batches.show', $batch) }}" class="btn btn-secondary btn-sm">详情</a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
         </div>
     </div>
 

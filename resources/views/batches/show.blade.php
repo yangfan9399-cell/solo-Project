@@ -194,8 +194,9 @@
                                     <a href="{{ route('versions.compare', [$batch, $version]) }}" class="btn btn-secondary btn-sm">对比</a>
                                     @if($batch->version != $version->version_number)
                                         <form method="POST" action="{{ route('versions.restore', [$batch, $version]) }}" style="display: inline;"
-                                              onsubmit="return confirm('确定要回滚到此版本吗？当前版本的数据将被覆盖。');">
+                                              onsubmit="return confirm('确定要回滚到此版本吗？当前版本的数据将被覆盖，并自动创建新版本。');">
                                             @csrf
+                                            <input type="hidden" name="expected_version" value="{{ $batch->version }}">
                                             <button type="submit" class="btn btn-danger btn-sm">回滚</button>
                                         </form>
                                     @endif

@@ -10,8 +10,9 @@
         <a href="{{ route('batches.show', $batch) }}" class="btn btn-secondary">查看当前版本</a>
         @if($version->version_number != $batch->version)
             <form method="POST" action="{{ route('versions.restore', [$batch, $version]) }}" style="display: inline;"
-                  onsubmit="return confirm('确定要回滚到此版本吗？');">
+                  onsubmit="return confirm('确定要回滚到此版本吗？当前版本的数据将被覆盖，并自动创建新版本。');">
                 @csrf
+                <input type="hidden" name="expected_version" value="{{ $batch->version }}">
                 <button type="submit" class="btn btn-primary">回滚到此版本</button>
             </form>
         @endif

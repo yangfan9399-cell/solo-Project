@@ -87,8 +87,9 @@
         <a href="{{ route('versions.index', $batch) }}" class="btn btn-secondary">返回</a>
         @if($version->version_number != $batch->version)
             <form method="POST" action="{{ route('versions.restore', [$batch, $version]) }}"
-                  onsubmit="return confirm('确定要回滚到 v{{ $version->version_number }} 吗？');">
+                  onsubmit="return confirm('确定要回滚到 v{{ $version->version_number }} 吗？当前版本的数据将被覆盖，并自动创建新版本。');">
                 @csrf
+                <input type="hidden" name="expected_version" value="{{ $batch->version }}">
                 <button type="submit" class="btn btn-primary">回滚到 v{{ $version->version_number }}</button>
             </form>
         @endif

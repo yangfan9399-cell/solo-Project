@@ -115,10 +115,13 @@ class ExportService
     public function buildCsvContent(array $data, string $type): string
     {
         $handle = fopen('php://temp', 'r+');
-        $this->writeDataToCsv($handle, $data, $type);
-        rewind($handle);
-        return stream_get_contents($handle);
-        fclose($handle);
+        try {
+            $this->writeDataToCsv($handle, $data, $type);
+            rewind($handle);
+            return stream_get_contents($handle);
+        } finally {
+            fclose($handle);
+        }
     }
 
     protected function writeDataToCsv($handle, array $data, string $type): void

@@ -161,19 +161,42 @@ class BatchController extends Controller
             'operator' => 'nullable|string|max:50',
             'production_date' => 'required|date',
             'change_summary' => 'nullable|string|max:255',
+            'expected_version' => 'nullable|integer',
         ]);
+
+        $expectedVersion = (int)($validated['expected_version'] ?? 0);
+        if ($expectedVersion > 0 && $expectedVersion !== $batch->version) {
+            return redirect()->route('batches.edit', $batch)
+                ->withErrors(['版本冲突' => "批次 [{$batch->batch_code}] 在您编辑期间已被修改（当前版本 v{$batch->version}）。为避免数据覆盖，本次提交已阻断。请刷新页面获取最新数据后重新编辑。"])
+                ->withInput();
+        }
 
         $oilYieldRate = $this->batchService->calculateOilYieldRate(
             (float)$validated['oil_output'],
             (float)$validated['seed_weight']
         );
 
-        $batch->version = $batch->version + 1;
-        $batch->fill(array_merge($validated, [
+        $newVersion = $batch->version + 1;
+        $updateData = array_merge($validated, [
             'oil_yield_rate' => $oilYieldRate,
             'sediment_amount' => $validated['sediment_amount'] ?? 0,
-        ]));
-        $batch->save();
+            'version' => $newVersion,
+            'updated_at' => now(),
+        ]);
+        unset($updateData['expected_version'], $updateData['change_summary']);
+
+        $updateSuccess = Batch::where('id', $batch->id)
+            ->where('version', $batch->version)
+            ->update($updateData);
+
+        if (!$updateSuccess) {
+            return redirect()->route('batches.edit', $batch)
+                ->withErrors(['版本冲突' => '检测到并发修改，本次更新已阻断。请刷新页面获取最新数据后重试。'])
+                ->withInput();
+        }
+
+        $batch->refresh();
+        $batch->version = $newVersion;
 
         $anomalies = $this->batchService->checkAnomalies($batch);
         $this->batchService->saveAnomalies($batch, $anomalies);
@@ -184,9 +207,8 @@ class BatchController extends Controller
             $validated['operator'] ?? null
         );
 
-        $version = $batch->version;
         return redirect()->route('batches.show', $batch)
-            ->with('success', "批次 [{$batch->batch_code}] 更新成功！当前版本 v{$version}。");
+            ->with('success', "批次 [{$batch->batch_code}] 更新成功！当前版本 v{$newVersion}。");
     }
 
     public function destroy(Batch $batch): RedirectResponse

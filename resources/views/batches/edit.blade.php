@@ -11,6 +11,7 @@
     <form method="POST" action="{{ route('batches.update', $batch) }}" id="batchForm">
         @csrf
         @method('PUT')
+        <input type="hidden" name="expected_version" value="{{ $batch->version }}">
 
         <div class="card">
             <div class="card-header">

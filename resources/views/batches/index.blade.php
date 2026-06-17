@@ -78,71 +78,86 @@
             </div>
         </div>
         <div class="card-body" style="padding: 0;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>批次编号</th>
-                        <th>溯源码</th>
-                        <th>油料</th>
-                        <th>生产日期</th>
-                        <th>原料(kg)</th>
-                        <th>水分(%)</th>
-                        <th>炒温(℃)</th>
-                        <th>压力(MPa)</th>
-                        <th>出油(L)</th>
-                        <th>出油率</th>
-                        <th>沉淀(h)</th>
-                        <th>操作员</th>
-                        <th>状态</th>
-                        <th>异常</th>
-                        <th>版本</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($batches as $batch)
+            @if($batches->isEmpty())
+                <div class="text-center py-8">
+                    <div style="font-size: 48px; color: #d4c4a8; margin-bottom: 12px;">📋</div>
+                    @if(collect($filters)->filter(fn($v) => $v !== '')->isNotEmpty())
+                        <div class="text-muted mb-2">未找到匹配的批次记录</div>
+                        <div class="text-sm text-muted mb-4">请调整筛选条件后重试</div>
+                        <a href="{{ route('batches.index') }}" class="btn btn-secondary">🔄 重置筛选条件</a>
+                    @else
+                        <div class="text-muted mb-2">暂无批次记录</div>
+                        <div class="text-sm text-muted mb-4">点击下方按钮录入第一条压榨生产记录</div>
+                        <a href="{{ route('batches.create') }}" class="btn btn-primary">📝 新建批次记录</a>
+                    @endif
+                </div>
+            @else
+                <table>
+                    <thead>
                         <tr>
-                            <td>
-                                <a href="{{ route('batches.show', $batch) }}" class="fw-bold text-decoration-none" style="color: #8b5a2b;">{{ $batch->batch_code }}</a>
-                            </td>
-                            <td class="text-xs text-muted" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $batch->trace_code }}</td>
-                            <td>{{ $batch->seed_type }}</td>
-                            <td>{{ $batch->production_date->format('m-d') }}</td>
-                            <td>{{ $batch->seed_weight }}</td>
-                            <td>{{ $batch->moisture_content }}</td>
-                            <td>{{ $batch->roasting_temperature }}</td>
-                            <td>{{ $batch->pressing_pressure }}</td>
-                            <td>{{ $batch->oil_output }}</td>
-                            <td class="fw-bold">{{ $batch->oil_yield_rate }}%</td>
-                            <td>{{ $batch->settling_time }}</td>
-                            <td>{{ $batch->operator ?? '-' }}</td>
-                            <td>
-                                <span class="badge {{ status_badge_class($batch->status) }}">{{ status_badge_label($batch->status) }}</span>
-                            </td>
-                            <td>
-                                @php($unresolved = $batch->unresolvedAnomalies->count())
-                                @if($unresolved > 0)
-                                    @php($high = $batch->unresolvedAnomalies->where('anomaly_type', 'high')->count())
-                                    @if($high > 0)
-                                        <span class="badge badge-danger">{{ $high }} 严重</span>
-                                    @else
-                                        <span class="badge badge-warning">{{ $unresolved }} 项</span>
-                                    @endif
-                                @else
-                                    <span class="badge badge-success">正常</span>
-                                @endif
-                            </td>
-                            <td class="text-sm">v{{ $batch->version }}</td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="{{ route('batches.show', $batch) }}" class="btn btn-secondary btn-sm">查看</a>
-                                    <a href="{{ route('batches.edit', $batch) }}" class="btn btn-primary btn-sm">编辑</a>
-                                </div>
-                            </td>
+                            <th>批次编号</th>
+                            <th>溯源码</th>
+                            <th>油料</th>
+                            <th>生产日期</th>
+                            <th>原料(kg)</th>
+                            <th>水分(%)</th>
+                            <th>炒温(℃)</th>
+                            <th>压力(MPa)</th>
+                            <th>出油(L)</th>
+                            <th>出油率</th>
+                            <th>沉淀(h)</th>
+                            <th>操作员</th>
+                            <th>状态</th>
+                            <th>异常</th>
+                            <th>版本</th>
+                            <th>操作</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($batches as $batch)
+                            <tr>
+                                <td>
+                                    <a href="{{ route('batches.show', $batch) }}" class="fw-bold text-decoration-none" style="color: #8b5a2b;">{{ $batch->batch_code }}</a>
+                                </td>
+                                <td class="text-xs text-muted" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $batch->trace_code }}</td>
+                                <td>{{ $batch->seed_type }}</td>
+                                <td>{{ $batch->production_date->format('m-d') }}</td>
+                                <td>{{ $batch->seed_weight }}</td>
+                                <td>{{ $batch->moisture_content }}</td>
+                                <td>{{ $batch->roasting_temperature }}</td>
+                                <td>{{ $batch->pressing_pressure }}</td>
+                                <td>{{ $batch->oil_output }}</td>
+                                <td class="fw-bold">{{ $batch->oil_yield_rate }}%</td>
+                                <td>{{ $batch->settling_time }}</td>
+                                <td>{{ $batch->operator ?? '-' }}</td>
+                                <td>
+                                    <span class="badge {{ status_badge_class($batch->status) }}">{{ status_badge_label($batch->status) }}</span>
+                                </td>
+                                <td>
+                                    @php($unresolved = $batch->unresolvedAnomalies->count())
+                                    @if($unresolved > 0)
+                                        @php($high = $batch->unresolvedAnomalies->where('anomaly_type', 'high')->count())
+                                        @if($high > 0)
+                                            <span class="badge badge-danger">{{ $high }} 严重</span>
+                                        @else
+                                            <span class="badge badge-warning">{{ $unresolved }} 项</span>
+                                        @endif
+                                    @else
+                                        <span class="badge badge-success">正常</span>
+                                    @endif
+                                </td>
+                                <td class="text-sm">v{{ $batch->version }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ route('batches.show', $batch) }}" class="btn btn-secondary btn-sm">查看</a>
+                                        <a href="{{ route('batches.edit', $batch) }}" class="btn btn-primary btn-sm">编辑</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
         </div>
     </div>
 

@@ -83,24 +83,52 @@ class VersionController extends Controller
 
     public function restore(Batch $batch, BatchVersion $version): RedirectResponse
     {
-        $batch->version = $batch->version + 1;
-        $batch->update([
-            'seed_type' => $version->seed_type,
-            'seed_weight' => $version->seed_weight,
-            'moisture_content' => $version->moisture_content,
-            'roasting_temperature' => $version->roasting_temperature,
-            'roasting_duration' => $version->roasting_duration,
-            'pressing_pressure' => $version->pressing_pressure,
-            'pressing_duration' => $version->pressing_duration,
-            'oil_output' => $version->oil_output,
-            'oil_yield_rate' => $version->oil_yield_rate,
-            'settling_time' => $version->settling_time,
-            'sediment_amount' => $version->sediment_amount,
-            'notes' => $version->notes,
-            'operator' => $version->operator,
-            'production_date' => $version->production_date,
-            'status' => $version->status,
-        ]);
+        if ($version->batch_id !== $batch->id) {
+            return redirect()->route('versions.index', $batch)
+                ->withErrors(['版本冲突' => '目标版本不属于该批次，回滚操作已阻断。']);
+        }
+
+        if ($version->version_number === $batch->version) {
+            return redirect()->route('versions.index', $batch)
+                ->withErrors(['版本冲突' => '目标版本已是当前版本，无需回滚。']);
+        }
+
+        $expectedVersion = (int)(request()->input('expected_version', 0));
+        if ($expectedVersion > 0 && $expectedVersion !== $batch->version) {
+            return redirect()->route('versions.index', $batch)
+                ->withErrors(['版本冲突' => "批次 [{$batch->batch_code}] 在您查看期间已被修改（当前版本 v{$batch->version}），为避免数据覆盖，回滚操作已阻断。请刷新页面确认最新状态后再试。"]);
+        }
+
+        $newVersion = $batch->version + 1;
+        $updateSuccess = $batch->where('id', $batch->id)
+            ->where('version', $batch->version)
+            ->update([
+                'seed_type' => $version->seed_type,
+                'seed_weight' => $version->seed_weight,
+                'moisture_content' => $version->moisture_content,
+                'roasting_temperature' => $version->roasting_temperature,
+                'roasting_duration' => $version->roasting_duration,
+                'pressing_pressure' => $version->pressing_pressure,
+                'pressing_duration' => $version->pressing_duration,
+                'oil_output' => $version->oil_output,
+                'oil_yield_rate' => $version->oil_yield_rate,
+                'settling_time' => $version->settling_time,
+                'sediment_amount' => $version->sediment_amount,
+                'notes' => $version->notes,
+                'operator' => $version->operator,
+                'production_date' => $version->production_date,
+                'status' => $version->status ?? 'active',
+                'version' => $newVersion,
+                'updated_at' => now(),
+            ]);
+
+        if (!$updateSuccess) {
+            return redirect()->route('versions.index', $batch)
+                ->withErrors(['版本冲突' => '检测到并发修改，回滚操作已阻断。请刷新页面后重试。']);
+        }
+
+        $batch->refresh();
+        $batch->version = $newVersion;
 
         $anomalies = $this->batchService->checkAnomalies($batch);
         $this->batchService->saveAnomalies($batch, $anomalies);
