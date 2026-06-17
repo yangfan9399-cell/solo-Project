@@ -1,0 +1,19 @@
+<% content_for :title, "新建构件 - #{@project.name}" %>
+
+<div class="mb-6">
+  <nav class="text-sm text-stone-500 mb-4">
+    <%= link_to "项目台账", projects_path, class: "hover:text-amber-600" %>
+    <span class="mx-2">/</span>
+    <%= link_to @project.name, project_path(@project), class: "hover:text-amber-600" %>
+    <span class="mx-2">/</span>
+    <%= link_to "构件列表", project_components_path(@project), class: "hover:text-amber-600" %>
+    <span class="mx-2">/</span>
+    <span class="text-stone-700">新建构件</span>
+  </nav>
+  <h1 class="text-2xl font-bold text-stone-800">新建构件</h1>
+  <p class="text-stone-500 mt-1">在项目「<%= @project.name %>」中创建新的构件记录</p>
+</div>
+
+<div class="bg-stone-50 rounded-lg border border-stone-200 p-6">
+  <%= render "form", component: @component %>
+</div>

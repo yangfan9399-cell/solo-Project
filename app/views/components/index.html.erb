@@ -1,0 +1,145 @@
+<% content_for :title, "构件列表 - #{@project.name}" %>
+
+<div class="mb-6">
+  <nav class="text-sm text-stone-500 mb-4">
+    <%= link_to "项目台账", projects_path, class: "hover:text-amber-600" %>
+    <span class="mx-2">/</span>
+    <%= link_to @project.name, project_path(@project), class: "hover:text-amber-600" %>
+    <span class="mx-2">/</span>
+    <span class="text-stone-700">构件列表</span>
+  </nav>
+  <div class="flex justify-between items-start">
+    <div>
+      <h1 class="text-2xl font-bold text-stone-800">构件列表</h1>
+      <p class="text-stone-500 mt-1">项目「<%= @project.name %>」共 <%= @total_count %> 个构件</p>
+    </div>
+    <%= link_to new_project_component_path(@project), class: "inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors" do %>
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      新建构件
+    <% end %>
+  </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-stone-200 mb-6 p-4">
+  <%= form_with url: project_components_path(@project), method: :get, local: true, class: "grid grid-cols-1 md:grid-cols-5 gap-3" do |f| %>
+    <div>
+      <%= f.label :query, "搜索", class: "block text-xs font-medium text-stone-500 mb-1" %>
+      <%= f.text_field :query, value: params[:query], placeholder: "编号或备注", class: "w-full px-3 py-2 text-sm border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+    </div>
+    <div>
+      <%= f.label :type, "类型", class: "block text-xs font-medium text-stone-500 mb-1" %>
+      <%= f.select :type, Component::COMPONENT_TYPES.map { |t| [t, t] }, { include_blank: "全部类型", selected: params[:type] }, class: "w-full px-3 py-2 text-sm border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+    </div>
+    <div>
+      <%= f.label :status, "状态", class: "block text-xs font-medium text-stone-500 mb-1" %>
+      <%= f.select :status, Component::STATUSES.map { |s| [s, s] }, { include_blank: "全部状态", selected: params[:status] }, class: "w-full px-3 py-2 text-sm border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+    </div>
+    <div>
+      <%= f.label :orientation, "朝向", class: "block text-xs font-medium text-stone-500 mb-1" %>
+      <%= f.select :orientation, Component::ORIENTATIONS.map { |o| [o, o] }, { include_blank: "全部朝向", selected: params[:orientation] }, class: "w-full px-3 py-2 text-sm border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+    </div>
+    <div class="flex items-end space-x-2">
+      <%= f.submit "筛选", class: "px-4 py-2 text-sm bg-stone-700 text-white rounded-md hover:bg-stone-800 transition-colors cursor-pointer" %>
+      <%= link_to "重置", project_components_path(@project), class: "px-4 py-2 text-sm border border-stone-300 text-stone-600 rounded-md hover:bg-stone-50 transition-colors" %>
+      <%= link_to export_project_components_path(@project, query: params[:query], type: params[:type], status: params[:status], orientation: params[:orientation], batch: params[:batch]), class: "px-4 py-2 text-sm bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors" do %>
+        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        导出
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="bg-stone-50 border-b border-stone-200">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">编号</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">类型</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">状态</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">位置</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">朝向</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">批次</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">缺损数</th>
+          <th class="px-4 py-3 text-right text-xs font-medium text-stone-500 uppercase tracking-wider">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-stone-100">
+        <% @components.each do |component| %>
+          <tr class="hover:bg-stone-50 transition-colors">
+            <td class="px-4 py-3">
+              <%= link_to component.full_code, project_component_path(@project, component), class: "text-amber-600 hover:text-amber-800 font-medium" %>
+            </td>
+            <td class="px-4 py-3 text-stone-700">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-stone-100 text-stone-700">
+                <%= component.component_type %>
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <% status_color = case component.status
+                when "在原位" then "bg-blue-100 text-blue-700"
+                when "已拆卸" then "bg-stone-200 text-stone-700"
+                when "修复中" then "bg-amber-100 text-amber-700"
+                when "待复装" then "bg-yellow-100 text-yellow-700"
+                when "已复装" then "bg-green-100 text-green-700"
+                when "异常" then "bg-red-100 text-red-700"
+                else "bg-stone-100 text-stone-700"
+              end %>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= status_color %>">
+                <%= component.status %>
+              </span>
+            </td>
+            <td class="px-4 py-3 text-stone-600 text-sm"><%= component.position.presence || "-" %></td>
+            <td class="px-4 py-3 text-stone-600 text-sm"><%= component.orientation.presence || "-" %></td>
+            <td class="px-4 py-3 text-stone-600 text-sm"><%= component.batch_tag.presence || "-" %></td>
+            <td class="px-4 py-3">
+              <% if component.defect_count > 0 %>
+                <% defect_critical = component.defects.critical.exists? %>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= defect_critical ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700' %>">
+                  <%= component.defect_count %>
+                </span>
+              <% else %>
+                <span class="text-stone-400 text-sm">0</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-right text-sm">
+              <div class="flex justify-end space-x-2">
+                <%= link_to "查看", project_component_path(@project, component), class: "text-amber-600 hover:text-amber-800" %>
+                <%= link_to "编辑", edit_project_component_path(@project, component), class: "text-stone-500 hover:text-stone-700" %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @components.empty? %>
+    <div class="py-12 text-center text-stone-500">
+      <svg class="w-12 h-12 mx-auto text-stone-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+      </svg>
+      <p>暂无构件记录</p>
+    </div>
+  <% end %>
+
+  <% if @total_pages > 1 %>
+    <div class="px-4 py-3 bg-stone-50 border-t border-stone-200 flex items-center justify-between">
+      <div class="text-sm text-stone-500">
+        第 <%= @page %> 页，共 <%= @total_pages %> 页
+      </div>
+      <div class="flex space-x-1">
+        <% if @page > 1 %>
+          <%= link_to "上一页", project_components_path(@project, page: @page - 1, query: params[:query], type: params[:type], status: params[:status], orientation: params[:orientation], batch: params[:batch]), class: "px-3 py-1 text-sm border border-stone-300 rounded text-stone-600 hover:bg-stone-100" %>
+        <% end %>
+        <% if @page < @total_pages %>
+          <%= link_to "下一页", project_components_path(@project, page: @page + 1, query: params[:query], type: params[:type], status: params[:status], orientation: params[:orientation], batch: params[:batch]), class: "px-3 py-1 text-sm border border-stone-300 rounded text-stone-600 hover:bg-stone-100" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

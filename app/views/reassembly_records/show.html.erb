@@ -1,0 +1,126 @@
+<% content_for :title, "复装记录详情 - #{@component.full_code}" %>
+
+<div class="space-y-6">
+  <nav class="text-sm text-stone-500">
+    <ol class="flex items-center space-x-2">
+      <li><%= link_to "项目台账", projects_path, class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to @project.name, project_path(@project), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to @component.code, project_component_path(@project, @component), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to "复装记录", project_component_reassembly_records_path(@project, @component), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li class="text-stone-700 font-medium">详情</li>
+    </ol>
+  </nav>
+
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-stone-800">复装记录详情</h1>
+      <p class="text-stone-500 mt-1">构件 <%= @component.full_code %> 的复装核对记录</p>
+    </div>
+    <div class="flex space-x-3">
+      <%= link_to "返回列表", project_component_reassembly_records_path(@project, @component), class: "px-4 py-2 border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-50 transition-colors" %>
+      <%= link_to "编辑", edit_project_component_reassembly_record_path(@project, @component, @reassembly_record), class: "px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+          <h2 class="text-lg font-semibold text-stone-800">核对信息</h2>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">核对结果</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                <%= case @reassembly_record.result
+                    when '一致' then 'bg-green-100 text-green-800'
+                    when '位置偏差' then 'bg-yellow-100 text-yellow-800'
+                    when '需调整' then 'bg-orange-100 text-orange-800'
+                    when '异常' then 'bg-red-100 text-red-800'
+                    when '未核对' then 'bg-stone-100 text-stone-700'
+                    else 'bg-stone-100 text-stone-700'
+                    end %>">
+                <%= @reassembly_record.result %>
+              </span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">验证状态</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= @reassembly_record.verified? ? 'bg-blue-100 text-blue-800' : 'bg-stone-100 text-stone-600' %>">
+                <%= @reassembly_record.verified? ? '已验证' : '未验证' %>
+              </span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">核对人</span>
+              <span class="text-stone-800"><%= @reassembly_record.checked_by.presence || '-' %></span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">核对时间</span>
+              <span class="text-stone-800"><%= @reassembly_record.checked_at&.strftime('%Y年%m月%d日 %H:%M') %></span>
+            </div>
+            <div class="col-span-2">
+              <span class="text-sm text-stone-500 block mb-1">位置偏差</span>
+              <span class="text-stone-800"><%= @reassembly_record.position_deviation.presence || '-' %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% if @reassembly_record.notes.present? %>
+        <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+          <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+            <h2 class="text-lg font-semibold text-stone-800">备注</h2>
+          </div>
+          <div class="p-6">
+            <p class="text-stone-700 whitespace-pre-wrap"><%= @reassembly_record.notes %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+          <h2 class="text-lg font-semibold text-stone-800">关联构件</h2>
+        </div>
+        <div class="p-6 space-y-3">
+          <div>
+            <span class="text-sm text-stone-500 block mb-1">构件编号</span>
+            <span class="text-stone-800 font-medium"><%= @component.full_code %></span>
+          </div>
+          <div>
+            <span class="text-sm text-stone-500 block mb-1">构件类型</span>
+            <span class="text-stone-800"><%= @component.component_type %></span>
+          </div>
+          <div>
+            <span class="text-sm text-stone-500 block mb-1">所在位置</span>
+            <span class="text-stone-800"><%= @component.position.presence || '-' %></span>
+          </div>
+          <div>
+            <span class="text-sm text-stone-500 block mb-1">构件状态</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700">
+              <%= @component.status %>
+            </span>
+          </div>
+          <div class="pt-2">
+            <%= link_to "查看构件详情", project_component_path(@project, @component), class: "text-amber-600 hover:text-amber-700 text-sm font-medium" %>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+          <h2 class="text-lg font-semibold text-stone-800">操作</h2>
+        </div>
+        <div class="p-6 space-y-3">
+          <%= link_to "编辑记录", edit_project_component_reassembly_record_path(@project, @component, @reassembly_record), class: "block w-full text-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium" %>
+          <%= button_to "删除记录", project_component_reassembly_record_path(@project, @component, @reassembly_record), method: :delete, class: "w-full px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium", data: { confirm: "确定要删除这条复装记录吗？" } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

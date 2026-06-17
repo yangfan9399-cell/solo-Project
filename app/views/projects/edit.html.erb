@@ -1,0 +1,15 @@
+<% content_for :title, "编辑项目 - 古建筑榫卯构件编号平台" %>
+
+<div class="mb-6">
+  <%= link_to project_path(@project), class: "inline-flex items-center text-stone-600 hover:text-amber-600 transition-colors" do %>
+    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+    </svg>
+    返回项目详情
+  <% end %>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+  <h1 class="text-2xl font-bold text-stone-800 mb-6">编辑项目</h1>
+  <%= render "form" %>
+</div>

@@ -1,0 +1,37 @@
+<% content_for :title, "编辑复装记录 - #{@component.full_code}" %>
+
+<div class="space-y-6">
+  <nav class="text-sm text-stone-500">
+    <ol class="flex items-center space-x-2">
+      <li><%= link_to "项目台账", projects_path, class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to @project.name, project_path(@project), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to @component.code, project_component_path(@project, @component), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to "复装记录", project_component_reassembly_records_path(@project, @component), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li class="text-stone-700 font-medium">编辑</li>
+    </ol>
+  </nav>
+
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-stone-800">编辑复装记录</h1>
+      <p class="text-stone-500 mt-1">修改构件 <%= @component.full_code %> 的复装核对记录</p>
+    </div>
+    <div class="flex space-x-3">
+      <%= link_to "查看详情", project_component_reassembly_record_path(@project, @component, @reassembly_record), class: "px-4 py-2 border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-50 transition-colors" %>
+      <%= link_to "返回列表", project_component_reassembly_records_path(@project, @component), class: "px-4 py-2 border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-50 transition-colors" %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+      <h2 class="text-lg font-semibold text-stone-800">复装核对信息</h2>
+    </div>
+    <div class="p-6">
+      <%= render "form", reassembly_record: @reassembly_record %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,146 @@
+<% content_for :title, "缺损详情 - #{@component.full_code}" %>
+
+<div class="space-y-6">
+  <nav class="text-sm text-stone-500">
+    <ol class="flex items-center space-x-2">
+      <li><%= link_to "项目台账", projects_path, class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to @project.name, project_path(@project), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to @component.code, project_component_path(@project, @component), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to "缺损记录", project_component_defects_path(@project, @component), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li class="text-stone-700 font-medium">详情</li>
+    </ol>
+  </nav>
+
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-stone-800">缺损详情</h1>
+      <p class="text-stone-500 mt-1">构件 <%= @component.full_code %> 的缺损记录</p>
+    </div>
+    <div class="flex space-x-3">
+      <%= link_to "返回列表", project_component_defects_path(@project, @component), class: "px-4 py-2 border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-50 transition-colors" %>
+      <%= link_to "编辑", edit_project_component_defect_path(@project, @component, @defect), class: "px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+          <h2 class="text-lg font-semibold text-stone-800">基本信息</h2>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">缺损类型</span>
+              <span class="text-stone-800 font-medium"><%= @defect.defect_type %></span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">严重程度</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                <%= case @defect.severity
+                    when '轻微' then 'bg-stone-100 text-stone-700'
+                    when '中等' then 'bg-blue-100 text-blue-700'
+                    when '严重' then 'bg-orange-100 text-orange-700'
+                    when '致命' then 'bg-red-100 text-red-700'
+                    else 'bg-stone-100 text-stone-700'
+                    end %>">
+                <%= @defect.severity %>
+              </span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">修复状态</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= @defect.repaired? ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' %>">
+                <%= @defect.repaired? ? '已修复' : '待修复' %>
+              </span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">发现日期</span>
+              <span class="text-stone-800"><%= @defect.discovered_at&.strftime('%Y年%m月%d日') %></span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">构件位置</span>
+              <span class="text-stone-800"><%= @defect.location_on_component.presence || '-' %></span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">测量尺寸</span>
+              <span class="text-stone-800"><%= @defect.measured_size.presence || '-' %></span>
+            </div>
+            <% if @defect.repaired? %>
+              <div>
+                <span class="text-sm text-stone-500 block mb-1">修复日期</span>
+                <span class="text-stone-800"><%= @defect.repaired_at&.strftime('%Y年%m月%d日') %></span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+          <h2 class="text-lg font-semibold text-stone-800">缺损描述</h2>
+        </div>
+        <div class="p-6">
+          <p class="text-stone-700 whitespace-pre-wrap"><%= @defect.description.presence || '暂无描述' %></p>
+        </div>
+      </div>
+
+      <% if @defect.repair_notes.present? %>
+        <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+          <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+            <h2 class="text-lg font-semibold text-stone-800">修复说明</h2>
+          </div>
+          <div class="p-6">
+            <p class="text-stone-700 whitespace-pre-wrap"><%= @defect.repair_notes %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+          <h2 class="text-lg font-semibold text-stone-800">关联构件</h2>
+        </div>
+        <div class="p-6">
+          <div class="space-y-3">
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">构件编号</span>
+              <span class="text-stone-800 font-medium"><%= @component.full_code %></span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">构件类型</span>
+              <span class="text-stone-800"><%= @component.component_type %></span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">所在位置</span>
+              <span class="text-stone-800"><%= @component.position.presence || '-' %></span>
+            </div>
+            <div>
+              <span class="text-sm text-stone-500 block mb-1">构件状态</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700">
+                <%= @component.status %>
+              </span>
+            </div>
+            <div class="pt-2">
+              <%= link_to "查看构件详情", project_component_path(@project, @component), class: "text-amber-600 hover:text-amber-700 text-sm font-medium" %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+          <h2 class="text-lg font-semibold text-stone-800">操作</h2>
+        </div>
+        <div class="p-6 space-y-3">
+          <%= link_to "编辑缺损记录", edit_project_component_defect_path(@project, @component, @defect), class: "block w-full text-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium" %>
+          <%= button_to "删除缺损记录", project_component_defect_path(@project, @component, @defect), method: :delete, class: "w-full px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium", data: { confirm: "确定要删除这条缺损记录吗？" } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

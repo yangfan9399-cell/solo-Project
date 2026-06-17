@@ -1,0 +1,118 @@
+<% content_for :title, "复装记录 - #{@component.full_code}" %>
+
+<div class="space-y-6">
+  <nav class="text-sm text-stone-500">
+    <ol class="flex items-center space-x-2">
+      <li><%= link_to "项目台账", projects_path, class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to @project.name, project_path(@project), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li><%= link_to @component.code, project_component_path(@project, @component), class: "hover:text-amber-600" %></li>
+      <li class="text-stone-300">/</li>
+      <li class="text-stone-700 font-medium">复装记录</li>
+    </ol>
+  </nav>
+
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-stone-800">复装记录</h1>
+      <p class="text-stone-500 mt-1">构件 <%= @component.full_code %> 的复装核对记录</p>
+    </div>
+    <div class="flex space-x-3">
+      <%= link_to "返回构件", project_component_path(@project, @component), class: "px-4 py-2 border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-50 transition-colors" %>
+      <%= link_to "新建复装记录", new_project_component_reassembly_record_path(@project, @component), class: "px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium" %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-stone-800">全部记录</h2>
+        <span class="text-sm text-stone-500">共 <%= @total_count %> 条记录</span>
+      </div>
+    </div>
+
+    <% if @reassembly_records.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-stone-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">核对结果</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">核对人</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">核对时间</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">位置偏差</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">状态</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-stone-500 uppercase tracking-wider">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            <% @reassembly_records.each do |record| %>
+              <tr class="hover:bg-stone-50/50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    <%= case record.result
+                        when '一致' then 'bg-green-100 text-green-800'
+                        when '位置偏差' then 'bg-yellow-100 text-yellow-800'
+                        when '需调整' then 'bg-orange-100 text-orange-800'
+                        when '异常' then 'bg-red-100 text-red-800'
+                        when '未核对' then 'bg-stone-100 text-stone-700'
+                        else 'bg-stone-100 text-stone-700'
+                        end %>">
+                    <%= record.result %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-700">
+                  <%= record.checked_by.presence || '-' %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
+                  <%= record.checked_at&.strftime('%Y-%m-%d %H:%M') %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-600">
+                  <%= record.position_deviation.presence || '-' %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= record.verified? ? 'bg-blue-100 text-blue-800' : 'bg-stone-100 text-stone-600' %>">
+                    <%= record.verified? ? '已验证' : '未验证' %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                  <%= link_to "查看", project_component_reassembly_record_path(@project, @component, record), class: "text-amber-600 hover:text-amber-700 font-medium" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if @total_pages > 1 %>
+        <div class="px-6 py-4 border-t border-stone-100 bg-stone-50/30">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-stone-500">
+              显示 <%= (@page - 1) * @per_page + 1 %> - <%= [(@page - 1) * @per_page + @per_page, @total_count].min %> 条，共 <%= @total_count %> 条
+            </span>
+            <div class="flex space-x-1">
+              <% if @page == 1 %>
+                <span class="px-3 py-1 text-sm text-stone-300">上一页</span>
+              <% else %>
+                <%= link_to "上一页", project_component_reassembly_records_path(@project, @component, page: @page - 1), class: "px-3 py-1 text-sm text-amber-600 hover:bg-amber-50 rounded" %>
+              <% end %>
+              <% if @page == @total_pages %>
+                <span class="px-3 py-1 text-sm text-stone-300">下一页</span>
+              <% else %>
+                <%= link_to "下一页", project_component_reassembly_records_path(@project, @component, page: @page + 1), class: "px-3 py-1 text-sm text-amber-600 hover:bg-amber-50 rounded" %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="p-12 text-center">
+        <svg class="w-16 h-16 text-stone-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+        </svg>
+        <p class="text-stone-500 mb-4">暂无复装记录</p>
+        <%= link_to "添加第一条复装记录", new_project_component_reassembly_record_path(@project, @component), class: "text-amber-600 hover:text-amber-700 font-medium" %>
+      </div>
+    <% end %>
+  </div>
+</div>
