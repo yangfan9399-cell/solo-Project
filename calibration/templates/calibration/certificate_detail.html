@@ -1,0 +1,66 @@
+{% extends "calibration/base.html" %}
+{% block nav_certificates %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:certificate_list' %}">校准证书</a></li>
+        <li class="breadcrumb-item active">{{ certificate.certificate_number }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h4><i class="bi bi-award"></i> {{ certificate.certificate_number }}</h4>
+    <p class="text-muted mb-0">{{ certificate.issued_by }} · {{ certificate.issued_date }}</p>
+</div>
+
+{% if certificate.is_expired %}
+<div class="alert anomaly-alert mb-4">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>证书已过期</strong>：该证书已于 <strong>{{ certificate.expiry_date }}</strong> 过期，请尽快安排重新校准并更新证书。
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-info-circle"></i> 证书信息</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:120px">证书编号</td><td><code>{{ certificate.certificate_number }}</code></td></tr>
+                    <tr><td class="text-muted">关联仪器</td><td><a href="{% url 'calibration:instrument_detail' certificate.record.instrument.pk %}"><code>{{ certificate.record.instrument.serial_number }}</code></a></td></tr>
+                    <tr><td class="text-muted">关联记录</td><td><a href="{% url 'calibration:calibration_detail' certificate.record.pk %}">{{ certificate.record }}</a></td></tr>
+                    <tr><td class="text-muted">签发日期</td><td>{{ certificate.issued_date }}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:120px">有效期至</td><td>{{ certificate.expiry_date }}</td></tr>
+                    <tr><td class="text-muted">签发机构</td><td>{{ certificate.issued_by }}</td></tr>
+                    <tr>
+                        <td class="text-muted">是否有效</td>
+                        <td>
+                            {% if certificate.is_valid %}
+                            <span class="badge badge-pass">有效</span>
+                            {% else %}
+                            <span class="badge bg-secondary">已失效</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">过期状态</td>
+                        <td>
+                            {% if certificate.is_expired %}
+                            <span class="badge badge-fail">已过期</span>
+                            {% else %}
+                            <span class="badge badge-pass">未过期</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr><td class="text-muted">备注</td><td>{{ certificate.notes|default:"无" }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

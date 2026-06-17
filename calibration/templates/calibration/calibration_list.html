@@ -1,0 +1,109 @@
+{% extends "calibration/base.html" %}
+{% block nav_calibrations %}active{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="bi bi-clipboard-check"></i> 校准记录</h4>
+        <p class="text-muted mb-0">全部校准记录查询与管理</p>
+    </div>
+    <a href="{% url 'calibration:calibration_create' %}" class="btn btn-alpine">
+        <i class="bi bi-plus-lg"></i> 新增记录
+    </a>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label">搜索</label>
+            {{ filter_form.q }}
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">仪器类型</label>
+            {{ filter_form.instrument_type }}
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">校准结果</label>
+            {{ filter_form.result }}
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">异常</label>
+            {{ filter_form.is_anomaly }}
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">批次号</label>
+            {{ filter_form.batch }}
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">开始日期</label>
+            {{ filter_form.date_from }}
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">结束日期</label>
+            {{ filter_form.date_to }}
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-alpine btn-sm w-100">
+                <i class="bi bi-search"></i> 筛选
+            </button>
+        </div>
+    </form>
+    <div class="mt-2 d-flex gap-2">
+        <a href="?{% for key, val in request.GET.items %}{% if key != 'export' %}{{ key }}={{ val }}&{% endif %}{% endfor %}export=csv" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-file-earmark-spreadsheet"></i> 导出 CSV
+        </a>
+        <a href="?{% for key, val in request.GET.items %}{% if key != 'export' %}{{ key }}={{ val }}&{% endif %}{% endfor %}export=json" class="btn btn-sm btn-outline-info">
+            <i class="bi bi-file-earmark-code"></i> 导出 JSON
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>仪器序列号</th>
+                    <th>类型</th>
+                    <th>站点</th>
+                    <th>测试点</th>
+                    <th>校准前→后</th>
+                    <th>偏差(后)</th>
+                    <th>结果</th>
+                    <th>异常</th>
+                    <th>批次</th>
+                    <th>日期</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for rec in records %}
+                <tr class="{% if rec.is_anomaly %}table-danger{% endif %}">
+                    <td>
+                        <a href="{% url 'calibration:instrument_detail' rec.instrument.pk %}"><code>{{ rec.instrument.serial_number }}</code></a>
+                    </td>
+                    <td>{{ rec.instrument.get_instrument_type_display }}</td>
+                    <td>{{ rec.instrument.station.name }}</td>
+                    <td>{{ rec.test_point }}</td>
+                    <td>{{ rec.before_value }} → {{ rec.after_value }}</td>
+                    <td>{{ rec.deviation_after|default:"-" }}</td>
+                    <td><span class="badge badge-{{ rec.result }}">{{ rec.get_result_display }}</span></td>
+                    <td>
+                        {% if rec.is_anomaly %}
+                        <span class="badge badge-anomaly">异常</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td><a href="{% url 'calibration:batch_detail' rec.batch.pk %}">{{ rec.batch.batch_number }}</a></td>
+                    <td>{{ rec.batch.calibration_date }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center text-muted py-4">暂无匹配的校准记录</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

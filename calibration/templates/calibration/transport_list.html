@@ -1,0 +1,70 @@
+{% extends "calibration/base.html" %}
+{% block nav_transports %}active{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="bi bi-truck"></i> 运输记录</h4>
+        <p class="text-muted mb-0">仪器运输与影响评估</p>
+    </div>
+    <a href="{% url 'calibration:transport_create' %}" class="btn btn-alpine">
+        <i class="bi bi-plus-lg"></i> 新增运输记录
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>仪器</th>
+                    <th>出发站</th>
+                    <th>目的站</th>
+                    <th>运输日期</th>
+                    <th>运输方式</th>
+                    <th>影响评分</th>
+                    <th>读数偏差</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for transport in transports %}
+                <tr class="{% if transport.impact_score and transport.impact_score >= 5 %}table-danger{% endif %}">
+                    <td>
+                        <a href="{% url 'calibration:instrument_detail' transport.instrument.pk %}">
+                            <code>{{ transport.instrument.serial_number }}</code>
+                        </a>
+                    </td>
+                    <td>{{ transport.from_station.name }}</td>
+                    <td>{{ transport.to_station.name }}</td>
+                    <td>{{ transport.transport_date }}</td>
+                    <td>{{ transport.method|default:"-" }}</td>
+                    <td>
+                        {% if transport.impact_score is not None %}
+                            {% if transport.impact_score >= 5 %}
+                            <span class="text-danger fw-bold">{{ transport.impact_score }}</span>
+                            <span class="badge badge-anomaly">高影响</span>
+                            {% else %}
+                            {{ transport.impact_score }}
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ transport.reading_deviation|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'calibration:transport_detail' transport.pk %}" class="btn btn-sm btn-outline-primary" title="详情">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">暂无运输记录</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

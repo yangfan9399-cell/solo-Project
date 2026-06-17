@@ -1,0 +1,161 @@
+{% extends "calibration/base.html" %}
+{% block nav_stations %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:station_list' %}">气象站</a></li>
+        <li class="breadcrumb-item active">{{ station.name }}</li>
+    </ol>
+</nav>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="bi bi-building"></i> {{ station.name }}</h4>
+        <p class="text-muted mb-0">{{ station.code }} · {{ station.get_region_display }}</p>
+    </div>
+    <a href="{% url 'calibration:station_edit' station.pk %}" class="btn btn-alpine">
+        <i class="bi bi-pencil"></i> 编辑站点
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-info-circle"></i> 站点信息</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:120px">站名</td><td>{{ station.name }}</td></tr>
+                    <tr><td class="text-muted">站点编号</td><td><code>{{ station.code }}</code></td></tr>
+                    <tr><td class="text-muted">海拔</td><td>{{ station.altitude }} m</td></tr>
+                    <tr><td class="text-muted">经纬度</td><td>{{ station.latitude }}°N, {{ station.longitude }}°E</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:120px">所属区域</td><td>{{ station.get_region_display }}</td></tr>
+                    <tr>
+                        <td class="text-muted">运行状态</td>
+                        <td>
+                            {% if station.status == 'active' %}
+                            <span class="badge badge-pass">运行中</span>
+                            {% elif station.status == 'maintenance' %}
+                            <span class="badge badge-conditional">维护中</span>
+                            {% elif station.status == 'offline' %}
+                            <span class="badge badge-fail">离线</span>
+                            {% else %}
+                            <span class="badge bg-secondary">已退役</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr><td class="text-muted">建站日期</td><td>{{ station.established_date|default:"未记录" }}</td></tr>
+                    <tr><td class="text-muted">备注</td><td>{{ station.notes|default:"无" }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-thermometer-half"></i> 关联仪器</span>
+            <span class="badge bg-secondary">{{ instruments|length }} 台</span>
+        </div>
+        <div class="card-body">
+            {% if instruments %}
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>序列号</th>
+                        <th>类型</th>
+                        <th>型号</th>
+                        <th>状态</th>
+                        <th>下次校准</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for inst in instruments %}
+                    <tr>
+                        <td><code>{{ inst.serial_number }}</code></td>
+                        <td>{{ inst.get_instrument_type_display }}</td>
+                        <td>{{ inst.model_name }}</td>
+                        <td>
+                            {% if inst.status == 'normal' %}
+                            <span class="badge badge-pass">正常</span>
+                            {% elif inst.status == 'needs_calibration' %}
+                            <span class="badge badge-conditional">待校准</span>
+                            {% elif inst.status == 'calibrating' %}
+                            <span class="badge bg-info">校准中</span>
+                            {% elif inst.status == 'faulty' %}
+                            <span class="badge badge-fail">故障</span>
+                            {% else %}
+                            <span class="badge bg-secondary">退役</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ inst.next_calibration_due|default:"未设定" }}
+                            {% if inst.is_overdue %}
+                            <span class="badge badge-fail">超期</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'calibration:instrument_detail' inst.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted mb-0">暂无关联仪器</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-exclamation-triangle"></i> 异常记录</span>
+            <span class="badge bg-danger">{{ anomaly_records|length }} 条</span>
+        </div>
+        <div class="card-body">
+            {% if anomaly_records %}
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>仪器</th>
+                        <th>测试点</th>
+                        <th>校准前</th>
+                        <th>校准后</th>
+                        <th>标准值</th>
+                        <th>偏差(后)</th>
+                        <th>结果</th>
+                        <th>异常说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for rec in anomaly_records %}
+                    <tr class="anomaly-alert">
+                        <td><a href="{% url 'calibration:instrument_detail' rec.instrument.pk %}">{{ rec.instrument.serial_number }}</a></td>
+                        <td>{{ rec.test_point }}</td>
+                        <td>{{ rec.before_value }}</td>
+                        <td>{{ rec.after_value }}</td>
+                        <td>{{ rec.standard_value|default:"-" }}</td>
+                        <td>{{ rec.deviation_after|default:"-" }}</td>
+                        <td><span class="badge badge-{{ rec.result }}">{{ rec.get_result_display }}</span></td>
+                        <td>{{ rec.anomaly_note|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted mb-0">暂无异常记录</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

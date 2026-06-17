@@ -1,0 +1,120 @@
+{% extends "calibration/base.html" %}
+{% block nav_map %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="bi bi-geo-alt"></i> 站点地图</h4>
+    <p class="text-muted mb-0">全部气象站地理分布总览</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body p-0">
+        <div id="station-map-container"></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-building"></i> 站点列表</span>
+        <span class="badge bg-secondary">{{ stations|length }} 个站点</span>
+    </div>
+    <div class="card-body">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>站名</th>
+                    <th>编号</th>
+                    <th>海拔(m)</th>
+                    <th>区域</th>
+                    <th>状态</th>
+                    <th>仪器数</th>
+                    <th>异常数</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for station in stations %}
+                <tr>
+                    <td><a href="{% url 'calibration:station_detail' station.pk %}">{{ station.name }}</a></td>
+                    <td>{{ station.code }}</td>
+                    <td>{{ station.altitude }}</td>
+                    <td>{{ station.get_region_display }}</td>
+                    <td>
+                        {% if station.status == 'active' %}
+                        <span class="badge badge-pass">运行中</span>
+                        {% elif station.status == 'maintenance' %}
+                        <span class="badge badge-conditional">维护中</span>
+                        {% elif station.status == 'offline' %}
+                        <span class="badge badge-fail">离线</span>
+                        {% else %}
+                        <span class="badge bg-secondary">已退役</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ station.instruments.count }}</td>
+                    <td>
+                        {% if station.anomaly_count > 0 %}
+                        <span class="badge badge-anomaly">{{ station.anomaly_count }}</span>
+                        {% else %}
+                        <span class="text-muted">0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'calibration:station_detail' station.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'calibration:station_edit' station.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">暂无站点数据</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var stationsData = {{ stations_data|safe }};
+    var map = L.map('station-map-container').setView([33, 96], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    var markers = [];
+    stationsData.forEach(function(s) {
+        var color = s.anomaly_count > 0 ? '#c0392b' : '#27ae60';
+        var marker = L.circleMarker([s.lat, s.lng], {
+            radius: 10,
+            fillColor: color,
+            color: '#fff',
+            weight: 2,
+            fillOpacity: 0.85
+        }).addTo(map);
+
+        var popupContent =
+            '<div style="min-width:180px">' +
+            '<h6 style="margin:0 0 6px">' + s.name + '</h6>' +
+            '<table class="table table-sm mb-0" style="font-size:0.82rem">' +
+            '<tr><td class="text-muted">编号</td><td>' + s.code + '</td></tr>' +
+            '<tr><td class="text-muted">海拔</td><td>' + s.altitude + ' m</td></tr>' +
+            '<tr><td class="text-muted">区域</td><td>' + s.region + '</td></tr>' +
+            '<tr><td class="text-muted">仪器</td><td>' + s.instrument_count + ' 台</td></tr>' +
+            '<tr><td class="text-muted">异常</td><td style="color:' + (s.anomaly_count > 0 ? '#c0392b' : '#27ae60') + '">' + s.anomaly_count + '</td></tr>' +
+            '</table>' +
+            '</div>';
+        marker.bindPopup(popupContent);
+        markers.push(marker);
+    });
+
+    if (markers.length > 0) {
+        var group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+</script>
+{% endblock %}

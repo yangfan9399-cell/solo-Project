@@ -1,0 +1,100 @@
+{% extends "calibration/base.html" %}
+{% block nav_batches %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:batch_list' %}">校准批次</a></li>
+        {% if form.instance.pk %}
+        <li class="breadcrumb-item"><a href="{% url 'calibration:batch_detail' form.instance.pk %}">{{ form.instance.batch_number }}</a></li>
+        <li class="breadcrumb-item active">编辑</li>
+        {% else %}
+        <li class="breadcrumb-item active">新增批次</li>
+        {% endif %}
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h4>
+        <i class="bi bi-layers"></i>
+        {% if form.instance.pk %}编辑批次{% else %}新增批次{% endif %}
+    </h4>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_batch_number" class="form-label">批次号 <span class="text-danger">*</span></label>
+                    <input type="text" name="batch_number" id="id_batch_number" class="form-control {% if form.batch_number.errors %}is-invalid{% endif %}" value="{{ form.batch_number.value|default:'' }}" required>
+                    {% for error in form.batch_number.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_calibration_date" class="form-label">校准日期 <span class="text-danger">*</span></label>
+                    <input type="date" name="calibration_date" id="id_calibration_date" class="form-control {% if form.calibration_date.errors %}is-invalid{% endif %}" value="{{ form.calibration_date.value|default:'' }}" required>
+                    {% for error in form.calibration_date.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_operator" class="form-label">操作员 <span class="text-danger">*</span></label>
+                    <input type="text" name="operator" id="id_operator" class="form-control {% if form.operator.errors %}is-invalid{% endif %}" value="{{ form.operator.value|default:'' }}" required>
+                    {% for error in form.operator.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_lab_location" class="form-label">实验室地点</label>
+                    <input type="text" name="lab_location" id="id_lab_location" class="form-control {% if form.lab_location.errors %}is-invalid{% endif %}" value="{{ form.lab_location.value|default:'' }}">
+                    {% for error in form.lab_location.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_temperature_env" class="form-label">环境温度(°C)</label>
+                    <input type="number" step="any" name="temperature_env" id="id_temperature_env" class="form-control {% if form.temperature_env.errors %}is-invalid{% endif %}" value="{{ form.temperature_env.value|default:'' }}">
+                    {% for error in form.temperature_env.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_humidity_env" class="form-label">环境湿度(%RH)</label>
+                    <input type="number" step="any" name="humidity_env" id="id_humidity_env" class="form-control {% if form.humidity_env.errors %}is-invalid{% endif %}" value="{{ form.humidity_env.value|default:'' }}">
+                    {% for error in form.humidity_env.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <label for="id_notes" class="form-label">备注</label>
+                    <textarea name="notes" id="id_notes" rows="3" class="form-control {% if form.notes.errors %}is-invalid{% endif %}">{{ form.notes.value|default:'' }}</textarea>
+                    {% for error in form.notes.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'calibration:batch_list' %}" class="btn btn-outline-secondary">取消</a>
+                <button type="submit" class="btn btn-alpine">
+                    <i class="bi bi-check-lg"></i>
+                    {% if form.instance.pk %}保存修改{% else %}创建批次{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

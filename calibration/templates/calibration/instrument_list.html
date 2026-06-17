@@ -1,0 +1,148 @@
+{% extends "calibration/base.html" %}
+{% block nav_instruments %}active{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="bi bi-thermometer-half"></i> 仪器台账</h4>
+        <p class="text-muted mb-0">全部仪器信息管理</p>
+    </div>
+    <a href="{% url 'calibration:instrument_create' %}" class="btn btn-alpine">
+        <i class="bi bi-plus-lg"></i> 新增仪器
+    </a>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label">仪器类型</label>
+            <select name="instrument_type" class="form-select form-select-sm">
+                <option value="">全部类型</option>
+                {% for value, label in type_choices %}
+                <option value="{{ value }}" {% if request.GET.instrument_type == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">状态</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">全部状态</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">所属站点</label>
+            <select name="station" class="form-select form-select-sm">
+                <option value="">全部站点</option>
+                {% for st in stations %}
+                <option value="{{ st.pk }}" {% if request.GET.station == st.pk|stringformat:'s' %}selected{% endif %}>{{ st.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">搜索</label>
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="序列号或型号..." value="{{ request.GET.q|default:'' }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-alpine btn-sm w-100">
+                <i class="bi bi-search"></i> 筛选
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>序列号</th>
+                    <th>类型</th>
+                    <th>型号</th>
+                    <th>所属站点</th>
+                    <th>状态</th>
+                    <th>下次校准到期</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for inst in instruments %}
+                <tr>
+                    <td><code>{{ inst.serial_number }}</code></td>
+                    <td>{{ inst.get_instrument_type_display }}</td>
+                    <td>{{ inst.model_name }}</td>
+                    <td><a href="{% url 'calibration:station_detail' inst.station.pk %}">{{ inst.station.name }}</a></td>
+                    <td>
+                        {% if inst.status == 'normal' %}
+                        <span class="badge badge-pass">正常</span>
+                        {% elif inst.status == 'needs_calibration' %}
+                        <span class="badge badge-conditional">待校准</span>
+                        {% elif inst.status == 'calibrating' %}
+                        <span class="badge bg-info text-dark">校准中</span>
+                        {% elif inst.status == 'faulty' %}
+                        <span class="badge badge-fail">故障</span>
+                        {% else %}
+                        <span class="badge bg-secondary">退役</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ inst.next_calibration_due|default:"未设定" }}
+                        {% if inst.is_overdue %}
+                        <span class="badge badge-fail">超期</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'calibration:instrument_detail' inst.pk %}" class="btn btn-sm btn-outline-primary" title="详情">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'calibration:instrument_edit' inst.pk %}" class="btn btn-sm btn-outline-secondary" title="编辑">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">暂无匹配的仪器</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <span class="text-muted small">第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页，共 {{ page_obj.paginator.count }} 条</span>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.instrument_type %}&instrument_type={{ request.GET.instrument_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.station %}&station={{ request.GET.station }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="bi bi-chevron-double-left"></i></a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.instrument_type %}&instrument_type={{ request.GET.instrument_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.station %}&station={{ request.GET.station }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+                </li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.instrument_type %}&instrument_type={{ request.GET.instrument_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.station %}&station={{ request.GET.station }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.instrument_type %}&instrument_type={{ request.GET.instrument_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.station %}&station={{ request.GET.station }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.instrument_type %}&instrument_type={{ request.GET.instrument_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.station %}&station={{ request.GET.station }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="bi bi-chevron-double-right"></i></a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

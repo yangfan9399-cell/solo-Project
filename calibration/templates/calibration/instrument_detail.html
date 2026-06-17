@@ -1,0 +1,204 @@
+{% extends "calibration/base.html" %}
+{% block nav_instruments %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:instrument_list' %}">仪器</a></li>
+        <li class="breadcrumb-item active">{{ instrument.serial_number }}</li>
+    </ol>
+</nav>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="bi bi-thermometer-half"></i> {{ instrument.get_instrument_type_display }}</h4>
+        <p class="text-muted mb-0">{{ instrument.model_name }} · <code>{{ instrument.serial_number }}</code></p>
+    </div>
+    <a href="{% url 'calibration:instrument_edit' instrument.pk %}" class="btn btn-alpine">
+        <i class="bi bi-pencil"></i> 编辑仪器
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-info-circle"></i> 仪器信息</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:120px">序列号</td><td><code>{{ instrument.serial_number }}</code></td></tr>
+                    <tr><td class="text-muted">仪器类型</td><td>{{ instrument.get_instrument_type_display }}</td></tr>
+                    <tr><td class="text-muted">型号</td><td>{{ instrument.model_name }}</td></tr>
+                    <tr><td class="text-muted">制造商</td><td>{{ instrument.manufacturer|default:"未记录" }}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:120px">所属站点</td><td><a href="{% url 'calibration:station_detail' instrument.station.pk %}">{{ instrument.station.name }}</a></td></tr>
+                    <tr>
+                        <td class="text-muted">状态</td>
+                        <td>
+                            {% if instrument.status == 'normal' %}
+                            <span class="badge badge-pass">正常</span>
+                            {% elif instrument.status == 'needs_calibration' %}
+                            <span class="badge badge-conditional">待校准</span>
+                            {% elif instrument.status == 'calibrating' %}
+                            <span class="badge bg-info text-dark">校准中</span>
+                            {% elif instrument.status == 'faulty' %}
+                            <span class="badge badge-fail">故障</span>
+                            {% else %}
+                            <span class="badge bg-secondary">退役</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr><td class="text-muted">安装日期</td><td>{{ instrument.install_date|default:"未记录" }}</td></tr>
+                    <tr><td class="text-muted">上次校准</td><td>{{ instrument.last_calibration_date|default:"未记录" }}</td></tr>
+                    <tr>
+                        <td class="text-muted">下次校准到期</td>
+                        <td>
+                            {{ instrument.next_calibration_due|default:"未设定" }}
+                            {% if instrument.is_overdue %}
+                            <span class="badge badge-fail">超期</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clipboard-check"></i> 校准记录</span>
+            <span class="badge bg-secondary">{{ calibration_records|length }} 条</span>
+        </div>
+        <div class="card-body">
+            {% if calibration_records %}
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>测试点</th>
+                        <th>校准前</th>
+                        <th>校准后</th>
+                        <th>偏差(后)</th>
+                        <th>结果</th>
+                        <th>批次</th>
+                        <th>日期</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for rec in calibration_records %}
+                    <tr class="{% if rec.is_anomaly %}table-danger{% endif %}">
+                        <td>{{ rec.test_point }}</td>
+                        <td>{{ rec.before_value }}</td>
+                        <td>{{ rec.after_value }}</td>
+                        <td>{{ rec.deviation_after|default:"-" }}</td>
+                        <td>
+                            <span class="badge badge-{{ rec.result }}">{{ rec.get_result_display }}</span>
+                            {% if rec.is_anomaly %}
+                            <span class="badge badge-anomaly">异常</span>
+                            {% endif %}
+                        </td>
+                        <td><a href="{% url 'calibration:batch_detail' rec.batch.pk %}">{{ rec.batch.batch_number }}</a></td>
+                        <td>{{ rec.batch.calibration_date }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted mb-0">暂无校准记录</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-truck"></i> 运输记录</span>
+            <span class="badge bg-secondary">{{ transport_records|length }} 条</span>
+        </div>
+        <div class="card-body">
+            {% if transport_records %}
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>出发站</th>
+                        <th>目的站</th>
+                        <th>运输日期</th>
+                        <th>到达日期</th>
+                        <th>运输方式</th>
+                        <th>影响评分</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for tr in transport_records %}
+                    <tr class="{% if tr.impact_score and tr.impact_score >= 5 %}table-danger{% endif %}">
+                        <td>{{ tr.from_station.name }}</td>
+                        <td>{{ tr.to_station.name }}</td>
+                        <td>{{ tr.transport_date }}</td>
+                        <td>{{ tr.arrival_date|default:"-" }}</td>
+                        <td>{{ tr.method|default:"-" }}</td>
+                        <td>
+                            {{ tr.impact_score|default:"-" }}
+                            {% if tr.impact_score and tr.impact_score >= 5 %}
+                            <span class="badge badge-anomaly">高影响</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted mb-0">暂无运输记录</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-award"></i> 校准证书</span>
+            <span class="badge bg-secondary">{{ certificates|length }} 份</span>
+        </div>
+        <div class="card-body">
+            {% if certificates %}
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>证书编号</th>
+                        <th>签发日期</th>
+                        <th>有效期至</th>
+                        <th>签发机构</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for cert in certificates %}
+                    <tr>
+                        <td><code>{{ cert.certificate_number }}</code></td>
+                        <td>{{ cert.issued_date }}</td>
+                        <td>{{ cert.expiry_date }}</td>
+                        <td>{{ cert.issued_by }}</td>
+                        <td>
+                            {% if not cert.is_valid %}
+                            <span class="badge bg-secondary">已失效</span>
+                            {% elif cert.is_expired %}
+                            <span class="badge badge-fail">已过期</span>
+                            {% else %}
+                            <span class="badge badge-pass">有效</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted mb-0">暂无校准证书</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "calibration/base.html" %}
+{% block nav_transports %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:transport_list' %}">运输记录</a></li>
+        <li class="breadcrumb-item active">{{ transport.instrument.serial_number }} {{ transport.from_station.name }}→{{ transport.to_station.name }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h4><i class="bi bi-truck"></i> 运输记录详情</h4>
+    <p class="text-muted mb-0">{{ transport.instrument }} · {{ transport.transport_date }}</p>
+</div>
+
+{% if transport.impact_score and transport.impact_score >= 5 %}
+<div class="alert anomaly-alert mb-4">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>高影响警告</strong>：该运输影响评分为 <strong>{{ transport.impact_score }}</strong>，可能对仪器精度产生显著影响，请重点关注读数偏差并安排复校。
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-info-circle"></i> 运输信息</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:140px">仪器</td><td><a href="{% url 'calibration:instrument_detail' transport.instrument.pk %}"><code>{{ transport.instrument.serial_number }}</code></a></td></tr>
+                    <tr><td class="text-muted">出发站</td><td>{{ transport.from_station.name }}</td></tr>
+                    <tr><td class="text-muted">目的站</td><td>{{ transport.to_station.name }}</td></tr>
+                    <tr><td class="text-muted">运输日期</td><td>{{ transport.transport_date }}</td></tr>
+                    <tr><td class="text-muted">到达日期</td><td>{{ transport.arrival_date|default:"未记录" }}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:140px">运输方式</td><td>{{ transport.method|default:"未记录" }}</td></tr>
+                    <tr>
+                        <td class="text-muted">影响评分</td>
+                        <td>
+                            {% if transport.impact_score is not None %}
+                                {% if transport.impact_score >= 5 %}
+                                <span class="text-danger fw-bold">{{ transport.impact_score }}</span>
+                                <span class="badge badge-anomaly">高影响</span>
+                                {% else %}
+                                {{ transport.impact_score }}
+                                {% endif %}
+                            {% else %}
+                                未评分
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr><td class="text-muted">运输前读数</td><td>{{ transport.pre_transport_reading|default:"未记录" }}</td></tr>
+                    <tr><td class="text-muted">运输后读数</td><td>{{ transport.post_transport_reading|default:"未记录" }}</td></tr>
+                    <tr>
+                        <td class="text-muted">读数偏差</td>
+                        <td>
+                            {% if transport.reading_deviation is not None %}
+                                <code>{{ transport.reading_deviation }}</code>
+                            {% else %}
+                                未计算
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr><td class="text-muted">备注</td><td>{{ transport.notes|default:"无" }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

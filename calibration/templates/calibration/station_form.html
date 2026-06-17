@@ -1,0 +1,124 @@
+{% extends "calibration/base.html" %}
+{% block nav_stations %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:station_list' %}">气象站</a></li>
+        {% if form.instance.pk %}
+        <li class="breadcrumb-item"><a href="{% url 'calibration:station_detail' form.instance.pk %}">{{ form.instance.name }}</a></li>
+        <li class="breadcrumb-item active">编辑</li>
+        {% else %}
+        <li class="breadcrumb-item active">新增站点</li>
+        {% endif %}
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h4>
+        <i class="bi bi-building"></i>
+        {% if form.instance.pk %}编辑站点{% else %}新增站点{% endif %}
+    </h4>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_name" class="form-label">站名 <span class="text-danger">*</span></label>
+                    <input type="text" name="name" id="id_name" class="form-control {% if form.name.errors %}is-invalid{% endif %}" value="{{ form.name.value|default:'' }}" required>
+                    {% for error in form.name.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_code" class="form-label">站点编号 <span class="text-danger">*</span></label>
+                    <input type="text" name="code" id="id_code" class="form-control {% if form.code.errors %}is-invalid{% endif %}" value="{{ form.code.value|default:'' }}" required>
+                    {% for error in form.code.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="id_altitude" class="form-label">海拔(m) <span class="text-danger">*</span></label>
+                    <input type="number" step="any" name="altitude" id="id_altitude" class="form-control {% if form.altitude.errors %}is-invalid{% endif %}" value="{{ form.altitude.value|default:'' }}" required>
+                    {% for error in form.altitude.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_latitude" class="form-label">纬度 <span class="text-danger">*</span></label>
+                    <input type="number" step="any" name="latitude" id="id_latitude" class="form-control {% if form.latitude.errors %}is-invalid{% endif %}" value="{{ form.latitude.value|default:'' }}" required>
+                    {% for error in form.latitude.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_longitude" class="form-label">经度 <span class="text-danger">*</span></label>
+                    <input type="number" step="any" name="longitude" id="id_longitude" class="form-control {% if form.longitude.errors %}is-invalid{% endif %}" value="{{ form.longitude.value|default:'' }}" required>
+                    {% for error in form.longitude.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_region" class="form-label">所属区域 <span class="text-danger">*</span></label>
+                    <select name="region" id="id_region" class="form-select {% if form.region.errors %}is-invalid{% endif %}" required>
+                        <option value="">请选择区域</option>
+                        {% for value, label in form.fields.region.choices %}
+                        <option value="{{ value }}" {% if form.region.value == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.region.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_status" class="form-label">运行状态</label>
+                    <select name="status" id="id_status" class="form-select {% if form.status.errors %}is-invalid{% endif %}">
+                        {% for value, label in form.fields.status.choices %}
+                        <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.status.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_established_date" class="form-label">建站日期</label>
+                    <input type="date" name="established_date" id="id_established_date" class="form-control {% if form.established_date.errors %}is-invalid{% endif %}" value="{{ form.established_date.value|default:'' }}">
+                    {% for error in form.established_date.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="id_notes" class="form-label">备注</label>
+                <textarea name="notes" id="id_notes" class="form-control {% if form.notes.errors %}is-invalid{% endif %}" rows="3">{{ form.notes.value|default:'' }}</textarea>
+                {% for error in form.notes.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'calibration:station_list' %}" class="btn btn-outline-secondary">取消</a>
+                <button type="submit" class="btn btn-alpine">
+                    <i class="bi bi-check-lg"></i>
+                    {% if form.instance.pk %}保存修改{% else %}创建站点{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

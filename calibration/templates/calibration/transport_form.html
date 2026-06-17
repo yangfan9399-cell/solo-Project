@@ -1,0 +1,139 @@
+{% extends "calibration/base.html" %}
+{% block nav_transports %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:transport_list' %}">运输记录</a></li>
+        {% if form.instance.pk %}
+        <li class="breadcrumb-item"><a href="{% url 'calibration:transport_detail' form.instance.pk %}">详情</a></li>
+        <li class="breadcrumb-item active">编辑</li>
+        {% else %}
+        <li class="breadcrumb-item active">新增运输记录</li>
+        {% endif %}
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h4>
+        <i class="bi bi-truck"></i>
+        {% if form.instance.pk %}编辑运输记录{% else %}新增运输记录{% endif %}
+    </h4>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_instrument" class="form-label">仪器 <span class="text-danger">*</span></label>
+                    <select name="instrument" id="id_instrument" class="form-select {% if form.instrument.errors %}is-invalid{% endif %}" required>
+                        <option value="">请选择仪器</option>
+                        {% for choice in form.fields.instrument.queryset %}
+                        <option value="{{ choice.pk }}" {% if form.instrument.value == choice.pk|stringformat:'s' %}selected{% endif %}>{{ choice.serial_number }} - {{ choice.get_instrument_type_display }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.instrument.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_method" class="form-label">运输方式</label>
+                    <input type="text" name="method" id="id_method" class="form-control {% if form.method.errors %}is-invalid{% endif %}" value="{{ form.method.value|default:'' }}" placeholder="如: 陆运、空运、人力搬运">
+                    {% for error in form.method.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_from_station" class="form-label">出发站 <span class="text-danger">*</span></label>
+                    <select name="from_station" id="id_from_station" class="form-select {% if form.from_station.errors %}is-invalid{% endif %}" required>
+                        <option value="">请选择出发站</option>
+                        {% for choice in form.fields.from_station.queryset %}
+                        <option value="{{ choice.pk }}" {% if form.from_station.value == choice.pk|stringformat:'s' %}selected{% endif %}>{{ choice.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.from_station.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_to_station" class="form-label">目的站 <span class="text-danger">*</span></label>
+                    <select name="to_station" id="id_to_station" class="form-select {% if form.to_station.errors %}is-invalid{% endif %}" required>
+                        <option value="">请选择目的站</option>
+                        {% for choice in form.fields.to_station.queryset %}
+                        <option value="{{ choice.pk }}" {% if form.to_station.value == choice.pk|stringformat:'s' %}selected{% endif %}>{{ choice.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.to_station.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_transport_date" class="form-label">运输日期 <span class="text-danger">*</span></label>
+                    <input type="date" name="transport_date" id="id_transport_date" class="form-control {% if form.transport_date.errors %}is-invalid{% endif %}" value="{{ form.transport_date.value|default:'' }}" required>
+                    {% for error in form.transport_date.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_arrival_date" class="form-label">到达日期</label>
+                    <input type="date" name="arrival_date" id="id_arrival_date" class="form-control {% if form.arrival_date.errors %}is-invalid{% endif %}" value="{{ form.arrival_date.value|default:'' }}">
+                    {% for error in form.arrival_date.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="id_impact_score" class="form-label">影响评分</label>
+                    <input type="number" step="any" name="impact_score" id="id_impact_score" class="form-control {% if form.impact_score.errors %}is-invalid{% endif %}" value="{{ form.impact_score.value|default:'' }}" min="0" max="10" placeholder="0-10">
+                    {% for error in form.impact_score.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_pre_transport_reading" class="form-label">运输前读数</label>
+                    <input type="number" step="any" name="pre_transport_reading" id="id_pre_transport_reading" class="form-control {% if form.pre_transport_reading.errors %}is-invalid{% endif %}" value="{{ form.pre_transport_reading.value|default:'' }}">
+                    {% for error in form.pre_transport_reading.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_post_transport_reading" class="form-label">运输后读数</label>
+                    <input type="number" step="any" name="post_transport_reading" id="id_post_transport_reading" class="form-control {% if form.post_transport_reading.errors %}is-invalid{% endif %}" value="{{ form.post_transport_reading.value|default:'' }}">
+                    {% for error in form.post_transport_reading.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <label for="id_notes" class="form-label">备注</label>
+                    <textarea name="notes" id="id_notes" rows="3" class="form-control {% if form.notes.errors %}is-invalid{% endif %}">{{ form.notes.value|default:'' }}</textarea>
+                    {% for error in form.notes.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'calibration:transport_list' %}" class="btn btn-outline-secondary">取消</a>
+                <button type="submit" class="btn btn-alpine">
+                    <i class="bi bi-check-lg"></i>
+                    {% if form.instance.pk %}保存修改{% else %}创建运输记录{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

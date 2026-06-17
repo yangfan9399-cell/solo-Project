@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}高山气象站仪器校准日志系统{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        :root {
+            --alpine-primary: #1a5276;
+            --alpine-secondary: #2e86c1;
+            --alpine-accent: #d4ac0d;
+            --alpine-bg: #f0f3f5;
+            --alpine-dark: #1c2833;
+            --alpine-danger: #c0392b;
+            --alpine-success: #27ae60;
+            --alpine-warning: #f39c12;
+        }
+        body {
+            background-color: var(--alpine-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+        }
+        .sidebar {
+            background: linear-gradient(180deg, var(--alpine-dark) 0%, var(--alpine-primary) 100%);
+            min-height: 100vh;
+            color: #fff;
+            width: 240px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .sidebar .brand {
+            padding: 20px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        .sidebar .brand h5 {
+            color: var(--alpine-accent);
+            font-weight: 700;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .sidebar .brand small {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.75rem;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.75);
+            padding: 10px 20px;
+            font-size: 0.88rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #fff;
+            background: rgba(255,255,255,0.08);
+            border-left-color: var(--alpine-accent);
+        }
+        .sidebar .nav-link i {
+            width: 22px;
+            margin-right: 8px;
+            text-align: center;
+        }
+        .sidebar .nav-section {
+            padding: 12px 20px 4px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 0.1em;
+        }
+        .main-content {
+            margin-left: 240px;
+            padding: 20px 28px;
+        }
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+        .stat-card .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+        .stat-card .stat-label {
+            color: #7f8c8d;
+            font-size: 0.82rem;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .card-header {
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            border-radius: 12px 12px 0 0 !important;
+        }
+        .table th {
+            font-size: 0.82rem;
+            color: #7f8c8d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom-width: 1px;
+        }
+        .table td {
+            font-size: 0.88rem;
+            vertical-align: middle;
+        }
+        .badge-anomaly {
+            background: var(--alpine-danger);
+            color: #fff;
+        }
+        .badge-pass {
+            background: var(--alpine-success);
+            color: #fff;
+        }
+        .badge-fail {
+            background: var(--alpine-danger);
+            color: #fff;
+        }
+        .badge-conditional {
+            background: var(--alpine-warning);
+            color: #fff;
+        }
+        .page-header {
+            margin-bottom: 24px;
+        }
+        .page-header h4 {
+            font-weight: 700;
+            color: var(--alpine-dark);
+        }
+        .btn-alpine {
+            background: var(--alpine-primary);
+            color: #fff;
+            border: none;
+        }
+        .btn-alpine:hover {
+            background: var(--alpine-secondary);
+            color: #fff;
+        }
+        #station-map-container {
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .anomaly-alert {
+            border-left: 4px solid var(--alpine-danger);
+            background: #fdedec;
+        }
+        .filter-bar {
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin-bottom: 8px;
+        }
+        .detail-section {
+            margin-bottom: 24px;
+        }
+        .detail-section h6 {
+            color: var(--alpine-primary);
+            border-bottom: 2px solid var(--alpine-accent);
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand">
+            <h5>🏔️ 高山气象站</h5>
+            <small>仪器校准日志系统</small>
+        </div>
+        <div class="nav-section">概览</div>
+        <nav class="nav flex-column">
+            <a class="nav-link {% block nav_dashboard %}{% endblock %}" href="{% url 'calibration:dashboard' %}">
+                <i class="bi bi-speedometer2"></i> 工作台
+            </a>
+            <a class="nav-link {% block nav_map %}{% endblock %}" href="{% url 'calibration:station_map' %}">
+                <i class="bi bi-geo-alt"></i> 站点地图
+            </a>
+            <a class="nav-link {% block nav_anomaly %}{% endblock %}" href="{% url 'calibration:anomaly_overview' %}">
+                <i class="bi bi-exclamation-triangle"></i> 异常监控
+            </a>
+        </nav>
+        <div class="nav-section">台账管理</div>
+        <nav class="nav flex-column">
+            <a class="nav-link {% block nav_stations %}{% endblock %}" href="{% url 'calibration:station_list' %}">
+                <i class="bi bi-building"></i> 气象站
+            </a>
+            <a class="nav-link {% block nav_instruments %}{% endblock %}" href="{% url 'calibration:instrument_list' %}">
+                <i class="bi bi-thermometer-half"></i> 仪器
+            </a>
+        </nav>
+        <div class="nav-section">校准业务</div>
+        <nav class="nav flex-column">
+            <a class="nav-link {% block nav_calibrations %}{% endblock %}" href="{% url 'calibration:calibration_list' %}">
+                <i class="bi bi-clipboard-check"></i> 校准记录
+            </a>
+            <a class="nav-link {% block nav_batches %}{% endblock %}" href="{% url 'calibration:batch_list' %}">
+                <i class="bi bi-layers"></i> 校准批次
+            </a>
+            <a class="nav-link {% block nav_transports %}{% endblock %}" href="{% url 'calibration:transport_list' %}">
+                <i class="bi bi-truck"></i> 运输记录
+            </a>
+            <a class="nav-link {% block nav_certificates %}{% endblock %}" href="{% url 'calibration:certificate_list' %}">
+                <i class="bi bi-award"></i> 校准证书
+            </a>
+        </nav>
+        <div class="nav-section">数据</div>
+        <nav class="nav flex-column">
+            <a class="nav-link" href="{% url 'calibration:export_summary' %}?format=json">
+                <i class="bi bi-download"></i> 导出摘要
+            </a>
+            <a class="nav-link" href="#" onclick="openOfflineEntry(); return false;">
+                <i class="bi bi-cloud-off"></i> 离线录入
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="modal fade" id="offlineModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-cloud-off"></i> 离线录入</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">在离线状态下录入校准数据，数据将保存在本地浏览器中。恢复网络连接后可一键同步至服务器。</p>
+                    <div id="offline-status" class="alert alert-info" style="display:none;"></div>
+                    <form id="offline-form">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">仪器序列号</label>
+                                <input type="text" class="form-control" id="off-instrument-serial" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">批次号</label>
+                                <input type="text" class="form-control" id="off-batch-number" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">测试点</label>
+                                <input type="text" class="form-control" id="off-test-point" placeholder="如: -20°C" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">校准前读数</label>
+                                <input type="number" step="any" class="form-control" id="off-before-value" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">校准后读数</label>
+                                <input type="number" step="any" class="form-control" id="off-after-value" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">标准值</label>
+                                <input type="number" step="any" class="form-control" id="off-standard-value">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">允许误差</label>
+                                <input type="number" step="any" class="form-control" id="off-tolerance">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">结果</label>
+                                <select class="form-select" id="off-result">
+                                    <option value="pass">合格</option>
+                                    <option value="fail">不合格</option>
+                                    <option value="conditional">有条件合格</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">备注</label>
+                                <textarea class="form-control" id="off-notes" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                    <hr>
+                    <h6>本地暂存记录 (<span id="offline-count">0</span>)</h6>
+                    <div id="offline-records-list" class="mt-2" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="saveOfflineRecord()">
+                        <i class="bi bi-save"></i> 暂存本地
+                    </button>
+                    <button type="button" class="btn btn-alpine" onclick="syncOfflineRecords()">
+                        <i class="bi bi-cloud-upload"></i> 同步至服务器
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        function getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        }
+
+        function getOfflineRecords() {
+            try {
+                return JSON.parse(localStorage.getItem('alpine_cal_offline') || '[]');
+            } catch { return []; }
+        }
+
+        function saveOfflineRecords(records) {
+            localStorage.setItem('alpine_cal_offline', JSON.stringify(records));
+        }
+
+        function saveOfflineRecord() {
+            const record = {
+                instrument_serial: document.getElementById('off-instrument-serial').value,
+                batch_number: document.getElementById('off-batch-number').value,
+                test_point: document.getElementById('off-test-point').value,
+                before_value: parseFloat(document.getElementById('off-before-value').value),
+                after_value: parseFloat(document.getElementById('off-after-value').value),
+                standard_value: document.getElementById('off-standard-value').value ? parseFloat(document.getElementById('off-standard-value').value) : null,
+                tolerance: document.getElementById('off-tolerance').value ? parseFloat(document.getElementById('off-tolerance').value) : null,
+                result: document.getElementById('off-result').value,
+                notes: document.getElementById('off-notes').value,
+                timestamp: new Date().toISOString(),
+            };
+
+            if (!record.instrument_serial || !record.batch_number || !record.test_point) {
+                alert('请填写必填项');
+                return;
+            }
+
+            const records = getOfflineRecords();
+            records.push(record);
+            saveOfflineRecords(records);
+            renderOfflineRecords();
+            document.getElementById('offline-form').reset();
+        }
+
+        function deleteOfflineRecord(index) {
+            const records = getOfflineRecords();
+            records.splice(index, 1);
+            saveOfflineRecords(records);
+            renderOfflineRecords();
+        }
+
+        function renderOfflineRecords() {
+            const records = getOfflineRecords();
+            document.getElementById('offline-count').textContent = records.length;
+            const list = document.getElementById('offline-records-list');
+            if (records.length === 0) {
+                list.innerHTML = '<p class="text-muted small">暂无暂存记录</p>';
+                return;
+            }
+            list.innerHTML = records.map((r, i) => `
+                <div class="d-flex justify-content-between align-items-center border-bottom py-1 small">
+                    <span>${r.instrument_serial} | ${r.test_point} | ${r.before_value}→${r.after_value}</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOfflineRecord(${i})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function syncOfflineRecords() {
+            const records = getOfflineRecords();
+            if (records.length === 0) {
+                alert('暂无待同步记录');
+                return;
+            }
+            try {
+                const resp = await fetch('{% url "calibration:offline_sync" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken(),
+                    },
+                    body: JSON.stringify({ records }),
+                });
+                const data = await resp.json();
+                const statusEl = document.getElementById('offline-status');
+                if (data.status === 'ok') {
+                    statusEl.className = 'alert alert-success';
+                    statusEl.style.display = 'block';
+                    statusEl.textContent = `同步完成: 成功 ${data.created} 条${data.errors.length > 0 ? ', 失败 ' + data.errors.length + ' 条' : ''}`;
+                    saveOfflineRecords([]);
+                    renderOfflineRecords();
+                } else {
+                    statusEl.className = 'alert alert-danger';
+                    statusEl.style.display = 'block';
+                    statusEl.textContent = '同步失败: ' + (data.message || '未知错误');
+                }
+            } catch (e) {
+                alert('同步请求失败: ' + e.message);
+            }
+        }
+
+        function openOfflineEntry() {
+            renderOfflineRecords();
+            new bootstrap.Modal(document.getElementById('offlineModal')).show();
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

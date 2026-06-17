@@ -1,0 +1,145 @@
+{% extends "calibration/base.html" %}
+{% block nav_calibrations %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:calibration_list' %}">校准记录</a></li>
+        {% if form.instance.pk %}
+        <li class="breadcrumb-item"><a href="{% url 'calibration:calibration_detail' form.instance.pk %}">{{ form.instance }}</a></li>
+        <li class="breadcrumb-item active">编辑</li>
+        {% else %}
+        <li class="breadcrumb-item active">新增记录</li>
+        {% endif %}
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h4>
+        <i class="bi bi-clipboard-check"></i>
+        {% if form.instance.pk %}编辑校准记录{% else %}新增校准记录{% endif %}
+    </h4>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_instrument" class="form-label">仪器 <span class="text-danger">*</span></label>
+                    <select name="instrument" id="id_instrument" class="form-select {% if form.instrument.errors %}is-invalid{% endif %}" required>
+                        <option value="">请选择仪器</option>
+                        {% for choice in form.fields.instrument.queryset %}
+                        <option value="{{ choice.pk }}" {% if form.instrument.value == choice.pk|stringformat:'s' %}selected{% endif %}>{{ choice.serial_number }} - {{ choice.get_instrument_type_display }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.instrument.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_batch" class="form-label">校准批次 <span class="text-danger">*</span></label>
+                    <select name="batch" id="id_batch" class="form-select {% if form.batch.errors %}is-invalid{% endif %}" required>
+                        <option value="">请选择批次</option>
+                        {% for choice in form.fields.batch.queryset %}
+                        <option value="{{ choice.pk }}" {% if form.batch.value == choice.pk|stringformat:'s' %}selected{% endif %}>{{ choice.batch_number }} (v{{ choice.version }})</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.batch.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="id_test_point" class="form-label">测试点 <span class="text-danger">*</span></label>
+                    <input type="text" name="test_point" id="id_test_point" class="form-control {% if form.test_point.errors %}is-invalid{% endif %}" value="{{ form.test_point.value|default:'' }}" placeholder="如: -20°C" required>
+                    {% for error in form.test_point.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_before_value" class="form-label">校准前读数 <span class="text-danger">*</span></label>
+                    <input type="number" step="any" name="before_value" id="id_before_value" class="form-control {% if form.before_value.errors %}is-invalid{% endif %}" value="{{ form.before_value.value|default:'' }}" required>
+                    {% for error in form.before_value.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_after_value" class="form-label">校准后读数 <span class="text-danger">*</span></label>
+                    <input type="number" step="any" name="after_value" id="id_after_value" class="form-control {% if form.after_value.errors %}is-invalid{% endif %}" value="{{ form.after_value.value|default:'' }}" required>
+                    {% for error in form.after_value.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="id_standard_value" class="form-label">标准值</label>
+                    <input type="number" step="any" name="standard_value" id="id_standard_value" class="form-control {% if form.standard_value.errors %}is-invalid{% endif %}" value="{{ form.standard_value.value|default:'' }}">
+                    {% for error in form.standard_value.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_tolerance" class="form-label">允许误差</label>
+                    <input type="number" step="any" name="tolerance" id="id_tolerance" class="form-control {% if form.tolerance.errors %}is-invalid{% endif %}" value="{{ form.tolerance.value|default:'' }}">
+                    {% for error in form.tolerance.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_result" class="form-label">校准结果 <span class="text-danger">*</span></label>
+                    <select name="result" id="id_result" class="form-select {% if form.result.errors %}is-invalid{% endif %}" required>
+                        {% for value, label in form.fields.result.choices %}
+                        <option value="{{ value }}" {% if form.result.value == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.result.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="form-check mt-2">
+                        <input type="checkbox" name="is_anomaly" id="id_is_anomaly" class="form-check-input {% if form.is_anomaly.errors %}is-invalid{% endif %}" {% if form.is_anomaly.value %}checked{% endif %}>
+                        <label for="id_is_anomaly" class="form-check-label">异常标记</label>
+                        {% for error in form.is_anomaly.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label for="id_anomaly_note" class="form-label">异常说明</label>
+                    <textarea name="anomaly_note" id="id_anomaly_note" class="form-control {% if form.anomaly_note.errors %}is-invalid{% endif %}" rows="2">{{ form.anomaly_note.value|default:'' }}</textarea>
+                    {% for error in form.anomaly_note.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="id_notes" class="form-label">备注</label>
+                <textarea name="notes" id="id_notes" class="form-control {% if form.notes.errors %}is-invalid{% endif %}" rows="2">{{ form.notes.value|default:'' }}</textarea>
+                {% for error in form.notes.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'calibration:calibration_list' %}" class="btn btn-outline-secondary">取消</a>
+                <button type="submit" class="btn btn-alpine">
+                    <i class="bi bi-check-lg"></i>
+                    {% if form.instance.pk %}保存修改{% else %}创建记录{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

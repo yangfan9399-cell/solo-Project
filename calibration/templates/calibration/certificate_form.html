@@ -1,0 +1,105 @@
+{% extends "calibration/base.html" %}
+{% block nav_certificates %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:certificate_list' %}">校准证书</a></li>
+        {% if form.instance.pk %}
+        <li class="breadcrumb-item"><a href="{% url 'calibration:certificate_detail' form.instance.pk %}">{{ form.instance.certificate_number }}</a></li>
+        <li class="breadcrumb-item active">编辑</li>
+        {% else %}
+        <li class="breadcrumb-item active">新增证书</li>
+        {% endif %}
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h4>
+        <i class="bi bi-award"></i>
+        {% if form.instance.pk %}编辑证书{% else %}新增证书{% endif %}
+    </h4>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_certificate_number" class="form-label">证书编号 <span class="text-danger">*</span></label>
+                    <input type="text" name="certificate_number" id="id_certificate_number" class="form-control {% if form.certificate_number.errors %}is-invalid{% endif %}" value="{{ form.certificate_number.value|default:'' }}" required>
+                    {% for error in form.certificate_number.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_record" class="form-label">关联校准记录 <span class="text-danger">*</span></label>
+                    <select name="record" id="id_record" class="form-select {% if form.record.errors %}is-invalid{% endif %}" required>
+                        <option value="">请选择校准记录</option>
+                        {% for choice in form.fields.record.queryset %}
+                        <option value="{{ choice.pk }}" {% if form.record.value == choice.pk|stringformat:'s' %}selected{% endif %}>{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.record.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_issued_date" class="form-label">签发日期 <span class="text-danger">*</span></label>
+                    <input type="date" name="issued_date" id="id_issued_date" class="form-control {% if form.issued_date.errors %}is-invalid{% endif %}" value="{{ form.issued_date.value|default:'' }}" required>
+                    {% for error in form.issued_date.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_expiry_date" class="form-label">有效期至 <span class="text-danger">*</span></label>
+                    <input type="date" name="expiry_date" id="id_expiry_date" class="form-control {% if form.expiry_date.errors %}is-invalid{% endif %}" value="{{ form.expiry_date.value|default:'' }}" required>
+                    {% for error in form.expiry_date.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="id_issued_by" class="form-label">签发机构 <span class="text-danger">*</span></label>
+                    <input type="text" name="issued_by" id="id_issued_by" class="form-control {% if form.issued_by.errors %}is-invalid{% endif %}" value="{{ form.issued_by.value|default:'' }}" required>
+                    {% for error in form.issued_by.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_is_valid" class="form-label">是否有效</label>
+                    <div class="form-check form-switch mt-2">
+                        <input type="checkbox" name="is_valid" id="id_is_valid" class="form-check-input" {% if form.is_valid.value %}checked{% endif %}>
+                        <label class="form-check-label" for="id_is_valid">证书有效</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <label for="id_notes" class="form-label">备注</label>
+                    <textarea name="notes" id="id_notes" rows="3" class="form-control {% if form.notes.errors %}is-invalid{% endif %}">{{ form.notes.value|default:'' }}</textarea>
+                    {% for error in form.notes.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'calibration:certificate_list' %}" class="btn btn-outline-secondary">取消</a>
+                <button type="submit" class="btn btn-alpine">
+                    <i class="bi bi-check-lg"></i>
+                    {% if form.instance.pk %}保存修改{% else %}创建证书{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "calibration/base.html" %}
+{% block nav_batches %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'calibration:batch_list' %}">校准批次</a></li>
+        <li class="breadcrumb-item active">{{ batch.batch_number }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h4><i class="bi bi-layers"></i> {{ batch.batch_number }}</h4>
+    <p class="text-muted mb-0">版本 v{{ batch.version }} · {{ batch.calibration_date }}</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-info-circle"></i> 批次信息</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:120px">批次号</td><td><code>{{ batch.batch_number }}</code></td></tr>
+                    <tr><td class="text-muted">校准日期</td><td>{{ batch.calibration_date }}</td></tr>
+                    <tr><td class="text-muted">操作员</td><td>{{ batch.operator }}</td></tr>
+                    <tr><td class="text-muted">实验室地点</td><td>{{ batch.lab_location|default:"未记录" }}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted" style="width:120px">版本号</td><td>v{{ batch.version }}</td></tr>
+                    <tr>
+                        <td class="text-muted">状态</td>
+                        <td>
+                            {% if batch.is_superseded %}
+                            <span class="badge bg-secondary">已作废</span>
+                            {% else %}
+                            <span class="badge badge-pass">有效</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr><td class="text-muted">环境温度</td><td>{{ batch.temperature_env|default:"未记录" }}{% if batch.temperature_env %}°C{% endif %}</td></tr>
+                    <tr><td class="text-muted">环境湿度</td><td>{{ batch.humidity_env|default:"未记录" }}{% if batch.humidity_env %}%RH{% endif %}</td></tr>
+                    <tr><td class="text-muted">备注</td><td>{{ batch.notes|default:"无" }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clock-history"></i> 版本时间线</span>
+            <span class="badge bg-secondary">{{ versions|length }} 个版本</span>
+        </div>
+        <div class="card-body">
+            {% if versions %}
+            <div class="timeline">
+                {% for ver in versions %}
+                <div class="d-flex align-items-start mb-3">
+                    <div class="me-3 text-center" style="min-width:60px;">
+                        <span class="badge {% if ver.is_superseded %}bg-secondary{% elif ver.pk == batch.pk %}bg-primary{% else %}bg-info{% endif %}">
+                            v{{ ver.version }}
+                        </span>
+                    </div>
+                    <div class="flex-grow-1 border-start ps-3 pb-2">
+                        <div>
+                            <a href="{% url 'calibration:batch_detail' ver.pk %}" class="text-decoration-none fw-bold">{{ ver.batch_number }}</a>
+                            {% if ver.is_superseded %}
+                            <span class="badge bg-secondary ms-1">已作废</span>
+                            {% elif ver.pk == batch.pk %}
+                            <span class="badge bg-primary ms-1">当前</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-muted small">
+                            {{ ver.calibration_date }} · {{ ver.operator }}
+                            {% if ver.lab_location %} · {{ ver.lab_location }}{% endif %}
+                        </div>
+                        <div class="small mt-1">
+                            <span class="me-2">记录: {{ ver.record_count }}</span>
+                            <span class="me-2">异常: {{ ver.anomaly_count }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">暂无版本记录</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clipboard-check"></i> 校准记录</span>
+            <span class="badge bg-secondary">{{ records|length }} 条</span>
+        </div>
+        <div class="card-body">
+            {% if records %}
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>仪器序列号</th>
+                        <th>类型</th>
+                        <th>站点</th>
+                        <th>测试点</th>
+                        <th>校准前</th>
+                        <th>校准后</th>
+                        <th>偏差(后)</th>
+                        <th>结果</th>
+                        <th>异常</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for rec in records %}
+                    <tr class="{% if rec.is_anomaly %}table-danger{% endif %}">
+                        <td><a href="{% url 'calibration:instrument_detail' rec.instrument.pk %}"><code>{{ rec.instrument.serial_number }}</code></a></td>
+                        <td>{{ rec.instrument.get_instrument_type_display }}</td>
+                        <td>{{ rec.instrument.station.name }}</td>
+                        <td>{{ rec.test_point }}</td>
+                        <td>{{ rec.before_value }}</td>
+                        <td>{{ rec.after_value }}</td>
+                        <td>{{ rec.deviation_after|default:"-" }}</td>
+                        <td><span class="badge badge-{{ rec.result }}">{{ rec.get_result_display }}</span></td>
+                        <td>
+                            {% if rec.is_anomaly %}
+                            <span class="badge badge-anomaly">异常</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted mb-0">暂无校准记录</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

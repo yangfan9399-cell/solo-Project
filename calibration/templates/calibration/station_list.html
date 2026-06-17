@@ -1,0 +1,140 @@
+{% extends "calibration/base.html" %}
+{% block nav_stations %}active{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="bi bi-building"></i> 气象站台账</h4>
+        <p class="text-muted mb-0">全部气象站信息管理</p>
+    </div>
+    <a href="{% url 'calibration:station_create' %}" class="btn btn-alpine">
+        <i class="bi bi-plus-lg"></i> 新增站点
+    </a>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">区域</label>
+            <select name="region" class="form-select form-select-sm">
+                <option value="">全部区域</option>
+                {% for value, label in region_choices %}
+                <option value="{{ value }}" {% if request.GET.region == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">状态</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">全部状态</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">搜索</label>
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="站名或编号..." value="{{ request.GET.q|default:'' }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-alpine btn-sm w-100">
+                <i class="bi bi-search"></i> 筛选
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>站名</th>
+                    <th>编号</th>
+                    <th>海拔(m)</th>
+                    <th>区域</th>
+                    <th>状态</th>
+                    <th>仪器数</th>
+                    <th>异常数</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for station in stations %}
+                <tr>
+                    <td><a href="{% url 'calibration:station_detail' station.pk %}">{{ station.name }}</a></td>
+                    <td><code>{{ station.code }}</code></td>
+                    <td>{{ station.altitude }}</td>
+                    <td>{{ station.get_region_display }}</td>
+                    <td>
+                        {% if station.status == 'active' %}
+                        <span class="badge badge-pass">运行中</span>
+                        {% elif station.status == 'maintenance' %}
+                        <span class="badge badge-conditional">维护中</span>
+                        {% elif station.status == 'offline' %}
+                        <span class="badge badge-fail">离线</span>
+                        {% else %}
+                        <span class="badge bg-secondary">已退役</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ station.instruments.count }}</td>
+                    <td>
+                        {% if station.anomaly_count > 0 %}
+                        <span class="badge badge-anomaly">{{ station.anomaly_count }}</span>
+                        {% else %}
+                        <span class="text-muted">0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'calibration:station_detail' station.pk %}" class="btn btn-sm btn-outline-primary" title="详情">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'calibration:station_edit' station.pk %}" class="btn btn-sm btn-outline-secondary" title="编辑">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">暂无匹配的站点</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <span class="text-muted small">第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页，共 {{ page_obj.paginator.count }} 条</span>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="bi bi-chevron-double-left"></i></a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+                </li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="bi bi-chevron-double-right"></i></a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

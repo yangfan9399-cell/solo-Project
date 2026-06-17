@@ -1,0 +1,229 @@
+{% extends "calibration/base.html" %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4>🏔️ 工作台</h4>
+        <p class="text-muted mb-0">高山气象站仪器校准日志系统 — 全局概览</p>
+    </div>
+    <div>
+        <a href="{% url 'calibration:export_summary' %}?format=csv" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-file-earmark-spreadsheet"></i> 导出CSV
+        </a>
+        <a href="{% url 'calibration:export_summary' %}?format=json" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-file-earmark-code"></i> 导出JSON
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_stations }}</div>
+                    <div class="stat-label">气象站总数 ({{ active_stations }} 运行中)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                    <i class="bi bi-thermometer-half"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_instruments }}</div>
+                    <div class="stat-label">仪器总数</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_records }}</div>
+                    <div class="stat-label">校准记录</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger me-3">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ anomaly_records }}</div>
+                    <div class="stat-label">异常记录</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if overdue_instruments %}
+<div class="alert anomaly-alert d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <strong><i class="bi bi-exclamation-triangle-fill"></i> 校准超期仪器:</strong>
+        {% for inst in overdue_instruments %}
+        <a href="{% url 'calibration:instrument_detail' inst.pk %}" class="text-decoration-none ms-2">
+            {{ inst.serial_number }} ({{ inst.station.name }})
+        </a>
+        {% if not forloop.last %}·{% endif %}
+        {% endfor %}
+    </div>
+    <a href="{% url 'calibration:anomaly_overview' %}" class="btn btn-sm btn-outline-danger">查看全部</a>
+</div>
+{% endif %}
+
+{% if expired_certs %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <strong><i class="bi bi-award"></i> 过期证书:</strong>
+        {% for cert in expired_certs %}
+        <span class="ms-2">{{ cert.certificate_number }}</span>
+        {% if not forloop.last %}·{% endif %}
+        {% endfor %}
+    </div>
+    <a href="{% url 'calibration:certificate_list' %}" class="btn btn-sm btn-outline-warning">查看</a>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">站点分布地图</div>
+            <div class="card-body p-0">
+                <div id="dashboard-map" style="height: 350px; border-radius: 0 0 12px 12px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">仪器类型分布</div>
+            <div class="card-body">
+                <canvas id="instrumentTypeChart" height="200"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">校准结果统计</div>
+            <div class="card-body">
+                <canvas id="resultChart" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>最近校准批次</span>
+                <a href="{% url 'calibration:batch_list' %}" class="btn btn-sm btn-outline-primary">全部</a>
+            </div>
+            <div class="card-body">
+                {% if recent_batches %}
+                <table class="table table-sm">
+                    <thead><tr><th>批次号</th><th>日期</th><th>操作员</th><th>版本</th></tr></thead>
+                    <tbody>
+                    {% for batch in recent_batches %}
+                    <tr>
+                        <td><a href="{% url 'calibration:batch_detail' batch.pk %}">{{ batch.batch_number }}</a></td>
+                        <td>{{ batch.calibration_date }}</td>
+                        <td>{{ batch.operator }}</td>
+                        <td>v{{ batch.version }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">暂无批次记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>最近校准记录</span>
+                <a href="{% url 'calibration:calibration_list' %}" class="btn btn-sm btn-outline-primary">全部</a>
+            </div>
+            <div class="card-body">
+                {% if recent_records %}
+                <table class="table table-sm">
+                    <thead><tr><th>仪器</th><th>测试点</th><th>前→后</th><th>结果</th></tr></thead>
+                    <tbody>
+                    {% for rec in recent_records %}
+                    <tr>
+                        <td><a href="{% url 'calibration:calibration_detail' rec.pk %}">{{ rec.instrument.serial_number }}</a></td>
+                        <td>{{ rec.test_point }}</td>
+                        <td>{{ rec.before_value }} → {{ rec.after_value }}</td>
+                        <td>
+                            <span class="badge badge-{{ rec.result }}">{{ rec.get_result_display }}</span>
+                            {% if rec.is_anomaly %}<span class="badge badge-anomaly">异常</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">暂无校准记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var stationsData = {{ stations_data|safe }};
+    var map = L.map('dashboard-map').setView([33, 96], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    stationsData.forEach(function(s) {
+        var color = s.anomaly_count > 0 ? '#c0392b' : '#27ae60';
+        var marker = L.circleMarker([s.lat, s.lng], {
+            radius: 8, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.8
+        }).addTo(map);
+        marker.bindPopup(
+            '<b>' + s.name + '</b> (' + s.code + ')<br>' +
+            '海拔: ' + s.altitude + 'm | 区域: ' + s.region + '<br>' +
+            '仪器: ' + s.instrument_count + ' | 异常: ' + s.anomaly_count
+        );
+    });
+
+    var typeStats = {{ instrument_type_stats|safe }};
+    new Chart(document.getElementById('instrumentTypeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(typeStats),
+            datasets: [{ data: Object.values(typeStats), backgroundColor: ['#2e86c1','#27ae60','#e67e22','#8e44ad','#1abc9c','#e74c3c'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+    });
+
+    var resultStats = {{ result_stats|safe }};
+    new Chart(document.getElementById('resultChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(resultStats),
+            datasets: [{ label: '数量', data: Object.values(resultStats), backgroundColor: ['#27ae60','#c0392b','#f39c12'] }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+</script>
+{% endblock %}
