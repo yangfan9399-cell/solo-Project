@@ -1,6 +1,16 @@
 import { component$ } from '@builder.io/qwik';
 import { routeAction$, routeLoader$, z } from '@builder.io/qwik-city';
-import { sectionDao, versionDao, anomalyDetector, sampleBoxDao, anomalyDao } from '~/server/dao';
+import {
+  sectionDao,
+  versionDao,
+  anomalyDetector,
+  sampleBoxDao,
+  anomalyDao,
+  micrographDao,
+  opticsDao,
+  associationDao,
+} from '~/server/dao';
+import type { Micrograph, MineralOptics, Association } from '~/types/mineral';
 
 const sectionSchema = z.object({
   sampleNumber: z.string().min(1),
@@ -12,15 +22,54 @@ const sectionSchema = z.object({
   collector: z.string().optional(),
   thinSectionNumber: z.string().min(1),
   thicknessMicrometers: z.coerce.number().min(0).max(100),
-  coverSlip: z.coerce.boolean().default(true),
+  coverSlip: z.union([z.boolean(), z.string()]).transform(v => v === true || v === 'true'),
   mountingMedium: z.string().optional(),
   grainSizeMm: z.coerce.number().optional(),
   rockType: z.string().optional(),
   alterationDegree: z.coerce.number().optional(),
-  sampleBoxId: z.coerce.number().optional(),
+  sampleBoxId: z.union([z.number(), z.string()]).optional().transform(v => v ? (typeof v === 'string' ? parseInt(v) : v) : undefined),
   boxPosition: z.string().optional(),
   notes: z.string().optional(),
+  photos: z.array(z.object({
+    mode: z.enum(['ppl', 'xpl', 'cnl']),
+    magnification: z.coerce.number(),
+    hasPhoto: z.boolean().optional(),
+    imagePath: z.string().optional(),
+    scaleBarMicrometers: z.coerce.number().optional(),
+    notes: z.string().optional(),
+  })).optional(),
+  optics: z.object({
+    relief: z.coerce.number().optional(),
+    refractiveIndexMin: z.union([z.number(), z.string()]).optional().transform(v => v === '' || v === undefined || v === null ? undefined : Number(v)),
+    refractiveIndexMax: z.union([z.number(), z.string()]).optional().transform(v => v === '' || v === undefined || v === null ? undefined : Number(v)),
+    birefringence: z.union([z.number(), z.string()]).optional().transform(v => v === '' || v === undefined || v === null ? undefined : Number(v)),
+    opticSign: z.enum(['positive', 'negative', 'unknown']).optional(),
+    opticAxisAngle: z.union([z.number(), z.string()]).optional().transform(v => v === '' || v === undefined || v === null ? undefined : Number(v)),
+    extinctionType: z.string().optional(),
+    extinctionAngle: z.union([z.number(), z.string()]).optional().transform(v => v === '' || v === undefined || v === null ? undefined : Number(v)),
+    pleochroism: z.string().optional(),
+    pleochroismColors: z.string().optional(),
+    absorptionFormula: z.string().optional(),
+    twinningType: z.string().optional(),
+    twinningDescription: z.string().optional(),
+    zoning: z.union([z.coerce.number(), z.string()]).optional().transform(v => {
+      if (v === undefined || v === null || v === '') return 0;
+      return Number(v);
+    }),
+    inclusionsDescription: z.string().optional(),
+  }).optional(),
+  associations: z.array(z.object({
+    associatedMineral: z.string().optional(),
+    relationshipType: z.string().optional(),
+    texturalRelation: z.string().optional(),
+    abundancePercent: z.coerce.number().optional(),
+    grainSizeMm: z.union([z.number(), z.string()]).optional().transform(v => v === '' || v === undefined || v === null ? undefined : Number(v)),
+    parageneticStage: z.string().optional(),
+    notes: z.string().optional(),
+  })).optional(),
 });
+
+const updateSchema = sectionSchema.partial().extend({ id: z.coerce.number() });
 
 export const useCreateSection = routeAction$(async (data, requestEvent) => {
   try {
@@ -30,11 +79,67 @@ export const useCreateSection = routeAction$(async (data, requestEvent) => {
 
     const section = await sectionDao.create(validated, userId);
 
+    if (validated.photos) {
+      for (const photo of validated.photos) {
+        if (photo.hasPhoto || photo.imagePath) {
+          const micrographData: Omit<Micrograph, 'id'> = {
+            sectionId: section.id,
+            mode: photo.mode,
+            magnification: photo.magnification,
+            scaleBarMicrometers: photo.scaleBarMicrometers || 100,
+            imagePath: photo.imagePath || `/images/placeholder-${photo.mode}-${photo.magnification}.svg`,
+            notes: photo.notes,
+          };
+          await micrographDao.create(micrographData);
+        }
+      }
+    }
+
+    if (validated.optics) {
+      const opticsData = {
+        sectionId: section.id,
+        relief: validated.optics.relief ?? 0,
+        refractiveIndexMin: validated.optics.refractiveIndexMin,
+        refractiveIndexMax: validated.optics.refractiveIndexMax,
+        birefringence: validated.optics.birefringence,
+        opticSign: validated.optics.opticSign || 'unknown',
+        opticAxisAngle: validated.optics.opticAxisAngle,
+        extinctionType: validated.optics.extinctionType || undefined,
+        extinctionAngle: validated.optics.extinctionAngle,
+        pleochroism: validated.optics.pleochroism || '',
+        pleochroismColors: validated.optics.pleochroismColors || '',
+        absorptionFormula: validated.optics.absorptionFormula || '',
+        twinningType: validated.optics.twinningType || undefined,
+        twinningDescription: validated.optics.twinningDescription || '',
+        zoning: validated.optics.zoning ?? 0,
+        inclusionsDescription: validated.optics.inclusionsDescription || '',
+      } as Omit<MineralOptics, 'id'>;
+      await opticsDao.save(opticsData);
+    }
+
+    if (validated.associations) {
+      for (const assoc of validated.associations) {
+        if (assoc.associatedMineral) {
+          const assocData: Omit<Association, 'id'> = {
+            sectionId: section.id,
+            associatedMineral: assoc.associatedMineral,
+            relationshipType: assoc.relationshipType || '共生',
+            texturalRelation: assoc.texturalRelation || '',
+            abundancePercent: assoc.abundancePercent ?? 0,
+            grainSizeMm: assoc.grainSizeMm,
+            parageneticStage: assoc.parageneticStage || '',
+            notes: assoc.notes || '',
+          };
+          await associationDao.create(assocData);
+        }
+      }
+    }
+
     await versionDao.create({
       sectionId: section.id,
       version: 1,
       changeType: 'create',
-      changeDescription: '创建薄片记录',
+      changeDescription: `创建薄片记录${validated.photos ? `，包含 ${validated.photos.filter(p => p.hasPhoto).length} 张显微照片` : ''}${validated.optics ? '，光学性质' : ''}${validated.associations ? `，${validated.associations.filter(a => a.associatedMineral).length} 种伴生矿物` : ''}`,
       changedBy: userId,
       batchId,
     });
@@ -59,9 +164,109 @@ export const useCreateSection = routeAction$(async (data, requestEvent) => {
       message: '薄片记录创建成功',
     };
   } catch (error: any) {
+    console.error('创建薄片失败:', error);
     return {
       success: false,
-      error: error.message,
+      error: error.message || '创建失败',
+    };
+  }
+});
+
+export const useUpdateSection = routeAction$(async (data, requestEvent) => {
+  try {
+    const validated = updateSchema.parse(data);
+    const userId = requestEvent.cookie.get('userId')?.value || 'system';
+    const sectionId = validated.id;
+    const batchId = `batch-${Date.now()}`;
+
+    const { id, ...updateData } = validated;
+    await sectionDao.update(sectionId, updateData as any, userId);
+
+    if (validated.photos) {
+      const existingPhotos = await micrographDao.listBySection(sectionId);
+      for (const ep of existingPhotos) {
+        await micrographDao.delete(ep.id);
+      }
+      for (const photo of validated.photos) {
+        if (photo.hasPhoto || photo.imagePath) {
+          const micrographData: Omit<Micrograph, 'id'> = {
+            sectionId,
+            mode: photo.mode,
+            magnification: photo.magnification,
+            scaleBarMicrometers: photo.scaleBarMicrometers || 100,
+            imagePath: photo.imagePath || `/images/placeholder-${photo.mode}-${photo.magnification}.svg`,
+            notes: photo.notes,
+          };
+          await micrographDao.create(micrographData);
+        }
+      }
+    }
+
+    if (validated.optics) {
+      const opticsData = {
+        sectionId,
+        relief: validated.optics.relief ?? 0,
+        refractiveIndexMin: validated.optics.refractiveIndexMin,
+        refractiveIndexMax: validated.optics.refractiveIndexMax,
+        birefringence: validated.optics.birefringence,
+        opticSign: validated.optics.opticSign || 'unknown',
+        opticAxisAngle: validated.optics.opticAxisAngle,
+        extinctionType: validated.optics.extinctionType || undefined,
+        extinctionAngle: validated.optics.extinctionAngle,
+        pleochroism: validated.optics.pleochroism || '',
+        pleochroismColors: validated.optics.pleochroismColors || '',
+        absorptionFormula: validated.optics.absorptionFormula || '',
+        twinningType: validated.optics.twinningType || undefined,
+        twinningDescription: validated.optics.twinningDescription || '',
+        zoning: validated.optics.zoning ?? 0,
+        inclusionsDescription: validated.optics.inclusionsDescription || '',
+      } as Omit<MineralOptics, 'id'>;
+      await opticsDao.save(opticsData);
+    }
+
+    if (validated.associations) {
+      const existingAssocs = await associationDao.listBySection(sectionId);
+      for (const ea of existingAssocs) {
+        await associationDao.delete(ea.id);
+      }
+      for (const assoc of validated.associations) {
+        if (assoc.associatedMineral) {
+          const assocData: Omit<Association, 'id'> = {
+            sectionId,
+            associatedMineral: assoc.associatedMineral,
+            relationshipType: assoc.relationshipType || '共生',
+            texturalRelation: assoc.texturalRelation || '',
+            abundancePercent: assoc.abundancePercent ?? 0,
+            grainSizeMm: assoc.grainSizeMm,
+            parageneticStage: assoc.parageneticStage || '',
+            notes: assoc.notes || '',
+          };
+          await associationDao.create(assocData);
+        }
+      }
+    }
+
+    await versionDao.create({
+      sectionId,
+      changeType: 'update',
+      version: (await sectionDao.getById(sectionId))?.currentVersion || 1,
+      changeDescription: '更新薄片记录',
+      changedBy: userId,
+      batchId,
+    });
+
+    await anomalyDetector.checkAll(sectionId);
+
+    return {
+      success: true,
+      id: sectionId,
+      message: '保存成功',
+    };
+  } catch (error: any) {
+    console.error('更新薄片失败:', error);
+    return {
+      success: false,
+      error: error.message || '保存失败',
     };
   }
 });

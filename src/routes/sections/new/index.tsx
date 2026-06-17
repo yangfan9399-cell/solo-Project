@@ -114,9 +114,12 @@ export default component$(() => {
     const submitData = {
       ...formData,
       sampleBoxId: formData.sampleBoxId ? parseInt(formData.sampleBoxId as string) : undefined,
+      photos,
+      optics,
+      associations,
     };
 
-    const result = await action.submit(submitData);
+    const result = await action.submit(submitData as any);
     
     if (result.value?.success) {
       nav(`/sections/${result.value.id}`);

@@ -1,10 +1,11 @@
-import { component$, useSignal, $, useComputed$ } from '@builder.io/qwik';
+import { component$, useSignal, $, useComputed$, useStore } from '@builder.io/qwik';
 import { routeLoader$, useNavigate, Link } from '@builder.io/qwik-city';
 import { sectionDao } from '~/server/dao';
 import { exportDetailToMarkdown } from '~/server/export';
 import { SeverityBadge, ModeBadge, VersionBadge } from '~/components/badges';
 import { InterferenceChart, MichelLevyChart } from '~/components/interference-chart';
 import type { SectionDetail } from '~/types/mineral';
+import { useUpdateSection } from '~/routes/api/sections/index';
 
 export const useSectionDetail = routeLoader$(async (requestEvent) => {
   const id = parseInt(requestEvent.params.id);
@@ -40,6 +41,213 @@ export default component$(() => {
   const selectedPhotoId = useSignal<number | null>(section.micrographs[0]?.id || null);
   const isEditing = useSignal(false);
   const showLevyChart = useSignal(false);
+  const action = useUpdateSection();
+  const isStoreInitialized = useSignal(false);
+
+  const editStore = useStore({
+    basicInfo: {
+      sampleNumber: '',
+      mineralName: '',
+      mineralFormula: '',
+      crystalSystem: '',
+      locality: '',
+      collectionDate: '',
+      collector: '',
+      thinSectionNumber: '',
+      thicknessMicrometers: 30 as number | undefined,
+      coverSlip: true as boolean | string,
+      mountingMedium: '',
+      grainSizeMm: undefined as number | undefined,
+      rockType: '',
+      alterationDegree: undefined as number | undefined,
+      sampleBoxId: undefined as number | string | undefined,
+      boxPosition: '',
+      notes: '',
+    },
+    optics: {
+      relief: 0 as number | undefined,
+      refractiveIndexMin: undefined as number | undefined,
+      refractiveIndexMax: undefined as number | undefined,
+      birefringence: undefined as number | undefined,
+      opticSign: 'unknown' as 'positive' | 'negative' | 'unknown',
+      opticAxisAngle: undefined as number | undefined,
+      extinctionType: '' as string,
+      extinctionAngle: undefined as number | undefined,
+      pleochroism: '',
+      pleochroismColors: '',
+      absorptionFormula: '',
+      twinningType: 'none' as string,
+      twinningDescription: '',
+      zoning: 0 as number,
+      inclusionsDescription: '',
+    },
+    photos: [] as Array<{
+      mode: 'ppl' | 'xpl' | 'cnl';
+      magnification: number;
+      hasPhoto: boolean;
+      imagePath?: string;
+      scaleBarMicrometers?: number;
+      notes?: string;
+    }>,
+    associations: [] as Array<{
+      associatedMineral: string;
+      relationshipType: string;
+      texturalRelation: string;
+      abundancePercent: number;
+      grainSizeMm?: number;
+      parageneticStage: string;
+      notes: string;
+    }>,
+  });
+
+  const crystalSystemOptions = [
+    '等轴晶系', '四方晶系', '六方晶系', '三方晶系',
+    '斜方晶系', '单斜晶系', '三斜晶系'
+  ];
+
+  const extinctionTypeOptions = [
+    { value: 'parallel', label: '平行消光' },
+    { value: 'symmetrical', label: '对称消光' },
+    { value: 'oblique', label: '斜消光' },
+    { value: 'undulose', label: '波状消光' },
+  ];
+
+  const twinningTypeOptions = [
+    { value: 'none', label: '无' },
+    { value: 'simple', label: '简单双晶' },
+    { value: 'polysynthetic', label: '聚片双晶' },
+    { value: 'cyclic', label: '环状双晶' },
+  ];
+
+  const opticSignOptions = [
+    { value: 'positive', label: '正光性' },
+    { value: 'negative', label: '负光性' },
+    { value: 'unknown', label: '未知' },
+  ];
+
+  const initializeEditStore = $(() => {
+    if (isStoreInitialized.value) return;
+
+    editStore.basicInfo = {
+      sampleNumber: section.sampleNumber || '',
+      mineralName: section.mineralName || '',
+      mineralFormula: section.mineralFormula || '',
+      crystalSystem: section.crystalSystem || '',
+      locality: section.locality || '',
+      collectionDate: section.collectionDate || '',
+      collector: section.collector || '',
+      thinSectionNumber: section.thinSectionNumber || '',
+      thicknessMicrometers: section.thicknessMicrometers,
+      coverSlip: section.coverSlip,
+      mountingMedium: section.mountingMedium || '',
+      grainSizeMm: section.grainSizeMm,
+      rockType: section.rockType || '',
+      alterationDegree: section.alterationDegree,
+      sampleBoxId: section.sampleBoxId,
+      boxPosition: section.boxPosition || '',
+      notes: section.notes || '',
+    };
+
+    if (section.optics) {
+      editStore.optics = {
+        relief: section.optics.relief,
+        refractiveIndexMin: section.optics.refractiveIndexMin,
+        refractiveIndexMax: section.optics.refractiveIndexMax,
+        birefringence: section.optics.birefringence,
+        opticSign: section.optics.opticSign || 'unknown',
+        opticAxisAngle: section.optics.opticAxisAngle,
+        extinctionType: section.optics.extinctionType || '',
+        extinctionAngle: section.optics.extinctionAngle,
+        pleochroism: section.optics.pleochroism || '',
+        pleochroismColors: section.optics.pleochroismColors || '',
+        absorptionFormula: section.optics.absorptionFormula || '',
+        twinningType: section.optics.twinningType || 'none',
+        twinningDescription: section.optics.twinningDescription || '',
+        zoning: section.optics.zoning,
+        inclusionsDescription: section.optics.inclusionsDescription || '',
+      };
+    } else {
+      editStore.optics = {
+        relief: 0,
+        refractiveIndexMin: undefined,
+        refractiveIndexMax: undefined,
+        birefringence: undefined,
+        opticSign: 'unknown',
+        opticAxisAngle: undefined,
+        extinctionType: '',
+        extinctionAngle: undefined,
+        pleochroism: '',
+        pleochroismColors: '',
+        absorptionFormula: '',
+        twinningType: 'none',
+        twinningDescription: '',
+        zoning: 0,
+        inclusionsDescription: '',
+      };
+    }
+
+    editStore.photos = section.micrographs.map(m => ({
+      mode: m.mode,
+      magnification: m.magnification,
+      hasPhoto: true,
+      imagePath: m.imagePath,
+      scaleBarMicrometers: m.scaleBarMicrometers,
+      notes: m.notes,
+    }));
+
+    editStore.associations = section.associations.map(a => ({
+      associatedMineral: a.associatedMineral,
+      relationshipType: a.relationshipType,
+      texturalRelation: a.texturalRelation,
+      abundancePercent: a.abundancePercent,
+      grainSizeMm: a.grainSizeMm,
+      parageneticStage: a.parageneticStage || '',
+      notes: a.notes || '',
+    }));
+
+    isStoreInitialized.value = true;
+  });
+
+  const addAssociation = $(() => {
+    editStore.associations.push({
+      associatedMineral: '',
+      relationshipType: '共生',
+      texturalRelation: '',
+      abundancePercent: 5,
+      grainSizeMm: 0.3,
+      parageneticStage: '',
+      notes: '',
+    });
+  });
+
+  const removeAssociation = $((index: number) => {
+    editStore.associations.splice(index, 1);
+  });
+
+  const handleEditClick = $(async () => {
+    if (!isEditing.value) {
+      await initializeEditStore();
+      isEditing.value = true;
+    } else {
+      const submitData = {
+        id: section.id,
+        ...editStore.basicInfo,
+        optics: editStore.optics,
+        photos: editStore.photos,
+        associations: editStore.associations,
+      };
+
+      const result = await action.submit(submitData as any);
+
+      if (result.value?.success) {
+        alert('保存成功');
+        isEditing.value = false;
+        nav(`/sections/${section.id}`);
+      } else if (result.value?.error) {
+        alert(`保存失败: ${result.value.error}`);
+      }
+    }
+  });
 
   const selectedPhoto = useComputed$(() => {
     return section.micrographs.find(m => m.id === selectedPhotoId.value) || section.micrographs[0];
@@ -66,7 +274,8 @@ export default component$(() => {
   });
 
   const totalAbundance = useComputed$(() => {
-    return section.associations.reduce((sum, a) => sum + a.abundancePercent, 0);
+    const list = isEditing.value ? editStore.associations : section.associations;
+    return list.reduce((sum, a) => sum + a.abundancePercent, 0);
   });
 
   const opticSignLabel: Record<string, string> = {
@@ -118,11 +327,32 @@ export default component$(() => {
       <div class="flex items-start justify-between">
         <div>
           <div class="flex items-center gap-3 mb-2">
-            <h1 class="text-2xl font-bold text-mineral-50">{section.mineralName}</h1>
-            {section.mineralFormula && (
-              <span class="px-2 py-0.5 bg-mineral-700 text-mineral-200 rounded font-mono text-sm">
-                {section.mineralFormula}
-              </span>
+            <h1 class="text-2xl font-bold text-mineral-50">
+              {isEditing.value ? (
+                <input
+                  type="text"
+                  class="input-field text-2xl font-bold"
+                  value={editStore.basicInfo.mineralName}
+                  onInput$={(e) => editStore.basicInfo.mineralName = (e.target as HTMLInputElement).value}
+                />
+              ) : (
+                section.mineralName
+              )}
+            </h1>
+            {isEditing.value ? (
+              <input
+                type="text"
+                class="px-2 py-0.5 bg-mineral-700 text-mineral-200 rounded font-mono text-sm"
+                value={editStore.basicInfo.mineralFormula}
+                onInput$={(e) => editStore.basicInfo.mineralFormula = (e.target as HTMLInputElement).value}
+                placeholder="矿物分子式"
+              />
+            ) : (
+              section.mineralFormula && (
+                <span class="px-2 py-0.5 bg-mineral-700 text-mineral-200 rounded font-mono text-sm">
+                  {section.mineralFormula}
+                </span>
+              )
             )}
             <VersionBadge version={section.currentVersion} isLatest={true} />
             {unresolvedAnomalies.value.length > 0 && (
@@ -130,11 +360,54 @@ export default component$(() => {
             )}
           </div>
           <p class="text-mineral-400">
-            薄片编号: <span class="font-mono text-mineral-200">{section.thinSectionNumber}</span>
+            薄片编号: <span class="font-mono text-mineral-200">
+              {isEditing.value ? (
+                <input
+                  type="text"
+                  class="input-field inline w-32"
+                  value={editStore.basicInfo.thinSectionNumber}
+                  onInput$={(e) => editStore.basicInfo.thinSectionNumber = (e.target as HTMLInputElement).value}
+                />
+              ) : (
+                section.thinSectionNumber
+              )}
+            </span>
             {section.locality && <span class="mx-2">·</span>}
-            {section.locality && <span>产地: {section.locality}</span>}
+            {isEditing.value ? (
+              <>
+                <span class="mx-2">·</span>
+                <span>产地: 
+                  <input
+                    type="text"
+                    class="input-field inline w-40"
+                    value={editStore.basicInfo.locality}
+                    onInput$={(e) => editStore.basicInfo.locality = (e.target as HTMLInputElement).value}
+                  />
+                </span>
+              </>
+            ) : (
+              section.locality && <span>产地: {section.locality}</span>
+            )}
             {section.crystalSystem && <span class="mx-2">·</span>}
-            {section.crystalSystem && <span>晶系: {section.crystalSystem}</span>}
+            {isEditing.value ? (
+              <>
+                <span class="mx-2">·</span>
+                <span>晶系: 
+                  <select
+                    class="select-field inline w-32"
+                    value={editStore.basicInfo.crystalSystem as any}
+                    onChange$={(e) => editStore.basicInfo.crystalSystem = (e.target as HTMLSelectElement).value as any}
+                  >
+                    <option value="">请选择晶系</option>
+                    {crystalSystemOptions.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </span>
+              </>
+            ) : (
+              section.crystalSystem && <span>晶系: {section.crystalSystem}</span>
+            )}
           </p>
         </div>
         <div class="flex gap-2">
@@ -142,16 +415,23 @@ export default component$(() => {
             📄 导出报告
           </button>
           <button 
-            onClick$={() => isEditing.value = !isEditing.value}
+            onClick$={handleEditClick}
             class={isEditing.value ? 'btn-warning' : 'btn-primary'}
+            disabled={action.isRunning}
           >
-            {isEditing.value ? '✓ 保存' : '✏️ 编辑'}
+            {action.isRunning ? '保存中...' : (isEditing.value ? '✓ 保存' : '✏️ 编辑')}
           </button>
           <Link href="/sections" class="btn-secondary">
             ← 返回列表
           </Link>
         </div>
       </div>
+
+      {action.value?.error && (
+        <div class="mt-4 p-4 bg-red-900/20 border border-red-800 rounded-lg text-red-300">
+          ⚠️ {action.value.error}
+        </div>
+      )}
 
       {unresolvedAnomalies.value.length > 0 && (
         <div class="bg-red-900/20 border border-red-800 rounded-lg p-4">
@@ -182,65 +462,188 @@ export default component$(() => {
         <div class="col-span-2 card p-4">
           <div class="mb-4">
             <h2 class="text-lg font-semibold text-mineral-100 mb-3">基本信息</h2>
-            <div class="grid grid-cols-4 gap-4 text-sm">
-              <div>
-                <p class="text-mineral-500">样品编号</p>
-                <p class="text-mineral-200 font-mono">{section.sampleNumber}</p>
+            {isEditing.value ? (
+              <div class="grid grid-cols-4 gap-4 text-sm">
+                <div>
+                  <label class="label">样品编号</label>
+                  <input
+                    type="text"
+                    class="input-field"
+                    value={editStore.basicInfo.sampleNumber}
+                    onInput$={(e) => editStore.basicInfo.sampleNumber = (e.target as HTMLInputElement).value}
+                  />
+                </div>
+                <div>
+                  <label class="label">薄片厚度 (μm)</label>
+                  <input
+                    type="number"
+                    class="input-field"
+                    min="10"
+                    max="60"
+                    value={editStore.basicInfo.thicknessMicrometers}
+                    onInput$={(e) => { const v = (e.target as HTMLInputElement).value; editStore.basicInfo.thicknessMicrometers = v === '' ? undefined as any : parseFloat(v); }}
+                  />
+                </div>
+                <div>
+                  <label class="label">盖玻片</label>
+                  <select
+                    class="select-field"
+                    value={editStore.basicInfo.coverSlip as any}
+                    onChange$={(e) => editStore.basicInfo.coverSlip = (e.target as HTMLSelectElement).value as any}
+                  >
+                    <option value="true">有</option>
+                    <option value="false">无</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="label">封固剂</label>
+                  <input
+                    type="text"
+                    class="input-field"
+                    value={editStore.basicInfo.mountingMedium}
+                    onInput$={(e) => editStore.basicInfo.mountingMedium = (e.target as HTMLInputElement).value}
+                    placeholder="例如: 环氧树脂"
+                  />
+                </div>
+                <div>
+                  <label class="label">粒度 (mm)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    class="input-field"
+                    value={editStore.basicInfo.grainSizeMm}
+                    onInput$={(e) => { const v = (e.target as HTMLInputElement).value; editStore.basicInfo.grainSizeMm = v === '' ? undefined as any : parseFloat(v); }}
+                  />
+                </div>
+                <div>
+                  <label class="label">岩石类型</label>
+                  <input
+                    type="text"
+                    class="input-field"
+                    value={editStore.basicInfo.rockType}
+                    onInput$={(e) => editStore.basicInfo.rockType = (e.target as HTMLInputElement).value}
+                    placeholder="例如: 花岗伟晶岩"
+                  />
+                </div>
+                <div>
+                  <label class="label">蚀变程度 (%)</label>
+                  <input
+                    type="number"
+                    class="input-field"
+                    value={editStore.basicInfo.alterationDegree}
+                    onInput$={(e) => { const v = (e.target as HTMLInputElement).value; editStore.basicInfo.alterationDegree = v === '' ? undefined as any : parseFloat(v); }}
+                  />
+                </div>
+                <div>
+                  <label class="label">采集日期</label>
+                  <input
+                    type="date"
+                    class="input-field"
+                    value={editStore.basicInfo.collectionDate}
+                    onInput$={(e) => editStore.basicInfo.collectionDate = (e.target as HTMLInputElement).value}
+                  />
+                </div>
+                <div>
+                  <label class="label">采集者</label>
+                  <input
+                    type="text"
+                    class="input-field"
+                    value={editStore.basicInfo.collector}
+                    onInput$={(e) => editStore.basicInfo.collector = (e.target as HTMLInputElement).value}
+                  />
+                </div>
+                <div>
+                  <label class="label">盒内位置</label>
+                  <input
+                    type="text"
+                    class="input-field font-mono"
+                    value={editStore.basicInfo.boxPosition}
+                    onInput$={(e) => editStore.basicInfo.boxPosition = (e.target as HTMLInputElement).value}
+                    placeholder="例如: A1, B3"
+                  />
+                </div>
+                <div>
+                  <label class="label">创建时间</label>
+                  <p class="text-mineral-200 text-xs font-mono">{new Date(section.createdAt).toLocaleString('zh-CN')}</p>
+                </div>
+                <div>
+                  <label class="label">更新时间</label>
+                  <p class="text-mineral-200 text-xs font-mono">{new Date(section.updatedAt).toLocaleString('zh-CN')}</p>
+                </div>
               </div>
-              <div>
-                <p class="text-mineral-500">薄片厚度</p>
-                <p class={`font-mono ${section.thicknessMicrometers < 15 || section.thicknessMicrometers > 45 ? 'text-orange-400' : 'text-mineral-200'}`}>
-                  {section.thicknessMicrometers} μm
-                </p>
+            ) : (
+              <div class="grid grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p class="text-mineral-500">样品编号</p>
+                  <p class="text-mineral-200 font-mono">{section.sampleNumber}</p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">薄片厚度</p>
+                  <p class={`font-mono ${section.thicknessMicrometers < 15 || section.thicknessMicrometers > 45 ? 'text-orange-400' : 'text-mineral-200'}`}>
+                    {section.thicknessMicrometers} μm
+                  </p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">盖玻片</p>
+                  <p class="text-mineral-200">{section.coverSlip ? '有' : '无'}</p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">封固剂</p>
+                  <p class="text-mineral-200">{section.mountingMedium || '-'}</p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">粒度</p>
+                  <p class="text-mineral-200">{section.grainSizeMm ? `${section.grainSizeMm} mm` : '-'}</p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">岩石类型</p>
+                  <p class="text-mineral-200">{section.rockType || '-'}</p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">蚀变程度</p>
+                  <p class="text-mineral-200">{section.alterationDegree !== undefined ? `${section.alterationDegree}%` : '-'}</p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">采集日期</p>
+                  <p class="text-mineral-200">{section.collectionDate || '-'}</p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">采集者</p>
+                  <p class="text-mineral-200">{section.collector || '-'}</p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">储存位置</p>
+                  <p class="text-mineral-200">
+                    {section.box ? `${section.box.name} (${section.box.position || '-'})` : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">创建时间</p>
+                  <p class="text-mineral-200 text-xs font-mono">{new Date(section.createdAt).toLocaleString('zh-CN')}</p>
+                </div>
+                <div>
+                  <p class="text-mineral-500">更新时间</p>
+                  <p class="text-mineral-200 text-xs font-mono">{new Date(section.updatedAt).toLocaleString('zh-CN')}</p>
+                </div>
               </div>
-              <div>
-                <p class="text-mineral-500">盖玻片</p>
-                <p class="text-mineral-200">{section.coverSlip ? '有' : '无'}</p>
-              </div>
-              <div>
-                <p class="text-mineral-500">封固剂</p>
-                <p class="text-mineral-200">{section.mountingMedium || '-'}</p>
-              </div>
-              <div>
-                <p class="text-mineral-500">粒度</p>
-                <p class="text-mineral-200">{section.grainSizeMm ? `${section.grainSizeMm} mm` : '-'}</p>
-              </div>
-              <div>
-                <p class="text-mineral-500">岩石类型</p>
-                <p class="text-mineral-200">{section.rockType || '-'}</p>
-              </div>
-              <div>
-                <p class="text-mineral-500">蚀变程度</p>
-                <p class="text-mineral-200">{section.alterationDegree !== undefined ? `${section.alterationDegree}%` : '-'}</p>
-              </div>
-              <div>
-                <p class="text-mineral-500">采集日期</p>
-                <p class="text-mineral-200">{section.collectionDate || '-'}</p>
-              </div>
-              <div>
-                <p class="text-mineral-500">采集者</p>
-                <p class="text-mineral-200">{section.collector || '-'}</p>
-              </div>
-              <div>
-                <p class="text-mineral-500">储存位置</p>
-                <p class="text-mineral-200">
-                  {section.box ? `${section.box.name} (${section.box.position || '-'})` : '-'}
-                </p>
-              </div>
-              <div>
-                <p class="text-mineral-500">创建时间</p>
-                <p class="text-mineral-200 text-xs font-mono">{new Date(section.createdAt).toLocaleString('zh-CN')}</p>
-              </div>
-              <div>
-                <p class="text-mineral-500">更新时间</p>
-                <p class="text-mineral-200 text-xs font-mono">{new Date(section.updatedAt).toLocaleString('zh-CN')}</p>
-              </div>
-            </div>
-            {section.notes && (
+            )}
+            {isEditing.value ? (
               <div class="mt-4 pt-4 border-t border-mineral-700">
-                <p class="text-mineral-500 text-sm mb-1">备注</p>
-                <p class="text-mineral-300">{section.notes}</p>
+                <label class="label">备注</label>
+                <textarea
+                  class="input-field min-h-[80px]"
+                  value={editStore.basicInfo.notes}
+                  onInput$={(e) => editStore.basicInfo.notes = (e.target as HTMLTextAreaElement).value}
+                  placeholder="记录样品的特殊处理、观察条件等信息..."
+                />
               </div>
+            ) : (
+              section.notes && (
+                <div class="mt-4 pt-4 border-t border-mineral-700">
+                  <p class="text-mineral-500 text-sm mb-1">备注</p>
+                  <p class="text-mineral-300">{section.notes}</p>
+                </div>
+              )
             )}
           </div>
         </div>
@@ -411,7 +814,199 @@ export default component$(() => {
             </div>
           )}
 
-          {activeTab.value === 'optics' && section.optics && (
+          {activeTab.value === 'optics' && isEditing.value && (
+            <div class="grid grid-cols-2 gap-6">
+              <div class="space-y-4">
+                <h3 class="text-md font-semibold text-mineral-200 mb-4">基本光学参数</h3>
+                <div>
+                  <label class="label">突起</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="-2"
+                    max="6"
+                    class="input-field"
+                    placeholder="例如: +2"
+                    value={editStore.optics.relief}
+                    onInput$={(e) => { const v = (e.target as HTMLInputElement).value; editStore.optics.relief = v === '' ? undefined as any : parseFloat(v); }}
+                  />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="label">最小折射率 Np</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      class="input-field font-mono"
+                      placeholder="例如: 1.648"
+                      value={editStore.optics.refractiveIndexMin}
+                      onInput$={(e) => { const v = (e.target as HTMLInputElement).value; editStore.optics.refractiveIndexMin = v === '' ? undefined as any : parseFloat(v); }}
+                    />
+                  </div>
+                  <div>
+                    <label class="label">最大折射率 Ng</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      class="input-field font-mono"
+                      placeholder="例如: 1.670"
+                      value={editStore.optics.refractiveIndexMax}
+                      onInput$={(e) => { const v = (e.target as HTMLInputElement).value; editStore.optics.refractiveIndexMax = v === '' ? undefined as any : parseFloat(v); }}
+                    />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="label">双折射率</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      class="input-field font-mono"
+                      placeholder="例如: 0.022"
+                      value={editStore.optics.birefringence}
+                      onInput$={(e) => { const v = (e.target as HTMLInputElement).value; editStore.optics.birefringence = v === '' ? undefined as any : parseFloat(v); }}
+                    />
+                  </div>
+                  <div>
+                    <label class="label">光轴角 2V</label>
+                    <input
+                      type="number"
+                      class="input-field"
+                      placeholder="例如: 75"
+                      value={editStore.optics.opticAxisAngle}
+                      onInput$={(e) => { const v = (e.target as HTMLInputElement).value; editStore.optics.opticAxisAngle = v === '' ? undefined as any : parseFloat(v); }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="label">光性符号</label>
+                  <select
+                    class="select-field"
+                    value={editStore.optics.opticSign as any}
+                    onChange$={(e) => editStore.optics.opticSign = (e.target as HTMLSelectElement).value as any}
+                  >
+                    {opticSignOptions.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <h3 class="text-md font-semibold text-mineral-200 mb-4">消光与多色性</h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="label">消光类型</label>
+                    <select
+                      class="select-field"
+                      value={editStore.optics.extinctionType as any}
+                      onChange$={(e) => editStore.optics.extinctionType = (e.target as HTMLSelectElement).value as any}
+                    >
+                      <option value="">未观察</option>
+                      {extinctionTypeOptions.map(e => (
+                        <option key={e.value} value={e.value}>{e.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label">消光角</label>
+                    <input
+                      type="number"
+                      class="input-field"
+                      placeholder="例如: 35"
+                      value={editStore.optics.extinctionAngle}
+                      onInput$={(e) => { const v = (e.target as HTMLInputElement).value; editStore.optics.extinctionAngle = v === '' ? undefined as any : parseFloat(v); }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="label">多色性</label>
+                  <input
+                    type="text"
+                    class="input-field"
+                    placeholder="例如: 弱-强"
+                    value={editStore.optics.pleochroism}
+                    onInput$={(e) => editStore.optics.pleochroism = (e.target as HTMLInputElement).value}
+                  />
+                </div>
+
+                <div>
+                  <label class="label">多色性公式</label>
+                  <input
+                    type="text"
+                    class="input-field font-mono"
+                    placeholder="例如: Ng = 淡紫色, Nm = 淡紫色, Np = 近无色"
+                    value={editStore.optics.pleochroismColors}
+                    onInput$={(e) => editStore.optics.pleochroismColors = (e.target as HTMLInputElement).value}
+                  />
+                </div>
+
+                <div>
+                  <label class="label">吸收公式</label>
+                  <input
+                    type="text"
+                    class="input-field font-mono"
+                    placeholder="例如: Ng > Nm > Np"
+                    value={editStore.optics.absorptionFormula}
+                    onInput$={(e) => editStore.optics.absorptionFormula = (e.target as HTMLInputElement).value}
+                  />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="label">双晶类型</label>
+                    <select
+                      class="select-field"
+                      value={editStore.optics.twinningType as any}
+                      onChange$={(e) => editStore.optics.twinningType = (e.target as HTMLSelectElement).value as any}
+                    >
+                      {twinningTypeOptions.map(t => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label">环带结构</label>
+                    <select
+                      class="select-field"
+                      value={editStore.optics.zoning as any}
+                      onChange$={(e) => editStore.optics.zoning = parseInt((e.target as HTMLSelectElement).value)}
+                    >
+                      <option value={0}>无</option>
+                      <option value={1}>有</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-span-2">
+                <label class="label">双晶描述</label>
+                <input
+                  type="text"
+                  class="input-field"
+                  placeholder="描述双晶的特征，如聚片双晶的结合面方向等"
+                  value={editStore.optics.twinningDescription}
+                  onInput$={(e) => editStore.optics.twinningDescription = (e.target as HTMLInputElement).value}
+                />
+              </div>
+
+              <div class="col-span-2">
+                <label class="label">包体特征</label>
+                <textarea
+                  class="input-field min-h-[80px]"
+                  placeholder="描述矿物中的包体类型、形态、分布特征等"
+                  value={editStore.optics.inclusionsDescription}
+                  onInput$={(e) => editStore.optics.inclusionsDescription = (e.target as HTMLTextAreaElement).value}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeTab.value === 'optics' && !isEditing.value && section.optics && (
             <div class="grid grid-cols-2 gap-6">
               <div class="space-y-4">
                 <h3 class="text-md font-semibold text-mineral-200 mb-4">基本光学参数</h3>
@@ -519,7 +1114,7 @@ export default component$(() => {
             </div>
           )}
 
-          {activeTab.value === 'optics' && !section.optics && (
+          {activeTab.value === 'optics' && !isEditing.value && !section.optics && (
             <div class="text-center py-12 text-mineral-500">
               <span class="text-4xl block mb-2">🔬</span>
               <p>暂无光学性质数据</p>
@@ -668,45 +1263,152 @@ export default component$(() => {
 
           {activeTab.value === 'association' && (
             <div class="space-y-6">
-              {section.associations.length > 0 ? (
-                <>
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-md font-semibold text-mineral-200">伴生矿物及含量</h3>
-                    <div class="flex items-center gap-2">
-                      <span class="text-mineral-500 text-sm">总含量:</span>
-                      <span class={`font-bold text-lg ${totalAbundance.value > 100 ? 'text-red-400' : 'text-green-400'}`}>
-                        {totalAbundance.value}%
-                      </span>
-                      {totalAbundance.value > 100 && (
-                        <span class="text-red-400 text-xs">⚠️ 含量总和超过100%</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div class="h-4 bg-mineral-800 rounded-full overflow-hidden flex">
-                    {section.associations.map((a, i) => {
-                      const colors = [
-                        'bg-purple-500', 'bg-blue-500', 'bg-green-500', 
-                        'bg-yellow-500', 'bg-orange-500', 'bg-pink-500'
-                      ];
-                      return (
-                        <div
-                          key={a.id}
-                          class={`${colors[i % colors.length]} transition-all`}
-                          style={{ width: `${(a.abundancePercent / 100) * 100}%` }}
-                          title={`${a.associatedMineral}: ${a.abundancePercent}%`}
-                        ></div>
-                      );
-                    })}
-                    {totalAbundance.value < 100 && (
-                      <div 
-                        class="bg-mineral-700"
-                        style={{ width: `${100 - totalAbundance.value}%` }}
-                        title={`其他: ${100 - totalAbundance.value}%`}
-                      ></div>
-                    )}
-                  </div>
+              <div class="flex items-center justify-between">
+                <h3 class="text-md font-semibold text-mineral-200">伴生矿物及含量</h3>
+                <div class="flex items-center gap-2">
+                  {isEditing.value && (
+                    <button
+                      type="button"
+                      onClick$={addAssociation}
+                      class="btn-secondary text-sm"
+                    >
+                      ➕ 添加伴生矿物
+                    </button>
+                  )}
+                  <span class="text-mineral-500 text-sm">总含量:</span>
+                  <span class={`font-bold text-lg ${totalAbundance.value > 100 ? 'text-red-400' : 'text-green-400'}`}>
+                    {totalAbundance.value}%
+                  </span>
+                  {totalAbundance.value > 100 && (
+                    <span class="text-red-400 text-xs">⚠️ 含量总和超过100%</span>
+                  )}
+                </div>
+              </div>
+              
+              <div class="h-4 bg-mineral-800 rounded-full overflow-hidden flex">
+                {(isEditing.value ? editStore.associations : section.associations).map((a, i) => {
+                  const colors = [
+                    'bg-purple-500', 'bg-blue-500', 'bg-green-500', 
+                    'bg-yellow-500', 'bg-orange-500', 'bg-pink-500'
+                  ];
+                  return (
+                    <div
+                      key={i}
+                      class={`${colors[i % colors.length]} transition-all`}
+                      style={{ width: `${(a.abundancePercent / 100) * 100}%` }}
+                      title={`${a.associatedMineral}: ${a.abundancePercent}%`}
+                    ></div>
+                  );
+                })}
+                {totalAbundance.value < 100 && (
+                  <div 
+                    class="bg-mineral-700"
+                    style={{ width: `${100 - totalAbundance.value}%` }}
+                    title={`其他: ${100 - totalAbundance.value}%`}
+                  ></div>
+                )}
+              </div>
 
+              {isEditing.value ? (
+                <div class="space-y-4">
+                  {editStore.associations.map((assoc, index) => (
+                    <div key={index} class="p-4 bg-mineral-800/30 rounded-lg border border-mineral-700">
+                      <div class="flex items-center justify-between mb-4">
+                        <span class="font-medium text-mineral-200">伴生矿物 #{index + 1}</span>
+                        {editStore.associations.length > 1 && (
+                          <button
+                            type="button"
+                            onClick$={() => removeAssociation(index)}
+                            class="text-red-400 hover:text-red-300 text-sm"
+                          >
+                            移除
+                          </button>
+                        )}
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-4">
+                        <div>
+                          <label class="label">矿物名称</label>
+                          <input
+                            type="text"
+                            class="input-field"
+                            placeholder="例如: 石英"
+                            value={assoc.associatedMineral}
+                            onInput$={(e) => assoc.associatedMineral = (e.target as HTMLInputElement).value}
+                          />
+                        </div>
+                        <div>
+                          <label class="label">含量 (%)</label>
+                          <input
+                            type="number"
+                            class="input-field"
+                            min="0"
+                            max="100"
+                            value={assoc.abundancePercent}
+                            onInput$={(e) => { const v = (e.target as HTMLInputElement).value; assoc.abundancePercent = v === '' ? 0 : parseFloat(v); }}
+                          />
+                        </div>
+                        <div>
+                          <label class="label">关系类型</label>
+                          <select
+                            class="select-field"
+                            value={assoc.relationshipType as any}
+                            onChange$={(e) => assoc.relationshipType = (e.target as HTMLSelectElement).value as any}
+                          >
+                            <option value="共生">共生</option>
+                            <option value="交生">交生</option>
+                            <option value="包裹">包裹</option>
+                            <option value="交代">交代</option>
+                            <option value="充填">充填</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="label">结构关系</label>
+                          <input
+                            type="text"
+                            class="input-field"
+                            placeholder="例如: 他形粒状"
+                            value={assoc.texturalRelation}
+                            onInput$={(e) => assoc.texturalRelation = (e.target as HTMLInputElement).value}
+                          />
+                        </div>
+                        <div>
+                          <label class="label">粒度 (mm)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            class="input-field"
+                            value={assoc.grainSizeMm}
+                            onInput$={(e) => { const v = (e.target as HTMLInputElement).value; assoc.grainSizeMm = v === '' ? undefined as any : parseFloat(v); }}
+                          />
+                        </div>
+                        <div>
+                          <label class="label">世代</label>
+                          <input
+                            type="text"
+                            class="input-field"
+                            placeholder="例如: 第II世代"
+                            value={assoc.parageneticStage}
+                            onInput$={(e) => assoc.parageneticStage = (e.target as HTMLInputElement).value}
+                          />
+                        </div>
+                      </div>
+
+                      <div class="mt-4">
+                        <label class="label">备注</label>
+                        <input
+                          type="text"
+                          class="input-field"
+                          placeholder="其他描述信息"
+                          value={assoc.notes}
+                          onInput$={(e) => assoc.notes = (e.target as HTMLInputElement).value}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                section.associations.length > 0 ? (
                   <div class="overflow-x-auto">
                     <table class="w-full">
                       <thead>
@@ -751,12 +1453,12 @@ export default component$(() => {
                       </tbody>
                     </table>
                   </div>
-                </>
-              ) : (
-                <div class="text-center py-12 text-mineral-500">
-                  <span class="text-4xl block mb-2">🔗</span>
-                  <p>暂无伴生关系记录</p>
-                </div>
+                ) : (
+                  <div class="text-center py-12 text-mineral-500">
+                    <span class="text-4xl block mb-2">🔗</span>
+                    <p>暂无伴生关系记录</p>
+                  </div>
+                )
               )}
             </div>
           )}

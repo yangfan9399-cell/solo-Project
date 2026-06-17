@@ -15,7 +15,7 @@
     "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
     "init": "tsx src/server/init-db.ts",
     "preview": "qwik build preview && vite preview --open",
-    "start": "node server/entry.express",
+    "start": "npm run init && npm run dev",
     "start.dev": "tsx src/server/init-db.ts && vite --mode ssr",
     "typecheck": "tsc --noEmit"
   },
