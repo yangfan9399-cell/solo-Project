@@ -20,6 +20,9 @@
 
 <form method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:20px;">
   {% csrf_token %}
+  {% if is_edit %}
+  <input type="hidden" name="_base_version" value="{{ record.version }}">
+  {% endif %}
   {% if form.non_field_errors %}
   <div class="alert-msg error">
     {% for e in form.non_field_errors %}{{ e }}{% endfor %}
@@ -140,7 +143,6 @@
     </div>
   </div>
 
-  {% if is_edit %}
   <div class="card">
     <div class="card-header" style="background:#fff7ed;border-bottom-color:#fed7aa;">
       <h3 style="color:#9a3412;">🚨 异常与处理 <span style="font-size:12px;font-weight:400;">(异常会在保存时根据浓度/池面自动检测)</span></h3>
@@ -158,7 +160,6 @@
       </div>
     </div>
   </div>
-  {% endif %}
 
   <div class="card">
     <div class="card-header"><h3>📝 备注</h3></div>
@@ -172,7 +173,7 @@
   <div style="display:flex;justify-content:flex-end;gap:10px;padding-bottom:40px;">
     {% if is_edit %}
     <a href="{% url 'inspection:record_detail' record.pk %}" class="btn">取消</a>
-    <a href="{% url 'inspection:record_delete' record.pk %}" class="btn btn-danger" data-confirm="确定要删除记录 #{{ record.id }} 吗？此操作不可撤销">🗑️ 删除</a>
+    <form method="post" action="{% url 'inspection:record_delete' record.pk %}" style="display:inline;" onsubmit="return confirm('确定要删除记录 #{{ record.id }} 吗？此操作不可撤销。')">{% csrf_token %}<button type="submit" class="btn btn-danger">🗑️ 删除</button></form>
     {% else %}
     <a href="{% url 'inspection:record_list' %}" class="btn">取消</a>
     {% endif %}

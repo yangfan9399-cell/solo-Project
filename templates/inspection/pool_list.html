@@ -43,7 +43,7 @@
             <td class="num">{{ p.depth_cm }}</td>
             <td>
               <span class="badge {% if p.status == 'active' %}badge-green{% elif p.status == 'idle' %}badge-gray{% elif p.status == 'maintenance' %}badge-amber{% else %}badge-red{% endif %}">
-                {{ p.get_status_display }}
+                {{ p.status_display }}
               </span>
             </td>
             <td style="font-family:ui-monospace,monospace;font-size:11px;color:#64748b;">

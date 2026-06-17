@@ -38,10 +38,7 @@
 
       <li class="nav-group-title">异常与导出</li>
       <li><a href="{% url 'inspection:alert_list' %}" class="{% if 'alert' in request.resolver_match.url_name %}active{% endif %}">
-        <span class="nav-icon">🚨</span><span>异常告警
-          {% with open_alerts=1 %}
-          {% endwith %}
-        </span></a>
+        <span class="nav-icon">🚨</span><span>异常告警</span></a>
       </li>
       <li><a href="{% url 'inspection:export_summary' %}">
         <span class="nav-icon">📑</span><span>导出摘要报告</span></a>

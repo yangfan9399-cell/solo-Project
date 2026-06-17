@@ -98,7 +98,7 @@
             </div>
             {% if a.status != 'resolved' and a.status != 'ignored' %}
             <div style="margin-top:4px;">
-              <a href="{% url 'inspection:alert_resolve' a.pk %}" class="btn btn-sm btn-success" style="padding:2px 10px;font-size:11px;">标记已处理</a>
+              <form method="post" action="{% url 'inspection:alert_resolve' a.pk %}" style="display:inline;" onsubmit="return confirm('确认标记告警已处理？')">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success" style="padding:2px 10px;font-size:11px;">标记已处理</button></form>
             </div>
             {% endif %}
           </div>

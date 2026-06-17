@@ -1,19 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse, JsonResponse, Http404
-from django.views.decorators.http import require_http_methods, require_GET
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q, Count, Sum, Avg, Min, Max, F
-from django.db.models.functions import TruncDate, TruncWeek, ExtractWeekDay
+from django.db.models import Q, Count, Sum, Avg, Min, Max
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from django.template.loader import render_to_string
-from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, date, timedelta
-from decimal import Decimal
 import csv
-import io
 import json
 
 from .models import CrystallizationPool, InspectionRecord, RecordVersion, AnomalyAlert
@@ -252,6 +246,7 @@ def record_create(request):
 
 def record_edit(request, pk):
     record = get_object_or_404(InspectionRecord, pk=pk)
+    base_version = record.version
     old_snapshot = {
         'concentration': float(record.brine_concentration),
         'surface': record.surface_status,
@@ -261,10 +256,14 @@ def record_edit(request, pk):
         'crystal': float(record.crystal_thickness_mm),
     }
     if request.method == 'POST':
+        submitted_version = request.POST.get('_base_version')
+        if submitted_version and int(submitted_version) != base_version:
+            messages.error(request, f'版本冲突：该记录已被更新至 v{record.version}，请重新加载后再编辑。')
+            return redirect('inspection:record_detail', pk=record.id)
         form = InspectionRecordForm(request.POST, request.FILES, instance=record)
         if form.is_valid():
             new_record = form.save(commit=False)
-            new_version = record.version + 1
+            new_version = base_version + 1
             new_record.version = new_version
             new_record.save()
 
@@ -305,6 +304,7 @@ def record_edit(request, pk):
     return render(request, 'inspection/record_form.html', context)
 
 
+@require_POST
 def record_delete(request, pk):
     record = get_object_or_404(InspectionRecord, pk=pk)
     pool_code = record.pool.pool_code
@@ -344,11 +344,20 @@ def record_versions(request, pk):
     return render(request, 'inspection/record_versions.html', context)
 
 
+@require_POST
 def record_revert(request, pk, version_no):
     record = get_object_or_404(InspectionRecord, pk=pk)
     target_version = get_object_or_404(RecordVersion, record=record, version_no=version_no)
     snap = target_version.snapshot or {}
     data = snap.get('new') if isinstance(snap.get('new'), dict) else snap
+
+    if not data:
+        messages.error(request, f'版本 v{version_no} 无有效数据快照，无法回滚。')
+        return redirect('inspection:record_versions', pk=pk)
+
+    if record.version == version_no:
+        messages.warning(request, f'当前已是版本 v{version_no}，无需回滚。')
+        return redirect('inspection:record_versions', pk=pk)
 
     old_snap = {
         'concentration': float(record.brine_concentration),
@@ -446,8 +455,15 @@ def alert_list(request):
     return render(request, 'inspection/alert_list.html', context)
 
 
+@require_POST
 def alert_resolve(request, pk):
     alert = get_object_or_404(AnomalyAlert, pk=pk)
+    if alert.status == 'resolved':
+        messages.warning(request, f'异常告警 #{alert.id} 已处于已解决状态，无需重复处理。')
+        return redirect(request.META.get('HTTP_REFERER') or 'inspection:alert_list')
+    if alert.status == 'ignored':
+        messages.warning(request, f'异常告警 #{alert.id} 已被忽略，如需处理请先更改状态。')
+        return redirect(request.META.get('HTTP_REFERER') or 'inspection:alert_list')
     alert.status = 'resolved'
     alert.resolved_at = timezone.now()
     alert.handler = alert.handler or (request.user.get_full_name() if request.user.is_authenticated else '系统')
@@ -460,10 +476,30 @@ def alert_resolve(request, pk):
 def pool_list(request):
     pools = CrystallizationPool.objects.all().annotate(
         record_count=Count('inspections'),
-        latest_conc=Max('inspections__brine_concentration'),
         total_yield=Sum('inspections__salt_yield'),
     ).order_by('pool_code')
-    context = {'pools': pools}
+    status_map = dict(CrystallizationPool.POOL_STATUS)
+    pool_data = []
+    for p in pools:
+        latest = p.inspections.first()
+        pool_data.append({
+            'pk': p.pk,
+            'pool_code': p.pool_code,
+            'pool_name': p.pool_name,
+            'pool_group': p.pool_group,
+            'area': p.area,
+            'depth_cm': p.depth_cm,
+            'status': p.status,
+            'status_display': status_map.get(p.status, p.status),
+            'position_x': p.position_x,
+            'position_y': p.position_y,
+            'build_date': p.build_date,
+            'record_count': p.record_count,
+            'latest_conc': latest.brine_concentration if latest else None,
+            'total_yield': p.total_yield,
+            'has_anomaly': latest.has_anomaly if latest else False,
+        })
+    context = {'pools': pool_data}
     return render(request, 'inspection/pool_list.html', context)
 
 
@@ -563,6 +599,9 @@ def _write_csv_response(rows, headers, filename):
 def export_csv(request):
     qs = InspectionRecord.objects.select_related('pool').all()
     qs, _ = _apply_filters(qs, request)
+    if not qs.exists():
+        messages.warning(request, '当前筛选条件下没有巡检记录，无法导出。')
+        return redirect('inspection:record_list')
     qs = qs[:5000]
     rows = []
     for r in qs:
@@ -610,6 +649,9 @@ def export_excel(request):
 
     qs = InspectionRecord.objects.select_related('pool').all()
     qs, _ = _apply_filters(qs, request)
+    if not qs.exists():
+        messages.warning(request, '当前筛选条件下没有巡检记录，无法导出。')
+        return redirect('inspection:record_list')
     qs = qs[:5000]
 
     wb = Workbook()

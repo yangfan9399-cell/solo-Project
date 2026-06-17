@@ -57,14 +57,14 @@
               </span>
               {% if record.version != v.version_no and v.action != 'revert' %}
               <span style="margin-left:auto;">
-                <a href="{% url 'inspection:record_revert' record.pk v.version_no %}"
-                   class="btn btn-sm btn-outline-primary"
-                   data-confirm="确定回滚到版本 v{{ v.version_no }} 吗？将创建新版本">
-                  ↩️ 回滚到此版本
-                </a>
+                <form method="post" action="{% url 'inspection:record_revert' record.pk v.version_no %}" style="display:inline;" onsubmit="return confirm('确定回滚到版本 v{{ v.version_no }} 吗？将创建新版本')">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-primary">↩️ 回滚到此版本</button></form>
               </span>
               {% elif record.version == v.version_no %}
               <span style="margin-left:auto;"><span class="badge badge-green">✨ 当前版本</span></span>
+              {% elif v.action == 'revert' and record.version != v.version_no %}
+              <span style="margin-left:auto;">
+                <form method="post" action="{% url 'inspection:record_revert' record.pk v.version_no %}" style="display:inline;" onsubmit="return confirm('确定回滚到版本 v{{ v.version_no }} 吗？将创建新版本')">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-primary">↩️ 回滚到此版本</button></form>
+              </span>
               {% endif %}
             </div>
             <div class="timeline-title" style="margin-bottom:6px;">{{ v.change_summary|default:"无变更摘要" }}</div>

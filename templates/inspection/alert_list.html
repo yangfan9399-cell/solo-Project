@@ -114,7 +114,7 @@
               <a href="{% url 'inspection:record_detail' a.record.pk %}" class="btn btn-sm">关联记录</a>
               {% endif %}
               {% if a.status != 'resolved' and a.status != 'ignored' %}
-              <a href="{% url 'inspection:alert_resolve' a.pk %}" class="btn btn-sm btn-success" data-confirm="确认将告警 #{{ a.id }} 标记为已解决？">标记解决</a>
+              <form method="post" action="{% url 'inspection:alert_resolve' a.pk %}" style="display:inline;" onsubmit="return confirm('确认将告警 #{{ a.id }} 标记为已解决？')">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success">标记解决</button></form>
               {% endif %}
             </td>
           </tr>
