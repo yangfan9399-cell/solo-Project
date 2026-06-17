@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}异常告警 - 海盐巡检台账{% endblock %}
+{% block page_title %}异常告警中心{% endblock %}
+{% block breadcrumb %}异常管理 / 告警中心{% endblock %}
+
+{% block content %}
+<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+  <div class="kpi-card red">
+    <div class="kpi-icon">🔴</div>
+    <div>
+      <div class="kpi-value">{{ stats.critical }}</div>
+      <div class="kpi-label">严重/高危告警</div>
+    </div>
+  </div>
+  <div class="kpi-card amber">
+    <div class="kpi-icon">🟠</div>
+    <div>
+      <div class="kpi-value">{{ stats.open }}</div>
+      <div class="kpi-label">待处理</div>
+    </div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-icon">🔵</div>
+    <div>
+      <div class="kpi-value">{{ stats.processing }}</div>
+      <div class="kpi-label">处理中</div>
+    </div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-icon">📊</div>
+    <div>
+      <div class="kpi-value">{{ stats.total }}</div>
+      <div class="kpi-label">告警总数</div>
+    </div>
+  </div>
+</div>
+
+<div class="filter-bar" style="margin-bottom:20px;">
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <div style="font-size:12px;color:#64748b;">状态：</div>
+    <a href="{% url 'inspection:alert_list' %}" class="btn btn-sm {% if not filter_status %}btn-primary{% endif %}">全部</a>
+    <a href="?status=open" class="btn btn-sm {% if filter_status == 'open' %}btn-primary{% endif %}">待处理</a>
+    <a href="?status=processing" class="btn btn-sm {% if filter_status == 'processing' %}btn-primary{% endif %}">处理中</a>
+    <a href="?status=resolved" class="btn btn-sm {% if filter_status == 'resolved' %}btn-primary{% endif %}">已解决</a>
+    <div style="font-size:12px;color:#64748b;margin-left:10px;">严重度：</div>
+    <a href="?{% if filter_status %}status={{ filter_status }}&{% endif %}severity=critical" class="btn btn-sm btn-danger">严重</a>
+    <a href="?{% if filter_status %}status={{ filter_status }}&{% endif %}severity=high" class="btn btn-sm btn-warning">高</a>
+    <a href="?{% if filter_status %}status={{ filter_status }}&{% endif %}severity=medium" class="btn btn-sm btn-outline-primary">中</a>
+    <a href="?{% if filter_status %}status={{ filter_status }}&{% endif %}severity=low" class="btn btn-sm">低</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>🚨 告警列表</h3>
+    <span class="badge badge-gray">第 {{ page_obj.number }}/{{ page_obj.paginator.num_pages }} 页</span>
+  </div>
+  <div class="card-body" style="padding:0;">
+    {% if page_obj.object_list %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>严重度</th>
+            <th>类型</th>
+            <th>池号</th>
+            <th>标题</th>
+            <th>状态</th>
+            <th>发现时间</th>
+            <th>处理人</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in page_obj %}
+          <tr style="background:{% if a.status == 'open' and a.severity == 'critical' %}#fef2f2{% elif a.status == 'resolved' %}#f0fdf4{% endif %};">
+            <td>#{{ a.id }}</td>
+            <td>
+              {% if a.severity == 'critical' %}🔴 <span class="badge badge-red">严重</span>
+              {% elif a.severity == 'high' %}🟠 <span class="badge badge-amber">高</span>
+              {% elif a.severity == 'medium' %}🟡 <span class="badge badge-blue">中</span>
+              {% else %}🔵 <span class="badge badge-gray">低</span>{% endif %}
+            </td>
+            <td>
+              {% if a.anomaly_type == 'concentration' %}浓度
+              {% elif a.anomaly_type == 'surface' %}池面
+              {% elif a.anomaly_type == 'weather' %}天气
+              {% elif a.anomaly_type == 'yield' %}产量
+              {% elif a.anomaly_type == 'equipment' %}设备
+              {% else %}其他{% endif %}
+            </td>
+            <td>
+              <a href="{% url 'inspection:pool_detail' a.pool.pk %}">
+                <span class="group-tag group-{{ a.pool.pool_group }}">{{ a.pool.pool_code }}</span>
+              </a>
+            </td>
+            <td style="max-width:320px;">
+              <div style="font-weight:500;">{{ a.title }}</div>
+              {% if a.description %}
+              <div style="font-size:11px;color:#64748b;margin-top:2px;">{{ a.description|truncatechars:60 }}</div>
+              {% endif %}
+            </td>
+            <td>
+              {% if a.status == 'open' %}<span class="badge badge-red">待处理</span>
+              {% elif a.status == 'processing' %}<span class="badge badge-amber">处理中</span>
+              {% elif a.status == 'resolved' %}<span class="badge badge-green">已解决</span>
+              {% else %}<span class="badge badge-gray">已忽略</span>{% endif %}
+            </td>
+            <td style="white-space:nowrap;font-size:12px;">{{ a.detected_at|date:"m-d H:i" }}</td>
+            <td>{{ a.handler|default:"-" }}</td>
+            <td class="actions">
+              {% if a.record %}
+              <a href="{% url 'inspection:record_detail' a.record.pk %}" class="btn btn-sm">关联记录</a>
+              {% endif %}
+              {% if a.status != 'resolved' and a.status != 'ignored' %}
+              <a href="{% url 'inspection:alert_resolve' a.pk %}" class="btn btn-sm btn-success" data-confirm="确认将告警 #{{ a.id }} 标记为已解决？">标记解决</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">✅</div>
+      <h4>没有符合条件的告警</h4>
+      <p>所有结晶池运行状况良好</p>
+    </div>
+    {% endif %}
+  </div>
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="card-footer">
+    <div class="pagination">
+      <div class="page-info">共 {{ page_obj.paginator.count }} 条</div>
+      <ul class="page-nav">
+        {% if page_obj.has_previous %}
+        <li><a href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">←</a></li>
+        {% endif %}
+        {% for p in page_obj.paginator.page_range %}
+          {% if p == page_obj.number %}
+          <li><span class="current">{{ p }}</span></li>
+          {% elif p >= page_obj.number|add:"-3" and p <= page_obj.number|add:"3" %}
+          <li><a href="?{{ request.GET.urlencode }}&page={{ p }}">{{ p }}</a></li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li><a href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">→</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

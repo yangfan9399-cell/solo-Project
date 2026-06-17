@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}版本历史 - 记录 #{{ record.id }}{% endblock %}
+{% block page_title %}版本历史对比 · 记录 #{{ record.id }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'inspection:record_list' %}">巡检台账</a> /
+  <a href="{% url 'inspection:record_detail' record.pk %}">记录 #{{ record.id }}</a> / 版本历史
+{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'inspection:record_detail' record.pk %}" class="btn btn-primary">← 返回详情</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid-main-aside">
+  <div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header">
+        <h3>🧂 结晶池</h3>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">池号</span>
+            <span class="value"><span class="group-tag group-{{ record.pool.pool_group }}">{{ record.pool.pool_code }}</span> {{ record.pool.pool_name }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">巡检时间</span>
+            <span class="value">{{ record.inspection_date }} {{ record.inspection_time }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">当前版本</span>
+            <span class="value"><span class="badge badge-blue">v{{ record.version }}</span></span>
+          </div>
+          <div class="detail-item">
+            <span class="label">巡检员</span>
+            <span class="value">{{ record.inspector }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>📜 版本历史（共 {{ versions_list|length }} 个版本）</h3></div>
+      <div class="card-body">
+        {% if versions_list %}
+        <div class="timeline" style="padding-left:40px;">
+          {% for item in versions_list %}
+          {% with v=item.version %}
+          <div class="timeline-item {{ v.action }}">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+              <span class="badge badge-blue" style="font-size:13px;padding:4px 14px;">v{{ v.version_no }}</span>
+              <span class="badge {% if v.action == 'create' %}badge-green{% elif v.action == 'update' %}badge-blue{% elif v.action == 'revise' %}badge-amber{% else %}badge-purple{% endif %}">
+                {{ v.get_action_display }}
+              </span>
+              <span style="font-size:12px;color:#64748b;">
+                {{ v.changed_at|date:"Y-m-d H:i:s" }}
+                {% if v.changed_by %} · {{ v.changed_by }}{% endif %}
+              </span>
+              {% if record.version != v.version_no and v.action != 'revert' %}
+              <span style="margin-left:auto;">
+                <a href="{% url 'inspection:record_revert' record.pk v.version_no %}"
+                   class="btn btn-sm btn-outline-primary"
+                   data-confirm="确定回滚到版本 v{{ v.version_no }} 吗？将创建新版本">
+                  ↩️ 回滚到此版本
+                </a>
+              </span>
+              {% elif record.version == v.version_no %}
+              <span style="margin-left:auto;"><span class="badge badge-green">✨ 当前版本</span></span>
+              {% endif %}
+            </div>
+            <div class="timeline-title" style="margin-bottom:6px;">{{ v.change_summary|default:"无变更摘要" }}</div>
+            {% if item.diff %}
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;">
+              <div style="font-size:12px;color:#475569;margin-bottom:6px;font-weight:600;">字段变更对比：</div>
+              <div class="timeline-body">
+                {% for field, old, new in item.diff %}
+                <span class="diff-field">
+                  <strong style="color:#475569;">{{ field }}:</strong>
+                  <span class="diff-old">{{ old }}</span>
+                  →
+                  <span class="diff-new">{{ new }}</span>
+                </span>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+            {% if v.snapshot %}
+            <details style="margin-top:8px;">
+              <summary style="font-size:11px;color:#64748b;cursor:pointer;">查看完整 JSON 快照</summary>
+              <pre style="background:#1e293b;color:#e2e8f0;padding:12px;border-radius:6px;font-size:11px;overflow-x:auto;margin-top:6px;">{{ v.snapshot|pprint }}</pre>
+            </details>
+            {% endif %}
+          </div>
+          {% endwith %}
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📜</div>
+          <h4>暂无历史版本</h4>
+          <p>该记录从未被修改过</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-header"><h3>💡 操作说明</h3></div>
+      <div class="card-body" style="font-size:13px;line-height:1.9;">
+        <div style="display:flex;gap:10px;margin-bottom:12px;">
+          <span class="badge badge-green">创建</span>
+          <span style="color:#64748b;">记录首次创建</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;">
+          <span class="badge badge-blue">修改</span>
+          <span style="color:#64748b;">编辑保存，字段有变化</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;">
+          <span class="badge badge-amber">修正</span>
+          <span style="color:#64748b;">对历史数据修正调整</span>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <span class="badge badge-purple">回滚</span>
+          <span style="color:#64748b;">恢复到指定历史版本</span>
+        </div>
+        <hr style="margin:16px 0;border:none;border-top:1px dashed #e2e8f0;">
+        <p style="color:#94a3b8;font-size:12px;">
+          每次对记录的修改都会产生一个新的版本号，您可以随时回滚到之前的任意版本。回滚操作本身也会被记录。
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

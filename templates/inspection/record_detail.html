@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}巡检记录 #{{ record.id }} - 海盐巡检台账{% endblock %}
+{% block page_title %}巡检记录详情 #{{ record.id }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'inspection:record_list' %}">巡检台账</a> / 记录 #{{ record.id }}
+{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'inspection:record_edit' record.pk %}" class="btn btn-primary">✏️ 编辑</a>
+  <a href="{% url 'inspection:record_versions' record.pk %}" class="btn">📜 版本历史</a>
+  <a href="{% url 'inspection:record_list' %}" class="btn">← 返回列表</a>
+{% endblock %}
+
+{% block content %}
+<div class="status-panel">
+  <div class="status-card {{ conc_status }}">
+    <h4>卤水浓度</h4>
+    <div class="val">{{ record.brine_concentration }}°Bé</div>
+    <div style="font-size:11px;">
+      {% if conc_status == 'normal' %}✅ 正常范围（24~30°）
+      {% elif conc_status == 'warning' %}⚠️ 注意监控（22~24/30~31°）
+      {% else %}🚨 异常（<22°或>31°）{% endif %}
+    </div>
+  </div>
+  <div class="status-card {% if surface_ok %}normal{% else %}warning{% endif %}">
+    <h4>池面状态</h4>
+    <div class="val">{{ record.get_surface_status_display }}</div>
+    <div style="font-size:11px;">
+      {% if record.surface_status == 'normal' or record.surface_status == 'crystallized' %}✅ 池面状况良好
+      {% elif record.surface_status == 'flooded' or record.surface_status == 'dirty' %}⚠️ 需清理维护
+      {% else %}🚨 需立即处理{% endif %}
+    </div>
+  </div>
+  <div class="status-card {% if not record.has_anomaly %}normal{% else %}danger{% endif %}">
+    <h4>总体状态</h4>
+    <div class="val">{% if record.has_anomaly %}存在异常{% else %}正常{% endif %}</div>
+    <div style="font-size:11px;">
+      版本 v{{ record.version }} · {{ record.updated_at|date:"m-d H:i" }}更新
+    </div>
+  </div>
+</div>
+
+<div class="grid-main-aside">
+  <div style="display:flex;flex-direction:column;gap:20px;">
+    <div class="card">
+      <div class="card-header"><h3>🧪 核心指标</h3></div>
+      <div class="card-body">
+        <div class="surface-preview surface-{{ record.surface_status }}">
+          {% if record.surface_status == 'crystallized' %}❄️
+          {% elif record.surface_status == 'normal' %}💧
+          {% elif record.surface_status == 'leaking' %}🚿
+          {% elif record.surface_status == 'cracked' %}💢
+          {% elif record.surface_status == 'flooded' %}🌊
+          {% elif record.surface_status == 'dirty' %}🗑️{% endif %}
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">🔢 记录编号</span>
+            <span class="value">#{{ record.id }} / v{{ record.version }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">🧂 结晶池</span>
+            <span class="value">
+              <span class="group-tag group-{{ record.pool.pool_group }}">{{ record.pool.pool_code }}</span>
+              {{ record.pool.pool_name }}
+              <a href="{% url 'inspection:pool_detail' record.pool.pk %}" style="margin-left:8px;">查看池区→</a>
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="label">📅 巡检日期</span>
+            <span class="value">{{ record.inspection_date|date:"Y年m月d日" }} {{ record.inspection_time|date:"H:i" }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">👤 巡检员</span>
+            <span class="value">{{ record.inspector }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">📦 批次号</span>
+            <span class="value" style="font-family:ui-monospace,monospace;">{% if record.batch_no %}{{ record.batch_no }}{% else %}无批次号{% endif %}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">🌡️ 卤水浓度</span>
+            <span class="value" style="font-size:16px;font-weight:700;color:{% if conc_status == 'normal' %}#10b981{% elif conc_status == 'warning' %}#f59e0b{% else %}#ef4444{% endif %};">{{ record.brine_concentration }} °Bé</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">💧 卤水深度</span>
+            <span class="value">{{ record.brine_depth_cm }} cm</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">❄️ 结晶厚度</span>
+            <span class="value">{{ record.crystal_thickness_mm }} mm</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">⚖️ 本次收盐</span>
+            <span class="value" style="font-weight:600;">{{ record.salt_yield }} 吨</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">📊 累计产量</span>
+            <span class="value">{{ record.cumulative_yield }} 吨</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">🧪 pH值</span>
+            <span class="value">{% if record.ph_value %}{{ record.ph_value }}{% else %}未检测{% endif %}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">✨ 杂质等级</span>
+            <span class="value">{% if record.impurity_level %}{{ record.get_impurity_level_display }}{% else %}未评定{% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>🌤️ 天气环境</h3></div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">🌞 天气</span>
+            <span class="value">
+              {% if record.weather_type == 'sunny' %}☀️
+              {% elif record.weather_type == 'cloudy' %}⛅
+              {% elif record.weather_type == 'overcast' %}☁️
+              {% elif record.weather_type == 'rainy' %}🌧️
+              {% elif record.weather_type == 'storm' %}⛈️
+              {% elif record.weather_type == 'foggy' %}🌫️{% endif %}
+              {{ record.get_weather_type_display }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="label">🌡️ 气温</span>
+            <span class="value">{{ record.temperature }} ℃</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">💧 湿度</span>
+            <span class="value">{{ record.humidity }} %</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">💨 风力</span>
+            <span class="value">{{ record.get_wind_level_display }}{% if record.wind_direction %} · {{ record.wind_direction }}风{% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if record.has_anomaly or record.anomaly_description or record.handling_measures %}
+    <div class="card" style="border-color:#fca5a5;">
+      <div class="card-header" style="background:#fef2f2;border-bottom-color:#fecaca;">
+        <h3 style="color:#991b1b;">🚨 异常与处理</h3>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">⚠️ 异常描述</span>
+            <span class="value" style="color:#991b1b;">{{ record.anomaly_description|default:"无" }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">🛠️ 处理措施</span>
+            <span class="value">{{ record.handling_measures|default:"未制定" }}</span>
+          </div>
+        </div>
+        {% if alerts %}
+        <div style="margin-top:14px;">
+          <h4 style="font-size:13px;margin-bottom:10px;">关联告警</h4>
+          <ul class="alert-list">
+            {% for a in alerts %}
+            <li class="alert-item severity-{{ a.severity }}">
+              <div class="alert-body">
+                <div class="alert-title">{{ a.title }}</div>
+                <div class="alert-meta">{{ a.get_severity_display }} · {{ a.get_status_display }} · {{ a.detected_at|date:"m-d H:i" }}</div>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if record.remarks %}
+    <div class="card">
+      <div class="card-header"><h3>📝 备注</h3></div>
+      <div class="card-body">{{ record.remarks|linebreaks }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:20px;">
+    <div class="card">
+      <div class="card-header"><h3>📜 版本信息</h3></div>
+      <div class="card-body" style="padding:16px;">
+        <div class="timeline">
+          {% for v in versions %}
+          <div class="timeline-item {{ v.action }}">
+            <div class="timeline-date">{{ v.changed_at|date:"Y-m-d H:i" }}</div>
+            <div class="timeline-title">
+              <span class="badge badge-blue">v{{ v.version_no }}</span>
+              <span class="badge {% if v.action == 'create' %}badge-green{% elif v.action == 'update' %}badge-blue{% elif v.action == 'revise' %}badge-amber{% else %}badge-purple{% endif %}">
+                {{ v.get_action_display }}
+              </span>
+            </div>
+            <div class="timeline-body">{{ v.change_summary|default:"无详细说明" }}</div>
+          </div>
+          {% empty %}
+          <div style="color:#94a3b8;font-size:12px;">无历史版本</div>
+          {% endfor %}
+        </div>
+        <div style="margin-top:14px;text-align:center;">
+          <a href="{% url 'inspection:record_versions' record.pk %}" class="btn btn-sm btn-outline-primary">查看完整历史 →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>🔗 该池近期巡检</h3></div>
+      <div class="card-body" style="padding:0;">
+        <table class="data-table">
+          <thead>
+            <tr><th>日期</th><th>浓度</th><th>收盐</th><th>操作</th></tr>
+          </thead>
+          <tbody>
+            {% for r in related_records %}
+            <tr class="{% if r.has_anomaly %}has-anomaly{% endif %}{% if r.pk == record.pk %}" style="background:#eff6ff;{% endif %}">
+              <td style="white-space:nowrap;">{{ r.inspection_date|date:"m-d" }} {{ r.inspection_time|date:"H:i" }}</td>
+              <td>
+                <strong style="color:{% if r.brine_concentration >= 24 and r.brine_concentration <= 30 %}#10b981{% elif r.brine_concentration >= 22 and r.brine_concentration <= 31 %}#f59e0b{% else %}#ef4444{% endif %}">
+                  {{ r.brine_concentration }}°
+                </strong>
+              </td>
+              <td>{{ r.salt_yield }}t</td>
+              <td><a href="{% url 'inspection:record_detail' r.pk %}" class="btn btn-sm">查看</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="text-align:center;padding:30px;color:#94a3b8;">无更多记录</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

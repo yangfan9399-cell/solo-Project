@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}综合工作台 - 海盐巡检台账{% endblock %}
+{% block page_title %}综合工作台{% endblock %}
+{% block breadcrumb %}首页 / 工作台{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'inspection:record_create' %}" class="btn btn-primary">➕ 新增巡检</a>
+  <a href="{% url 'inspection:export_summary' %}" class="btn btn-success">📑 导出摘要</a>
+{% endblock %}
+
+{% block content %}
+<script id="pool-map-data" type="application/json">{{ pool_status_json|safe }}</script>
+
+<div class="kpi-grid">
+  <div class="kpi-card blue">
+    <div class="kpi-icon">🧂</div>
+    <div>
+      <div class="kpi-value">{{ pools_total }}</div>
+      <div class="kpi-label">结晶池总数</div>
+      <div class="kpi-sub">生产中 {{ pools_active }} 个</div>
+    </div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-icon">📈</div>
+    <div>
+      <div class="kpi-value">{{ avg_conc }}°</div>
+      <div class="kpi-label">30日平均卤水浓度</div>
+      <div class="kpi-sub">波美度(°Bé)</div>
+    </div>
+  </div>
+  <div class="kpi-card amber">
+    <div class="kpi-icon">⚖️</div>
+    <div>
+      <div class="kpi-value">{{ total_yield }}</div>
+      <div class="kpi-label">30日累计收盐</div>
+      <div class="kpi-sub">单位：吨</div>
+    </div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-icon">⚠️</div>
+    <div>
+      <div class="kpi-value">{{ anomaly_count }}</div>
+      <div class="kpi-label">待处理异常</div>
+      <div class="kpi-sub">严重告警 {{ anomaly_critical }} 条</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-main-aside" style="margin-bottom: 20px;">
+  <div class="card">
+    <div class="card-header">
+      <h3>🗺️ 池区分布与实时状态</h3>
+      <div>
+        <span class="badge badge-gray">按坐标映射 · 悬停查看详情</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="pool-map-wrap">
+        <div class="pool-map" id="pool-map"></div>
+        <div class="pool-tooltip" id="pool-tooltip"></div>
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-box" style="background:#f0fdf4;border-color:#10b981"></span>浓度正常(24~30°)</div>
+          <div class="legend-item"><span class="legend-box" style="background:#fffbeb;border-color:#f59e0b"></span>浓度偏高/低</div>
+          <div class="legend-item"><span class="legend-box" style="background:#fef2f2;border-color:#ef4444"></span>浓度异常</div>
+          <div class="legend-item"><span class="legend-box" style="background:#fff;border-color:#64748b"></span>闲置</div>
+          <div class="legend-item"><span class="pool-dot" style="background:#ef4444"></span>含告警</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>🚨 最新异常告警</h3>
+      <a href="{% url 'inspection:alert_list' %}" class="btn btn-sm btn-outline-primary">查看全部</a>
+    </div>
+    <div class="card-body" style="padding:14px;">
+      {% if recent_alerts %}
+      <ul class="alert-list">
+        {% for a in recent_alerts %}
+        <li class="alert-item severity-{{ a.severity }}">
+          <div style="font-size:16px;">
+            {% if a.severity == 'critical' %}🔴
+            {% elif a.severity == 'high' %}🟠
+            {% elif a.severity == 'medium' %}🟡
+            {% else %}🔵{% endif %}
+          </div>
+          <div class="alert-body">
+            <div class="alert-title">{{ a.title }}</div>
+            <div class="alert-meta">
+              <span class="group-tag group-{{ a.pool.pool_group }}">{{ a.pool.pool_code }}</span>
+              {{ a.get_severity_display }} · {{ a.detected_at|date:"m-d H:i" }}
+              <span class="badge {% if a.status == 'open' %}badge-red{% elif a.status == 'processing' %}badge-amber{% elif a.status == 'resolved' %}badge-green{% else %}badge-gray{% endif %}" style="margin-left:6px;">
+                {{ a.get_status_display }}
+              </span>
+            </div>
+            {% if a.status != 'resolved' and a.status != 'ignored' %}
+            <div style="margin-top:4px;">
+              <a href="{% url 'inspection:alert_resolve' a.pk %}" class="btn btn-sm btn-success" style="padding:2px 10px;font-size:11px;">标记已处理</a>
+            </div>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">✅</div>
+        <h4>暂无异常告警</h4>
+        <p>所有结晶池运行正常</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom: 20px;">
+  <div class="card">
+    <div class="card-header">
+      <h3>📈 浓度与产量趋势（近30日）</h3>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm btn-primary" data-trend-days="7">7日</button>
+        <button class="btn btn-sm" data-trend-days="30">30日</button>
+        <button class="btn btn-sm" data-trend-days="60">60日</button>
+        <button class="btn btn-sm" data-trend-days="90">90日</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="chart-box-lg" id="trend-chart">
+        <canvas id="trend-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>📊 分组指标对比</h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-box" style="height:380px;">
+        <canvas data-chart='{"type":"bar","data":{"labels":{% for g in group_stats %}"{{ g.group }}组"{% if not forloop.last %},{% endif %}{% endfor %},"datasets":[{"label":"平均浓度(°Bé)","type":"bar","data":[{% for g in group_stats %}{{ g.avg_conc|floatformat:2 }}{% if not forloop.last %},{% endif %}{% endfor %}],"backgroundColor":"rgba(14,165,233,.7)","borderRadius":6,"yAxisID":"y"},{"label":"收盐量(吨)","type":"line","data":[{% for g in group_stats %}{{ g.total_yield|floatformat:3 }}{% if not forloop.last %},{% endif %}{% endfor %}],"borderColor":"#f59e0b","backgroundColor":"rgba(245,158,11,.1)","borderWidth":2,"fill":true,"tension":0.35,"yAxisID":"y1","pointRadius":5}]},"options":{"responsive":true,"maintainAspectRatio":false,"plugins":{"legend":{"position":"top"}},"scales":{"y":{"type":"linear","position":"left","title":{"display":true,"text":"浓度(°Bé)"},"suggestedMin":20,"suggestedMax":32},"y1":{"type":"linear","position":"right","title":{"display":true,"text":"产量(吨)"}}}}}'></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <h3>📋 最新巡检记录</h3>
+      <a href="{% url 'inspection:record_list' %}" class="btn btn-sm btn-outline-primary">查看台账</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>池号</th>
+              <th>日期</th>
+              <th>浓度</th>
+              <th>池面</th>
+              <th>收盐</th>
+              <th>巡检员</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in latest_records %}
+            <tr class="{% if r.has_anomaly %}has-anomaly{% endif %}">
+              <td>
+                <div class="pool-chip">
+                  <span class="pool-dot" style="background:{% if r.has_anomaly %}#ef4444{% else %}#10b981{% endif %}"></span>
+                  <span class="group-tag group-{{ r.pool.pool_group }}">{{ r.pool.pool_code }}</span>
+                </div>
+              </td>
+              <td style="white-space:nowrap;">{{ r.inspection_date|date:"m-d" }} {{ r.inspection_time|date:"H:i" }}</td>
+              <td class="num">
+                <strong style="color:{% if r.brine_concentration >= 24 and r.brine_concentration <= 30 %}#10b981{% elif r.brine_concentration >= 22 and r.brine_concentration <= 31 %}#f59e0b{% else %}#ef4444{% endif %}">
+                  {{ r.brine_concentration }}°
+                </strong>
+              </td>
+              <td>
+                <span class="badge {% if r.surface_status == 'normal' or r.surface_status == 'crystallized' %}badge-green{% else %}badge-amber{% endif %}">
+                  {{ r.get_surface_status_display }}
+                </span>
+              </td>
+              <td class="num">{{ r.salt_yield }}t</td>
+              <td>{{ r.inspector }}</td>
+              <td>
+                {% if r.batch_no %}<span class="badge badge-blue">批次</span>{% endif %}
+                {% if r.has_anomaly %}<span class="badge badge-red">异常</span>{% endif %}
+                {% if not r.batch_no and not r.has_anomaly %}<span class="badge badge-gray">正常</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>🏭 池组产能统计</h3>
+    </div>
+    <div class="card-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>池组</th>
+            <th>池数</th>
+            <th>生产中</th>
+            <th>巡检</th>
+            <th>平均浓度</th>
+            <th>累计产量</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for g in group_stats %}
+          <tr>
+            <td>
+              <span class="group-tag group-{{ g.group }}">{{ g.group }}组</span>
+            </td>
+            <td class="num">{{ g.pool_count }}</td>
+            <td class="num">{{ g.active_count }}</td>
+            <td class="num">{{ g.records }}</td>
+            <td class="num">
+              <strong>{{ g.avg_conc|floatformat:2 }}°</strong>
+            </td>
+            <td class="num"><strong>{{ g.total_yield|floatformat:3 }}</strong> t</td>
+          </tr>
+          <tr>
+            <td colspan="6" style="padding:4px 14px 14px;border:none;">
+              <div class="progress">
+                <div class="progress-bar" style="width:{% widthratio g.total_yield|floatformat:0 500 100 %}%;background:{% if g.group == 'A' %}#3b82f6{% elif g.group == 'B' %}#10b981{% elif g.group == 'C' %}#f59e0b{% else %}#8b5cf6{% endif %}"></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

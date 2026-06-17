@@ -1,0 +1,81 @@
+{% load static %}<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}海盐晒场结晶池巡检台账{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon">🧂</div>
+      <h1>海盐巡检台账<small>Saltfield Inspection Ledger</small></h1>
+    </div>
+    <ul class="sidebar-nav">
+      <li class="nav-group-title">工作台</li>
+      <li><a href="{% url 'inspection:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <span class="nav-icon">📊</span><span>综合工作台</span></a>
+      </li>
+
+      <li class="nav-group-title">巡检管理</li>
+      <li><a href="{% url 'inspection:record_list' %}" class="{% if 'record' in request.resolver_match.url_name %}active{% endif %}">
+        <span class="nav-icon">📋</span><span>巡检台账</span></a>
+      </li>
+      <li><a href="{% url 'inspection:record_create' %}">
+        <span class="nav-icon">➕</span><span>新增记录</span></a>
+      </li>
+      <li><a href="{% url 'inspection:batch_list' %}" class="{% if request.resolver_match.url_name == 'batch_list' %}active{% endif %}">
+        <span class="nav-icon">📦</span><span>批次管理</span></a>
+      </li>
+
+      <li class="nav-group-title">池区管理</li>
+      <li><a href="{% url 'inspection:pool_list' %}" class="{% if 'pool' in request.resolver_match.url_name %}active{% endif %}">
+        <span class="nav-icon">🗺️</span><span>结晶池总览</span></a>
+      </li>
+
+      <li class="nav-group-title">异常与导出</li>
+      <li><a href="{% url 'inspection:alert_list' %}" class="{% if 'alert' in request.resolver_match.url_name %}active{% endif %}">
+        <span class="nav-icon">🚨</span><span>异常告警
+          {% with open_alerts=1 %}
+          {% endwith %}
+        </span></a>
+      </li>
+      <li><a href="{% url 'inspection:export_summary' %}">
+        <span class="nav-icon">📑</span><span>导出摘要报告</span></a>
+      </li>
+    </ul>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>{% block page_title %}海盐晒场结晶池巡检台账{% endblock %}</h2>
+        <div class="breadcrumb">{% block breadcrumb %}首页 / 工作台{% endblock %}</div>
+      </div>
+      <div class="topbar-right">
+        {% block topbar_actions %}{% endblock %}
+      </div>
+    </header>
+
+    <main class="content">
+      {% if messages %}
+      <div class="alert-messages">
+        {% for m in messages %}
+        <div class="alert-msg {{ m.tags }}">{{ m }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

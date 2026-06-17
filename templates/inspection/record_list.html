@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% block title %}巡检台账 - 海盐巡检台账{% endblock %}
+{% block page_title %}巡检台账{% endblock %}
+{% block breadcrumb %}巡检管理 / 台账列表{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'inspection:record_create' %}" class="btn btn-primary">➕ 新增记录</a>
+  <button class="btn" data-export="csv">📥 CSV</button>
+  <button class="btn btn-success" data-export="excel">📊 Excel</button>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" action="">
+    <div class="form-row">
+      <div style="flex:2;min-width:200px;">
+        <label style="font-size:12px;color:#64748b;">关键词</label>
+        <input type="text" name="keyword" class="form-control" placeholder="池号/名称/批次/巡检员" value="{{ request.GET.keyword }}">
+      </div>
+      <div>
+        <label style="font-size:12px;color:#64748b;">池组</label>
+        <select name="pool_group" class="form-control">
+          <option value="">全部</option>
+          {% for v,l in pool_groups %}
+          <option value="{{ v }}" {% if request.GET.pool_group == v %}selected{% endif %}>{{ l }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;color:#64748b;">结晶池</label>
+        <select name="pool_id" class="form-control">
+          {{ form.pool_id }}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;color:#64748b;">池面状态</label>
+        <select name="surface_status" class="form-control">
+          <option value="">全部</option>
+          {% for v,l in surface_choices %}
+          <option value="{{ v }}" {% if request.GET.surface_status == v %}selected{% endif %}>{{ l }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;color:#64748b;">天气</label>
+        <select name="weather_type" class="form-control">
+          <option value="">全部</option>
+          {% for v,l in weather_choices %}
+          <option value="{{ v }}" {% if request.GET.weather_type == v %}selected{% endif %}>{{ l }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:14px;">
+      <div>
+        <label style="font-size:12px;color:#64748b;">开始日期</label>
+        <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+      </div>
+      <div>
+        <label style="font-size:12px;color:#64748b;">结束日期</label>
+        <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+      </div>
+      <div>
+        <label style="font-size:12px;color:#64748b;">最低浓度(°Bé)</label>
+        <input type="number" name="concentration_min" step="0.1" class="form-control" value="{{ request.GET.concentration_min }}" placeholder="20">
+      </div>
+      <div>
+        <label style="font-size:12px;color:#64748b;">最高浓度(°Bé)</label>
+        <input type="number" name="concentration_max" step="0.1" class="form-control" value="{{ request.GET.concentration_max }}" placeholder="32">
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:10px;">
+        <div class="form-check">
+          <input type="checkbox" name="anomaly_only" id="id_anomaly_only" class="form-check-input" {% if request.GET.anomaly_only %}checked{% endif %}>
+          <label for="id_anomaly_only">仅异常</label>
+        </div>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <a href="{% url 'inspection:record_list' %}" class="btn btn-sm">重置</a>
+      <button class="btn btn-sm btn-primary" type="submit">🔍 筛选</button>
+    </div>
+  </form>
+</div>
+
+<div class="stats-box">
+  <div class="stat-item">
+    <span class="k">筛选结果</span>
+    <span class="v">{{ stats.total|default:0 }} 条</span>
+  </div>
+  <div class="stat-item">
+    <span class="k">平均浓度</span>
+    <span class="v" style="color:#0ea5e9;">{{ stats.avg_conc|default:0|floatformat:2 }}°</span>
+  </div>
+  <div class="stat-item">
+    <span class="k">累计收盐</span>
+    <span class="v" style="color:#f59e0b;">{{ stats.sum_yield|default:0|floatformat:3 }} t</span>
+  </div>
+  <div class="stat-item">
+    <span class="k">异常记录</span>
+    <span class="v" style="color:#ef4444;">{{ stats.anomaly_count|default:0 }} 条</span>
+  </div>
+  <div class="stat-item">
+    <span class="k">筛选区间</span>
+    <span class="v" style="font-size:13px;">{{ date_from }} ~ {{ date_to }}</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>巡检记录列表</h3>
+    <div>
+      <span class="badge badge-blue">第 {{ page_obj.number }}/{{ page_obj.paginator.num_pages }} 页</span>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0;">
+    {% if page_obj.object_list %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>池号</th>
+            <th>巡检日期</th>
+            <th>巡检时间</th>
+            <th>巡检员</th>
+            <th>批次号</th>
+            <th class="num">浓度(°Bé)</th>
+            <th class="num">深度(cm)</th>
+            <th class="num">结晶(mm)</th>
+            <th>池面</th>
+            <th>天气</th>
+            <th class="num">收盐(t)</th>
+            <th>pH</th>
+            <th>杂质</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in page_obj %}
+          <tr class="{% if r.has_anomaly %}has-anomaly{% endif %}">
+            <td style="font-variant-numeric:tabular-nums;">#{{ r.id }}</td>
+            <td>
+              <div class="pool-chip">
+                <span class="pool-dot" style="background:{% if r.has_anomaly %}#ef4444{% else %}#10b981{% endif %}"></span>
+                <a href="{% url 'inspection:pool_detail' r.pool.pk %}">
+                  <span class="group-tag group-{{ r.pool.pool_group }}">{{ r.pool.pool_code }}</span>
+                </a>
+              </div>
+            </td>
+            <td style="white-space:nowrap;">{{ r.inspection_date|date:"Y-m-d" }}</td>
+            <td>{{ r.inspection_time|date:"H:i" }}</td>
+            <td>{{ r.inspector }}</td>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,monospace;font-size:12px;">
+              {% if r.batch_no %}<span class="badge badge-purple">{{ r.batch_no }}</span>{% else %}-{% endif %}
+            </td>
+            <td class="num">
+              <strong style="color:{% if r.brine_concentration >= 24 and r.brine_concentration <= 30 %}#10b981{% elif r.brine_concentration >= 22 and r.brine_concentration <= 31 %}#f59e0b{% else %}#ef4444{% endif %}">
+                {{ r.brine_concentration }}
+              </strong>
+            </td>
+            <td class="num">{{ r.brine_depth_cm }}</td>
+            <td class="num">{{ r.crystal_thickness_mm }}</td>
+            <td>
+              <span class="badge {% if r.surface_status == 'normal' or r.surface_status == 'crystallized' %}badge-green{% elif r.surface_status == 'flooded' or r.surface_status == 'dirty' %}badge-amber{% else %}badge-red{% endif %}">
+                {{ r.get_surface_status_display }}
+              </span>
+            </td>
+            <td>
+              {% if r.weather_type == 'sunny' %}☀️
+              {% elif r.weather_type == 'cloudy' %}⛅
+              {% elif r.weather_type == 'overcast' %}☁️
+              {% elif r.weather_type == 'rainy' %}🌧️
+              {% elif r.weather_type == 'storm' %}⛈️
+              {% elif r.weather_type == 'foggy' %}🌫️{% endif %}
+              {{ r.get_weather_type_display }}
+            </td>
+            <td class="num" style="font-weight:600;">{{ r.salt_yield|floatformat:3 }}</td>
+            <td class="num">{% if r.ph_value %}{{ r.ph_value|floatformat:2 }}{% else %}-{% endif %}</td>
+            <td>{% if r.impurity_level %}{{ r.get_impurity_level_display }}{% else %}-{% endif %}</td>
+            <td>
+              {% if r.version > 1 %}<span class="badge badge-amber">v{{ r.version }}</span>{% endif %}
+              {% if r.has_anomaly %}<span class="badge badge-red">异常</span>{% endif %}
+              {% if not r.has_anomaly and r.version <= 1 %}<span class="badge badge-green">正常</span>{% endif %}
+            </td>
+            <td class="actions">
+              <a href="{% url 'inspection:record_detail' r.pk %}" class="btn btn-sm">详情</a>
+              <a href="{% url 'inspection:record_edit' r.pk %}" class="btn btn-sm btn-outline-primary">编辑</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h4>暂无符合条件的记录</h4>
+      <p>尝试调整筛选条件或<a href="{% url 'inspection:record_create' %}">新增一条记录</a></p>
+    </div>
+    {% endif %}
+  </div>
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="card-footer">
+    <div class="pagination">
+      <div class="page-info">共 {{ page_obj.paginator.count }} 条，每页 25 条</div>
+      <ul class="page-nav">
+        {% if page_obj.has_previous %}
+        <li><a href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">←</a></li>
+        {% else %}
+        <li><span class="disabled">←</span></li>
+        {% endif %}
+        {% for p in page_obj.paginator.page_range %}
+          {% if p == page_obj.number %}
+          <li><span class="current">{{ p }}</span></li>
+          {% elif p >= page_obj.number|add:"-3" and p <= page_obj.number|add:"3" %}
+          <li><a href="?{{ query_string }}&page={{ p }}">{{ p }}</a></li>
+          {% elif p == 1 or p == page_obj.paginator.num_pages %}
+          <li><a href="?{{ query_string }}&page={{ p }}">{{ p }}</a></li>
+          {% elif p == page_obj.number|add:"-4" or p == page_obj.number|add:"4" %}
+          <li><span>…</span></li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li><a href="?{{ query_string }}&page={{ page_obj.next_page_number }}">→</a></li>
+        {% else %}
+        <li><span class="disabled">→</span></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

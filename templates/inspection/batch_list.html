@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}批次管理 - 海盐巡检台账{% endblock %}
+{% block page_title %}收盐批次管理{% endblock %}
+{% block breadcrumb %}巡检管理 / 批次管理{% endblock %}
+{% block topbar_actions %}
+  <button class="btn" data-export="csv">📥 导出CSV</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h3>📦 收盐批次列表（近90天）</h3>
+    <div>
+      <span class="badge badge-blue">共 {{ page_obj.paginator.count }} 个批次</span>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0;">
+    {% if page_obj.object_list %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>批次号</th>
+            <th>池组</th>
+            <th>涉及池数</th>
+            <th>记录数</th>
+            <th>起始日期</th>
+            <th>结束日期</th>
+            <th class="num">平均浓度</th>
+            <th class="num">总产量(吨)</th>
+            <th>异常</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in page_obj %}
+          <tr class="{% if b.anomaly_count > 0 %}has-anomaly{% endif %}">
+            <td style="font-family:ui-monospace,monospace;font-weight:600;font-size:12px;">
+              <span class="badge badge-purple">{{ b.batch_no }}</span>
+            </td>
+            <td><span class="group-tag group-{{ b.pool__pool_group }}">{{ b.pool__pool_group }}组</span></td>
+            <td class="num">{{ b.pools }}</td>
+            <td class="num">{{ b.record_count }}</td>
+            <td>{{ b.first_date|date:"Y-m-d" }}</td>
+            <td>{{ b.last_date|date:"Y-m-d" }}</td>
+            <td class="num">
+              <strong style="color:{% if b.avg_conc >= 24 and b.avg_conc <= 30 %}#10b981{% elif b.avg_conc >= 22 and b.avg_conc <= 31 %}#f59e0b{% else %}#ef4444{% endif %}">
+                {{ b.avg_conc|floatformat:2 }}°
+              </strong>
+            </td>
+            <td class="num" style="font-weight:700;">{{ b.total_yield|floatformat:3 }}</td>
+            <td>
+              {% if b.anomaly_count > 0 %}
+              <span class="badge badge-red">{{ b.anomaly_count }} 条</span>
+              {% else %}
+              <span class="badge badge-green">无</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📦</div>
+      <h4>暂无收盐批次</h4>
+      <p>当巡检记录填写批次号时会自动归类到批次列表</p>
+    </div>
+    {% endif %}
+  </div>
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="card-footer">
+    <div class="pagination">
+      <div class="page-info">共 {{ page_obj.paginator.count }} 个批次</div>
+      <ul class="page-nav">
+        {% if page_obj.has_previous %}
+        <li><a href="?page={{ page_obj.previous_page_number }}">←</a></li>
+        {% endif %}
+        {% for p in page_obj.paginator.page_range %}
+          {% if p == page_obj.number %}
+          <li><span class="current">{{ p }}</span></li>
+          {% elif p >= page_obj.number|add:"-3" and p <= page_obj.number|add:"3" %}
+          <li><a href="?page={{ p }}">{{ p }}</a></li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li><a href="?page={{ page_obj.next_page_number }}">→</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

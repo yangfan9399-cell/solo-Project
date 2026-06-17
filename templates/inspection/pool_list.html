@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}结晶池总览 - 海盐巡检台账{% endblock %}
+{% block page_title %}结晶池总览{% endblock %}
+{% block breadcrumb %}池区管理 / 总览{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'inspection:dashboard' %}#pool-map" class="btn btn-primary">🗺️ 地图视图</a>
+{% endblock %}
+{% block content %}
+
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-header"><h3>🏭 全部结晶池</h3></div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>池号</th>
+            <th>池名</th>
+            <th>池组</th>
+            <th class="num">面积(亩)</th>
+            <th class="num">池深(cm)</th>
+            <th>状态</th>
+            <th>位置</th>
+            <th class="num">30天巡检</th>
+            <th class="num">最新浓度</th>
+            <th class="num">30天产量(t)</th>
+            <th>建成日期</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in pools %}
+          <tr class="{% if p.status != 'active' and p.status != 'idle' %}has-anomaly{% endif %}">
+            <td>
+              <div class="pool-chip">
+                <span class="pool-dot" style="background:{% if p.status == 'active' %}#10b981{% elif p.status == 'idle' %}#94a3b8{% elif p.status == 'maintenance' %}#f59e0b{% else %}#ef4444{% endif %}"></span>
+                <strong>{{ p.pool_code }}</strong>
+              </div>
+            </td>
+            <td>{{ p.pool_name }}</td>
+            <td><span class="group-tag group-{{ p.pool_group }}">{{ p.pool_group }}组</span></td>
+            <td class="num">{{ p.area }}</td>
+            <td class="num">{{ p.depth_cm }}</td>
+            <td>
+              <span class="badge {% if p.status == 'active' %}badge-green{% elif p.status == 'idle' %}badge-gray{% elif p.status == 'maintenance' %}badge-amber{% else %}badge-red{% endif %}">
+                {{ p.get_status_display }}
+              </span>
+            </td>
+            <td style="font-family:ui-monospace,monospace;font-size:11px;color:#64748b;">
+              ({{ p.position_x }}, {{ p.position_y }})
+            </td>
+            <td class="num">{{ p.record_count|default:0 }}</td>
+            <td class="num">
+              {% if p.latest_conc %}
+              <strong style="color:{% if p.latest_conc >= 24 and p.latest_conc <= 30 %}#10b981{% elif p.latest_conc >= 22 and p.latest_conc <= 31 %}#f59e0b{% else %}#ef4444{% endif %}">
+                {{ p.latest_conc|floatformat:2 }}°
+              </strong>
+              {% else %}
+              <span style="color:#cbd5e1;">-</span>
+              {% endif %}
+            </td>
+            <td class="num" style="font-weight:600;">
+              {{ p.total_yield|default:0|floatformat:3 }}
+            </td>
+            <td style="font-size:12px;">{{ p.build_date|date:"Y-m" }}</td>
+            <td class="actions">
+              <a href="{% url 'inspection:pool_detail' p.pk %}" class="btn btn-sm btn-outline-primary">详情</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

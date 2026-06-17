@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}编辑巡检记录 #{{ record.id }}{% else %}新增巡检记录{% endif %} - 海盐巡检台账{% endblock %}
+{% block page_title %}{% if is_edit %}编辑巡检记录 #{{ record.id }}{% else %}新增巡检记录{% endif %}{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'inspection:record_list' %}">巡检台账</a> /
+  {% if is_edit %}<a href="{% url 'inspection:record_detail' record.pk %}">记录 #{{ record.id }}</a> / 编辑{% else %}新增记录{% endif %}
+{% endblock %}
+{% block topbar_actions %}
+  {% if is_edit %}
+  <a href="{% url 'inspection:record_detail' record.pk %}" class="btn">← 返回详情</a>
+  {% else %}
+  <a href="{% url 'inspection:record_list' %}" class="btn">← 返回列表</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="stats-box" style="background:#fef3c7;border-color:#fbbf24;">
+  <div class="stat-item"><span class="k">📋 提示</span><span class="v" style="font-size:13px;">卤水浓度正常范围 24~30°Bé，超过或低于会自动标记异常</span></div>
+</div>
+
+<form method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:20px;">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert-msg error">
+    {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header"><h3>基本信息</h3></div>
+    <div class="card-body">
+      <div class="form-4col">
+        <div class="form-group">
+          <label>{{ form.pool.label }} *</label>
+          {{ form.pool }}
+          {{ form.pool.errors }}
+        </div>
+        <div class="form-group">
+          <label>{{ form.inspection_date.label }} *</label>
+          {{ form.inspection_date }}
+        </div>
+        <div class="form-group">
+          <label>{{ form.inspection_time.label }} *</label>
+          {{ form.inspection_time }}
+        </div>
+        <div class="form-group">
+          <label>{{ form.inspector.label }}</label>
+          {{ form.inspector }}
+        </div>
+        <div class="form-group" style="grid-column:span 2;">
+          <label>{{ form.batch_no.label }} <span style="color:#94a3b8;font-weight:400;">(收盐批次填写)</span></label>
+          {{ form.batch_no }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><h3>🧪 卤水与结晶</h3></div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.brine_concentration.label }} (°Bé) *</label>
+            {{ form.brine_concentration }}
+            <div style="margin-top:6px;font-size:11px;color:#64748b;">
+              正常 24~30° · 警戒 22~24/30~31° · 异常 <22或>31°
+            </div>
+          </div>
+          <div class="form-group">
+            <label>{{ form.brine_depth_cm.label }} (cm)</label>
+            {{ form.brine_depth_cm }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.crystal_thickness_mm.label }} (mm)</label>
+            {{ form.crystal_thickness_mm }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.ph_value.label }}</label>
+            {{ form.ph_value }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.impurity_level.label }}</label>
+            {{ form.impurity_level }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>⚖️ 产量与池面</h3></div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.surface_status.label }} *</label>
+            {{ form.surface_status }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.salt_yield.label }} (吨)</label>
+            {{ form.salt_yield }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.cumulative_yield.label }} (吨)</label>
+            {{ form.cumulative_yield }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.surface_photo.label }}</label>
+            {{ form.surface_photo }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>🌤️ 天气环境</h3></div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>{{ form.weather_type.label }}</label>
+          {{ form.weather_type }}
+        </div>
+        <div class="form-group">
+          <label>{{ form.temperature.label }} (℃)</label>
+          {{ form.temperature }}
+        </div>
+        <div class="form-group">
+          <label>{{ form.humidity.label }} (%)</label>
+          {{ form.humidity }}
+        </div>
+        <div class="form-group">
+          <label>{{ form.wind_level.label }}</label>
+          {{ form.wind_level }}
+        </div>
+        <div class="form-group">
+          <label>{{ form.wind_direction.label }}</label>
+          {{ form.wind_direction }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if is_edit %}
+  <div class="card">
+    <div class="card-header" style="background:#fff7ed;border-bottom-color:#fed7aa;">
+      <h3 style="color:#9a3412;">🚨 异常与处理 <span style="font-size:12px;font-weight:400;">(异常会在保存时根据浓度/池面自动检测)</span></h3>
+    </div>
+    <div class="card-body">
+      <div class="form-2col">
+        <div class="form-group">
+          <label>{{ form.anomaly_description.label }}</label>
+          {{ form.anomaly_description }}
+        </div>
+        <div class="form-group">
+          <label>{{ form.handling_measures.label }}</label>
+          {{ form.handling_measures }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header"><h3>📝 备注</h3></div>
+    <div class="card-body">
+      <div class="form-group" style="margin:0;">
+        {{ form.remarks }}
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;gap:10px;padding-bottom:40px;">
+    {% if is_edit %}
+    <a href="{% url 'inspection:record_detail' record.pk %}" class="btn">取消</a>
+    <a href="{% url 'inspection:record_delete' record.pk %}" class="btn btn-danger" data-confirm="确定要删除记录 #{{ record.id }} 吗？此操作不可撤销">🗑️ 删除</a>
+    {% else %}
+    <a href="{% url 'inspection:record_list' %}" class="btn">取消</a>
+    {% endif %}
+    <button type="submit" class="btn btn-primary btn-lg">💾 {% if is_edit %}保存修改{% else %}提交记录{% endif %}</button>
+  </div>
+</form>
+{% endblock %}
