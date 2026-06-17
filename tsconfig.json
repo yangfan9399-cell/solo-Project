@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "noEmit": true,
+    "strict": true,
+    "isolatedModules": true,
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "baseUrl": "."
+  }
+}
