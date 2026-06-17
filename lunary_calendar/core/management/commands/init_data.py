@@ -169,4 +169,35 @@ class Command(BaseCommand):
         )
         self.stdout.write(f'创建批次: {batch.name}')
         
+        abnormal_records = [
+            {
+                'record': CalculationRecord.objects.first(),
+                'type': 'calculation',
+                'message': '农历日期推算结果与参考数据存在微小偏差（约0.5天），建议验证',
+                'details': {'source': '自动校验', 'threshold': 0.5},
+            },
+            {
+                'record': CalculationRecord.objects.filter(title__contains='夏至').first(),
+                'type': 'warning',
+                'message': '夏至时刻处于时区边界，推算结果可能存在±1小时误差',
+                'details': {'timezone_boundary': True, 'precision': 'hour'},
+            },
+            {
+                'record': None,
+                'type': 'system',
+                'message': '系统检测到部分历史推算记录需要重新验证',
+                'details': {'affected_count': 2, 'action': '建议执行验证'},
+            },
+        ]
+        
+        for abnormal_data in abnormal_records:
+            AbnormalData.objects.create(
+                record=abnormal_data['record'],
+                type=abnormal_data['type'],
+                message=abnormal_data['message'],
+                details=abnormal_data['details'],
+                resolved=False,
+            )
+        
+        self.stdout.write('创建异常数据提示样例')
         self.stdout.write(self.style.SUCCESS('样例数据初始化完成！'))

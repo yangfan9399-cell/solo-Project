@@ -13,29 +13,18 @@
             </div>
         </div>
         
-        <div class="search-bar">
+        <form method="get" class="search-bar">
             <input type="text" name="q" placeholder="搜索标题或地点..." value="{{ query }}">
-            <select name="status">
-                <option value="">全部状态</option>
-                {% for value, label in status_choices %}
-                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-            <input type="date" name="start_date" value="{{ start_date }}">
-            <input type="date" name="end_date" value="{{ end_date }}">
-            <button class="btn btn-primary" onclick="document.querySelector('form').submit()">筛选</button>
-            <a href="{% url 'index' %}" class="btn btn-secondary">重置</a>
-        </div>
-        
-        <form method="get" style="display: none;">
-            <input type="text" name="q" value="{{ query }}">
             <select name="status" onchange="this.form.submit()">
+                <option value="">全部状态</option>
                 {% for value, label in status_choices %}
                     <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
             <input type="date" name="start_date" value="{{ start_date }}" onchange="this.form.submit()">
             <input type="date" name="end_date" value="{{ end_date }}" onchange="this.form.submit()">
+            <button type="submit" class="btn btn-primary">筛选</button>
+            <a href="{% url 'index' %}" class="btn btn-secondary">重置</a>
         </form>
         
         <table class="table">
