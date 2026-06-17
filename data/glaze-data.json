@@ -1,0 +1,1436 @@
+{
+  "projects": [
+    {
+      "id": "proj_celadon",
+      "name": "青瓷釉料系统研究",
+      "code": "CEL-2024",
+      "description": "探索不同长石-高岭土比例对青瓷釉面效果的影响，系统研究还原焰下的呈色机理",
+      "createdAt": "2024-03-15T10:00:00.000Z",
+      "updatedAt": "2024-06-20T14:30:00.000Z",
+      "recipeCount": 5,
+      "specimenCount": 25,
+      "status": "active",
+      "tags": [
+        "青瓷",
+        "还原焰",
+        "长石系"
+      ],
+      "primaryKiln": "气窑A",
+      "targetCone": "06"
+    },
+    {
+      "id": "proj_tenmoku",
+      "name": "天目釉系列开发",
+      "code": "TEN-2024",
+      "description": "高铁含量釉料在不同烧成制度下的析晶效果研究，目标油滴、兔毫等经典天目效果",
+      "createdAt": "2024-01-10T09:00:00.000Z",
+      "updatedAt": "2024-05-28T16:45:00.000Z",
+      "recipeCount": 4,
+      "specimenCount": 32,
+      "status": "active",
+      "tags": [
+        "天目",
+        "铁结晶",
+        "高温"
+      ],
+      "primaryKiln": "气窑B",
+      "targetCone": "10"
+    },
+    {
+      "id": "proj_lowfire",
+      "name": "低温釉彩色卡项目",
+      "code": "LOW-2024",
+      "description": "建立低温铅硼釉基础配方体系，系统测试各类金属氧化物呈色效果",
+      "createdAt": "2024-02-20T11:00:00.000Z",
+      "updatedAt": "2024-04-15T10:20:00.000Z",
+      "recipeCount": 6,
+      "specimenCount": 48,
+      "status": "completed",
+      "tags": [
+        "低温",
+        "釉彩",
+        "色卡"
+      ],
+      "primaryKiln": "电窑",
+      "targetCone": "022"
+    },
+    {
+      "id": "proj_matting",
+      "name": "哑光釉配方优化",
+      "code": "MAT-2024",
+      "description": "通过调整钙镁比例和硅铝比，开发不同质感的哑光釉系列",
+      "createdAt": "2024-04-05T08:30:00.000Z",
+      "updatedAt": "2024-06-10T09:15:00.000Z",
+      "recipeCount": 3,
+      "specimenCount": 15,
+      "status": "on-hold",
+      "tags": [
+        "哑光",
+        "钙镁系",
+        "氧化焰"
+      ],
+      "primaryKiln": "气窑A",
+      "targetCone": "06"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "recipe_celadon_base",
+      "name": "青瓷基础配方",
+      "code": "CEL-B01",
+      "projectId": "proj_celadon",
+      "description": "经典青瓷基础配方，长石-高岭土二元体系",
+      "coneTarget": "06",
+      "currentVersionId": "ver_celadon_v2",
+      "matrixType": "binary",
+      "matrixConfig": {
+        "type": "binary",
+        "baseIngredients": [
+          "ing_feldspar",
+          "ing_kaolin"
+        ],
+        "minPercentages": [
+          30,
+          20
+        ],
+        "maxPercentages": [
+          70,
+          50
+        ],
+        "steps": 5,
+        "fixedComponents": [
+          {
+            "ingredientId": "ing_silica",
+            "ingredientName": "Silica (石英)",
+            "percentage": 25,
+            "locked": true
+          },
+          {
+            "ingredientId": "ing_whiting",
+            "ingredientName": "Whiting (石灰石)",
+            "percentage": 15,
+            "locked": true
+          },
+          {
+            "ingredientId": "ing_iron_oxide",
+            "ingredientName": "Iron Oxide (氧化铁)",
+            "percentage": 2.5,
+            "locked": true
+          }
+        ]
+      },
+      "tags": [
+        "青瓷",
+        "基础配方",
+        "还原焰"
+      ],
+      "status": "active",
+      "createdAt": "2024-03-16T10:00:00.000Z",
+      "updatedAt": "2024-05-20T14:30:00.000Z",
+      "versions": [
+        {
+          "id": "ver_celadon_v1",
+          "recipeId": "recipe_celadon_base",
+          "versionNumber": 1,
+          "batchNumber": "BATCH-001",
+          "components": [
+            {
+              "ingredientId": "ing_feldspar",
+              "ingredientName": "Feldspar (长石)",
+              "percentage": 45,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_kaolin",
+              "ingredientName": "Kaolin (高岭土)",
+              "percentage": 25,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_silica",
+              "ingredientName": "Silica (石英)",
+              "percentage": 20,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_whiting",
+              "ingredientName": "Whiting (石灰石)",
+              "percentage": 10,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_iron_oxide",
+              "ingredientName": "Iron Oxide (氧化铁)",
+              "percentage": 2,
+              "locked": true
+            }
+          ],
+          "totalPercentage": 102,
+          "firingTemperature": 1240,
+          "firingType": "reduction",
+          "holdTime": 20,
+          "createdAt": "2024-03-16T10:00:00.000Z",
+          "createdBy": "张工",
+          "changeNotes": "初始配方，基于传统青瓷比例",
+          "isLocked": true,
+          "specimens": [
+            {
+              "id": "spec_recipe_celadon_base_v1_0",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v1",
+              "position": {
+                "row": 0,
+                "col": 0
+              },
+              "label": "CELADON-A1",
+              "firedColor": "#7BA38D",
+              "surfaceQuality": "excellent",
+              "glossLevel": "medium",
+              "defects": [],
+              "notes": "试片 1 烧成记录",
+              "firedAt": "2024-01-10T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_base_v1_1",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v1",
+              "position": {
+                "row": 0,
+                "col": 1
+              },
+              "label": "CELADON-A2",
+              "firedColor": "#5D8A6D",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔"
+              ],
+              "notes": "试片 2 烧成记录",
+              "firedAt": "2024-02-11T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_base_v1_2",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v1",
+              "position": {
+                "row": 0,
+                "col": 2
+              },
+              "label": "CELADON-A3",
+              "firedColor": "#8FB996",
+              "surfaceQuality": "good",
+              "glossLevel": "low",
+              "defects": [
+                "气泡"
+              ],
+              "notes": "试片 3 烧成记录",
+              "firedAt": "2024-03-12T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_base_v1_3",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v1",
+              "position": {
+                "row": 1,
+                "col": 0
+              },
+              "label": "CELADON-B1",
+              "firedColor": "#4A7C59",
+              "surfaceQuality": "fair",
+              "glossLevel": "low",
+              "defects": [
+                "流釉"
+              ],
+              "notes": "试片 4 烧成记录",
+              "firedAt": "2024-04-13T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_base_v1_4",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v1",
+              "position": {
+                "row": 1,
+                "col": 1
+              },
+              "label": "CELADON-B2",
+              "firedColor": "#A3C9A8",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔",
+                "气泡"
+              ],
+              "notes": "试片 5 烧成记录",
+              "firedAt": "2024-05-14T14:00:00.000Z"
+            }
+          ]
+        },
+        {
+          "id": "ver_celadon_v2",
+          "recipeId": "recipe_celadon_base",
+          "versionNumber": 2,
+          "batchNumber": "BATCH-003",
+          "components": [
+            {
+              "ingredientId": "ing_feldspar",
+              "ingredientName": "Feldspar (长石)",
+              "percentage": 50,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_kaolin",
+              "ingredientName": "Kaolin (高岭土)",
+              "percentage": 22,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_silica",
+              "ingredientName": "Silica (石英)",
+              "percentage": 23,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_whiting",
+              "ingredientName": "Whiting (石灰石)",
+              "percentage": 12,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_iron_oxide",
+              "ingredientName": "Iron Oxide (氧化铁)",
+              "percentage": 2.5,
+              "locked": true
+            }
+          ],
+          "totalPercentage": 109.5,
+          "firingTemperature": 1250,
+          "firingType": "reduction",
+          "holdTime": 25,
+          "createdAt": "2024-05-10T09:30:00.000Z",
+          "createdBy": "李工",
+          "changeNotes": "增加长石比例和氧化铁含量，调整硅钙比",
+          "isLocked": false,
+          "specimens": [
+            {
+              "id": "spec_recipe_celadon_base_v2_0",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v2",
+              "position": {
+                "row": 0,
+                "col": 0
+              },
+              "label": "CELADON-A1",
+              "firedColor": "#7BA38D",
+              "surfaceQuality": "excellent",
+              "glossLevel": "medium",
+              "defects": [],
+              "notes": "试片 1 烧成记录",
+              "firedAt": "2024-01-10T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_base_v2_1",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v2",
+              "position": {
+                "row": 0,
+                "col": 1
+              },
+              "label": "CELADON-A2",
+              "firedColor": "#5D8A6D",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔"
+              ],
+              "notes": "试片 2 烧成记录",
+              "firedAt": "2024-02-11T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_base_v2_2",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v2",
+              "position": {
+                "row": 0,
+                "col": 2
+              },
+              "label": "CELADON-A3",
+              "firedColor": "#8FB996",
+              "surfaceQuality": "good",
+              "glossLevel": "low",
+              "defects": [
+                "气泡"
+              ],
+              "notes": "试片 3 烧成记录",
+              "firedAt": "2024-03-12T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_base_v2_3",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v2",
+              "position": {
+                "row": 1,
+                "col": 0
+              },
+              "label": "CELADON-B1",
+              "firedColor": "#4A7C59",
+              "surfaceQuality": "fair",
+              "glossLevel": "low",
+              "defects": [
+                "流釉"
+              ],
+              "notes": "试片 4 烧成记录",
+              "firedAt": "2024-04-13T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_base_v2_4",
+              "recipeId": "recipe_celadon_base",
+              "versionId": "ver_celadon_v2",
+              "position": {
+                "row": 1,
+                "col": 1
+              },
+              "label": "CELADON-B2",
+              "firedColor": "#A3C9A8",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔",
+                "气泡"
+              ],
+              "notes": "试片 5 烧成记录",
+              "firedAt": "2024-05-14T14:00:00.000Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recipe_tenmoku_oilspot",
+      "name": "油滴天目",
+      "code": "TEN-O01",
+      "projectId": "proj_tenmoku",
+      "description": "高铁釉料，保温析晶形成油滴效果",
+      "coneTarget": "10",
+      "currentVersionId": "ver_tenmoku_v2",
+      "matrixType": "single",
+      "tags": [
+        "天目",
+        "油滴",
+        "高温"
+      ],
+      "status": "experimental",
+      "createdAt": "2024-01-15T11:00:00.000Z",
+      "updatedAt": "2024-05-28T16:45:00.000Z",
+      "versions": [
+        {
+          "id": "ver_tenmoku_v1",
+          "recipeId": "recipe_tenmoku_oilspot",
+          "versionNumber": 1,
+          "batchNumber": "TEN-B01",
+          "components": [
+            {
+              "ingredientId": "ing_feldspar",
+              "ingredientName": "Feldspar (长石)",
+              "percentage": 35,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_kaolin",
+              "ingredientName": "Kaolin (高岭土)",
+              "percentage": 15,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_silica",
+              "ingredientName": "Silica (石英)",
+              "percentage": 20,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_iron_oxide",
+              "ingredientName": "Iron Oxide (氧化铁)",
+              "percentage": 12,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_talc",
+              "ingredientName": "Talc (滑石)",
+              "percentage": 8,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_dolomite",
+              "ingredientName": "Dolomite (白云石)",
+              "percentage": 10,
+              "locked": false
+            }
+          ],
+          "totalPercentage": 100,
+          "firingTemperature": 1280,
+          "firingType": "oxidation",
+          "holdTime": 45,
+          "createdAt": "2024-01-15T11:00:00.000Z",
+          "createdBy": "王工",
+          "changeNotes": "初始配方，高含铁量",
+          "isLocked": true,
+          "specimens": [
+            {
+              "id": "spec_recipe_tenmoku_oilspot_v1_0",
+              "recipeId": "recipe_tenmoku_oilspot",
+              "versionId": "ver_tenmoku_v1",
+              "position": {
+                "row": 0,
+                "col": 0
+              },
+              "label": "TENMOKU-A1",
+              "firedColor": "#7BA38D",
+              "surfaceQuality": "excellent",
+              "glossLevel": "medium",
+              "defects": [],
+              "notes": "试片 1 烧成记录",
+              "firedAt": "2024-01-10T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_tenmoku_oilspot_v1_1",
+              "recipeId": "recipe_tenmoku_oilspot",
+              "versionId": "ver_tenmoku_v1",
+              "position": {
+                "row": 0,
+                "col": 1
+              },
+              "label": "TENMOKU-A2",
+              "firedColor": "#5D8A6D",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔"
+              ],
+              "notes": "试片 2 烧成记录",
+              "firedAt": "2024-02-11T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_tenmoku_oilspot_v1_2",
+              "recipeId": "recipe_tenmoku_oilspot",
+              "versionId": "ver_tenmoku_v1",
+              "position": {
+                "row": 0,
+                "col": 2
+              },
+              "label": "TENMOKU-A3",
+              "firedColor": "#8FB996",
+              "surfaceQuality": "good",
+              "glossLevel": "low",
+              "defects": [
+                "气泡"
+              ],
+              "notes": "试片 3 烧成记录",
+              "firedAt": "2024-03-12T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_tenmoku_oilspot_v1_3",
+              "recipeId": "recipe_tenmoku_oilspot",
+              "versionId": "ver_tenmoku_v1",
+              "position": {
+                "row": 1,
+                "col": 0
+              },
+              "label": "TENMOKU-B1",
+              "firedColor": "#4A7C59",
+              "surfaceQuality": "fair",
+              "glossLevel": "low",
+              "defects": [
+                "流釉"
+              ],
+              "notes": "试片 4 烧成记录",
+              "firedAt": "2024-04-13T14:00:00.000Z"
+            }
+          ]
+        },
+        {
+          "id": "ver_tenmoku_v2",
+          "recipeId": "recipe_tenmoku_oilspot",
+          "versionNumber": 2,
+          "batchNumber": "TEN-B03",
+          "components": [
+            {
+              "ingredientId": "ing_feldspar",
+              "ingredientName": "Feldspar (长石)",
+              "percentage": 38,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_kaolin",
+              "ingredientName": "Kaolin (高岭土)",
+              "percentage": 12,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_silica",
+              "ingredientName": "Silica (石英)",
+              "percentage": 22,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_iron_oxide",
+              "ingredientName": "Iron Oxide (氧化铁)",
+              "percentage": 14,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_talc",
+              "ingredientName": "Talc (滑石)",
+              "percentage": 6,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_dolomite",
+              "ingredientName": "Dolomite (白云石)",
+              "percentage": 8,
+              "locked": false
+            }
+          ],
+          "totalPercentage": 100,
+          "firingTemperature": 1300,
+          "firingType": "reduction",
+          "holdTime": 60,
+          "createdAt": "2024-04-20T10:00:00.000Z",
+          "createdBy": "王工",
+          "changeNotes": "提高铁含量和烧成温度，延长保温时间，改用还原焰",
+          "isLocked": false,
+          "specimens": [
+            {
+              "id": "spec_recipe_tenmoku_oilspot_v2_0",
+              "recipeId": "recipe_tenmoku_oilspot",
+              "versionId": "ver_tenmoku_v2",
+              "position": {
+                "row": 0,
+                "col": 0
+              },
+              "label": "TENMOKU-A1",
+              "firedColor": "#7BA38D",
+              "surfaceQuality": "excellent",
+              "glossLevel": "medium",
+              "defects": [],
+              "notes": "试片 1 烧成记录",
+              "firedAt": "2024-01-10T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_tenmoku_oilspot_v2_1",
+              "recipeId": "recipe_tenmoku_oilspot",
+              "versionId": "ver_tenmoku_v2",
+              "position": {
+                "row": 0,
+                "col": 1
+              },
+              "label": "TENMOKU-A2",
+              "firedColor": "#5D8A6D",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔"
+              ],
+              "notes": "试片 2 烧成记录",
+              "firedAt": "2024-02-11T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_tenmoku_oilspot_v2_2",
+              "recipeId": "recipe_tenmoku_oilspot",
+              "versionId": "ver_tenmoku_v2",
+              "position": {
+                "row": 0,
+                "col": 2
+              },
+              "label": "TENMOKU-A3",
+              "firedColor": "#8FB996",
+              "surfaceQuality": "good",
+              "glossLevel": "low",
+              "defects": [
+                "气泡"
+              ],
+              "notes": "试片 3 烧成记录",
+              "firedAt": "2024-03-12T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_tenmoku_oilspot_v2_3",
+              "recipeId": "recipe_tenmoku_oilspot",
+              "versionId": "ver_tenmoku_v2",
+              "position": {
+                "row": 1,
+                "col": 0
+              },
+              "label": "TENMOKU-B1",
+              "firedColor": "#4A7C59",
+              "surfaceQuality": "fair",
+              "glossLevel": "low",
+              "defects": [
+                "流釉"
+              ],
+              "notes": "试片 4 烧成记录",
+              "firedAt": "2024-04-13T14:00:00.000Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recipe_lowfire_leadborate",
+      "name": "铅硼基础釉",
+      "code": "LOW-B01",
+      "projectId": "proj_lowfire",
+      "description": "低温铅硼熔块基础配方，适用于釉上彩",
+      "coneTarget": "022",
+      "currentVersionId": "ver_lowfire_v1",
+      "matrixType": "ternary",
+      "matrixConfig": {
+        "type": "ternary",
+        "baseIngredients": [
+          "ing_borax",
+          "ing_soda_ash",
+          "ing_silica"
+        ],
+        "minPercentages": [
+          20,
+          5,
+          30
+        ],
+        "maxPercentages": [
+          40,
+          15,
+          50
+        ],
+        "steps": 3,
+        "fixedComponents": [
+          {
+            "ingredientId": "ing_ball_clay",
+            "ingredientName": "Ball Clay (球土)",
+            "percentage": 10,
+            "locked": true
+          }
+        ]
+      },
+      "tags": [
+        "低温",
+        "铅硼",
+        "基础釉"
+      ],
+      "status": "active",
+      "createdAt": "2024-02-21T09:00:00.000Z",
+      "updatedAt": "2024-04-15T10:20:00.000Z",
+      "versions": [
+        {
+          "id": "ver_lowfire_v1",
+          "recipeId": "recipe_lowfire_leadborate",
+          "versionNumber": 1,
+          "batchNumber": "LOW-B01",
+          "components": [
+            {
+              "ingredientId": "ing_borax",
+              "ingredientName": "Borax (硼砂)",
+              "percentage": 30,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_soda_ash",
+              "ingredientName": "Soda Ash (纯碱)",
+              "percentage": 10,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_silica",
+              "ingredientName": "Silica (石英)",
+              "percentage": 40,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_ball_clay",
+              "ingredientName": "Ball Clay (球土)",
+              "percentage": 10,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_zinc",
+              "ingredientName": "Zinc Oxide (氧化锌)",
+              "percentage": 8,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_titanium",
+              "ingredientName": "Titanium Dioxide (钛白)",
+              "percentage": 2,
+              "locked": false
+            }
+          ],
+          "totalPercentage": 100,
+          "firingTemperature": 750,
+          "firingType": "oxidation",
+          "holdTime": 10,
+          "createdAt": "2024-02-21T09:00:00.000Z",
+          "createdBy": "陈工",
+          "changeNotes": "初始低温基础配方",
+          "isLocked": true,
+          "specimens": [
+            {
+              "id": "spec_recipe_lowfire_leadborate_v1_0",
+              "recipeId": "recipe_lowfire_leadborate",
+              "versionId": "ver_lowfire_v1",
+              "position": {
+                "row": 0,
+                "col": 0
+              },
+              "label": "LOWFIRE-A1",
+              "firedColor": "#7BA38D",
+              "surfaceQuality": "excellent",
+              "glossLevel": "medium",
+              "defects": [],
+              "notes": "试片 1 烧成记录",
+              "firedAt": "2024-01-10T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_lowfire_leadborate_v1_1",
+              "recipeId": "recipe_lowfire_leadborate",
+              "versionId": "ver_lowfire_v1",
+              "position": {
+                "row": 0,
+                "col": 1
+              },
+              "label": "LOWFIRE-A2",
+              "firedColor": "#5D8A6D",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔"
+              ],
+              "notes": "试片 2 烧成记录",
+              "firedAt": "2024-02-11T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_lowfire_leadborate_v1_2",
+              "recipeId": "recipe_lowfire_leadborate",
+              "versionId": "ver_lowfire_v1",
+              "position": {
+                "row": 0,
+                "col": 2
+              },
+              "label": "LOWFIRE-A3",
+              "firedColor": "#8FB996",
+              "surfaceQuality": "good",
+              "glossLevel": "low",
+              "defects": [
+                "气泡"
+              ],
+              "notes": "试片 3 烧成记录",
+              "firedAt": "2024-03-12T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_lowfire_leadborate_v1_3",
+              "recipeId": "recipe_lowfire_leadborate",
+              "versionId": "ver_lowfire_v1",
+              "position": {
+                "row": 1,
+                "col": 0
+              },
+              "label": "LOWFIRE-B1",
+              "firedColor": "#4A7C59",
+              "surfaceQuality": "fair",
+              "glossLevel": "low",
+              "defects": [
+                "流釉"
+              ],
+              "notes": "试片 4 烧成记录",
+              "firedAt": "2024-04-13T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_lowfire_leadborate_v1_4",
+              "recipeId": "recipe_lowfire_leadborate",
+              "versionId": "ver_lowfire_v1",
+              "position": {
+                "row": 1,
+                "col": 1
+              },
+              "label": "LOWFIRE-B2",
+              "firedColor": "#A3C9A8",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔",
+                "气泡"
+              ],
+              "notes": "试片 5 烧成记录",
+              "firedAt": "2024-05-14T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_lowfire_leadborate_v1_5",
+              "recipeId": "recipe_lowfire_leadborate",
+              "versionId": "ver_lowfire_v1",
+              "position": {
+                "row": 1,
+                "col": 2
+              },
+              "label": "LOWFIRE-B3",
+              "firedColor": "#3D6B4F",
+              "surfaceQuality": "excellent",
+              "glossLevel": "high",
+              "defects": [],
+              "notes": "试片 6 烧成记录",
+              "firedAt": "2024-06-15T14:00:00.000Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recipe_matte_calcium",
+      "name": "钙系哑光釉",
+      "code": "MAT-C01",
+      "projectId": "proj_matting",
+      "description": "高钙含量哑光釉，通过析晶产生哑光效果",
+      "coneTarget": "06",
+      "currentVersionId": "ver_matte_v1",
+      "matrixType": "binary",
+      "matrixConfig": {
+        "type": "binary",
+        "baseIngredients": [
+          "ing_whiting",
+          "ing_talc"
+        ],
+        "minPercentages": [
+          10,
+          5
+        ],
+        "maxPercentages": [
+          25,
+          15
+        ],
+        "steps": 4,
+        "fixedComponents": [
+          {
+            "ingredientId": "ing_feldspar",
+            "ingredientName": "Feldspar (长石)",
+            "percentage": 40,
+            "locked": true
+          },
+          {
+            "ingredientId": "ing_silica",
+            "ingredientName": "Silica (石英)",
+            "percentage": 25,
+            "locked": true
+          },
+          {
+            "ingredientId": "ing_kaolin",
+            "ingredientName": "Kaolin (高岭土)",
+            "percentage": 15,
+            "locked": true
+          }
+        ]
+      },
+      "tags": [
+        "哑光",
+        "钙系",
+        "氧化焰"
+      ],
+      "status": "active",
+      "createdAt": "2024-04-05T08:30:00.000Z",
+      "updatedAt": "2024-06-10T09:15:00.000Z",
+      "versions": [
+        {
+          "id": "ver_matte_v1",
+          "recipeId": "recipe_matte_calcium",
+          "versionNumber": 1,
+          "batchNumber": "MAT-B01",
+          "components": [
+            {
+              "ingredientId": "ing_feldspar",
+              "ingredientName": "Feldspar (长石)",
+              "percentage": 40,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_silica",
+              "ingredientName": "Silica (石英)",
+              "percentage": 25,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_kaolin",
+              "ingredientName": "Kaolin (高岭土)",
+              "percentage": 15,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_whiting",
+              "ingredientName": "Whiting (石灰石)",
+              "percentage": 15,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_talc",
+              "ingredientName": "Talc (滑石)",
+              "percentage": 5,
+              "locked": false
+            }
+          ],
+          "totalPercentage": 100,
+          "firingTemperature": 1220,
+          "firingType": "oxidation",
+          "holdTime": 30,
+          "createdAt": "2024-04-05T08:30:00.000Z",
+          "createdBy": "赵工",
+          "changeNotes": "初始哑光配方，高钙低镁",
+          "isLocked": false,
+          "specimens": [
+            {
+              "id": "spec_recipe_matte_calcium_v1_0",
+              "recipeId": "recipe_matte_calcium",
+              "versionId": "ver_matte_v1",
+              "position": {
+                "row": 0,
+                "col": 0
+              },
+              "label": "MATTE-A1",
+              "firedColor": "#7BA38D",
+              "surfaceQuality": "excellent",
+              "glossLevel": "medium",
+              "defects": [],
+              "notes": "试片 1 烧成记录",
+              "firedAt": "2024-01-10T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_matte_calcium_v1_1",
+              "recipeId": "recipe_matte_calcium",
+              "versionId": "ver_matte_v1",
+              "position": {
+                "row": 0,
+                "col": 1
+              },
+              "label": "MATTE-A2",
+              "firedColor": "#5D8A6D",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔"
+              ],
+              "notes": "试片 2 烧成记录",
+              "firedAt": "2024-02-11T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_matte_calcium_v1_2",
+              "recipeId": "recipe_matte_calcium",
+              "versionId": "ver_matte_v1",
+              "position": {
+                "row": 0,
+                "col": 2
+              },
+              "label": "MATTE-A3",
+              "firedColor": "#8FB996",
+              "surfaceQuality": "good",
+              "glossLevel": "low",
+              "defects": [
+                "气泡"
+              ],
+              "notes": "试片 3 烧成记录",
+              "firedAt": "2024-03-12T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_matte_calcium_v1_3",
+              "recipeId": "recipe_matte_calcium",
+              "versionId": "ver_matte_v1",
+              "position": {
+                "row": 1,
+                "col": 0
+              },
+              "label": "MATTE-B1",
+              "firedColor": "#4A7C59",
+              "surfaceQuality": "fair",
+              "glossLevel": "low",
+              "defects": [
+                "流釉"
+              ],
+              "notes": "试片 4 烧成记录",
+              "firedAt": "2024-04-13T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_matte_calcium_v1_4",
+              "recipeId": "recipe_matte_calcium",
+              "versionId": "ver_matte_v1",
+              "position": {
+                "row": 1,
+                "col": 1
+              },
+              "label": "MATTE-B2",
+              "firedColor": "#A3C9A8",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔",
+                "气泡"
+              ],
+              "notes": "试片 5 烧成记录",
+              "firedAt": "2024-05-14T14:00:00.000Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recipe_celadon_iron",
+      "name": "铁系青瓷变色实验",
+      "code": "CEL-E02",
+      "projectId": "proj_celadon",
+      "description": "系统性测试不同铁含量对青瓷呈色的影响",
+      "coneTarget": "06",
+      "currentVersionId": "ver_celadon_iron_v1",
+      "matrixType": "binary",
+      "matrixConfig": {
+        "type": "binary",
+        "baseIngredients": [
+          "ing_iron_oxide",
+          "ing_titanium"
+        ],
+        "minPercentages": [
+          0.5,
+          0
+        ],
+        "maxPercentages": [
+          6,
+          4
+        ],
+        "steps": 5,
+        "fixedComponents": [
+          {
+            "ingredientId": "ing_feldspar",
+            "ingredientName": "Feldspar (长石)",
+            "percentage": 50,
+            "locked": true
+          },
+          {
+            "ingredientId": "ing_kaolin",
+            "ingredientName": "Kaolin (高岭土)",
+            "percentage": 22,
+            "locked": true
+          },
+          {
+            "ingredientId": "ing_silica",
+            "ingredientName": "Silica (石英)",
+            "percentage": 23,
+            "locked": true
+          },
+          {
+            "ingredientId": "ing_whiting",
+            "ingredientName": "Whiting (石灰石)",
+            "percentage": 12,
+            "locked": true
+          }
+        ]
+      },
+      "tags": [
+        "青瓷",
+        "铁系",
+        "着色实验"
+      ],
+      "status": "experimental",
+      "createdAt": "2024-05-01T10:00:00.000Z",
+      "updatedAt": "2024-06-15T11:30:00.000Z",
+      "versions": [
+        {
+          "id": "ver_celadon_iron_v1",
+          "recipeId": "recipe_celadon_iron",
+          "versionNumber": 1,
+          "batchNumber": "CEL-B05",
+          "components": [
+            {
+              "ingredientId": "ing_feldspar",
+              "ingredientName": "Feldspar (长石)",
+              "percentage": 50,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_kaolin",
+              "ingredientName": "Kaolin (高岭土)",
+              "percentage": 22,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_silica",
+              "ingredientName": "Silica (石英)",
+              "percentage": 23,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_whiting",
+              "ingredientName": "Whiting (石灰石)",
+              "percentage": 12,
+              "locked": true
+            },
+            {
+              "ingredientId": "ing_iron_oxide",
+              "ingredientName": "Iron Oxide (氧化铁)",
+              "percentage": 3,
+              "locked": false
+            },
+            {
+              "ingredientId": "ing_titanium",
+              "ingredientName": "Titanium Dioxide (钛白)",
+              "percentage": 1,
+              "locked": false
+            }
+          ],
+          "totalPercentage": 111,
+          "firingTemperature": 1250,
+          "firingType": "reduction",
+          "holdTime": 20,
+          "createdAt": "2024-05-01T10:00:00.000Z",
+          "createdBy": "李工",
+          "changeNotes": "铁钛二元系统着色实验初始版",
+          "isLocked": false,
+          "specimens": [
+            {
+              "id": "spec_recipe_celadon_iron_v1_0",
+              "recipeId": "recipe_celadon_iron",
+              "versionId": "ver_celadon_iron_v1",
+              "position": {
+                "row": 0,
+                "col": 0
+              },
+              "label": "CELADON-A1",
+              "firedColor": "#7BA38D",
+              "surfaceQuality": "excellent",
+              "glossLevel": "medium",
+              "defects": [],
+              "notes": "试片 1 烧成记录",
+              "firedAt": "2024-01-10T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_iron_v1_1",
+              "recipeId": "recipe_celadon_iron",
+              "versionId": "ver_celadon_iron_v1",
+              "position": {
+                "row": 0,
+                "col": 1
+              },
+              "label": "CELADON-A2",
+              "firedColor": "#5D8A6D",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔"
+              ],
+              "notes": "试片 2 烧成记录",
+              "firedAt": "2024-02-11T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_iron_v1_2",
+              "recipeId": "recipe_celadon_iron",
+              "versionId": "ver_celadon_iron_v1",
+              "position": {
+                "row": 0,
+                "col": 2
+              },
+              "label": "CELADON-A3",
+              "firedColor": "#8FB996",
+              "surfaceQuality": "good",
+              "glossLevel": "low",
+              "defects": [
+                "气泡"
+              ],
+              "notes": "试片 3 烧成记录",
+              "firedAt": "2024-03-12T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_iron_v1_3",
+              "recipeId": "recipe_celadon_iron",
+              "versionId": "ver_celadon_iron_v1",
+              "position": {
+                "row": 1,
+                "col": 0
+              },
+              "label": "CELADON-B1",
+              "firedColor": "#4A7C59",
+              "surfaceQuality": "fair",
+              "glossLevel": "low",
+              "defects": [
+                "流釉"
+              ],
+              "notes": "试片 4 烧成记录",
+              "firedAt": "2024-04-13T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_iron_v1_4",
+              "recipeId": "recipe_celadon_iron",
+              "versionId": "ver_celadon_iron_v1",
+              "position": {
+                "row": 1,
+                "col": 1
+              },
+              "label": "CELADON-B2",
+              "firedColor": "#A3C9A8",
+              "surfaceQuality": "good",
+              "glossLevel": "medium",
+              "defects": [
+                "针孔",
+                "气泡"
+              ],
+              "notes": "试片 5 烧成记录",
+              "firedAt": "2024-05-14T14:00:00.000Z"
+            },
+            {
+              "id": "spec_recipe_celadon_iron_v1_5",
+              "recipeId": "recipe_celadon_iron",
+              "versionId": "ver_celadon_iron_v1",
+              "position": {
+                "row": 1,
+                "col": 2
+              },
+              "label": "CELADON-B3",
+              "firedColor": "#3D6B4F",
+              "surfaceQuality": "excellent",
+              "glossLevel": "high",
+              "defects": [],
+              "notes": "试片 6 烧成记录",
+              "firedAt": "2024-06-15T14:00:00.000Z"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "ing_silica",
+      "name": "Silica (石英)",
+      "formula": "SiO2",
+      "category": "filler",
+      "notes": "主要玻璃形成体"
+    },
+    {
+      "id": "ing_feldspar",
+      "name": "Feldspar (长石)",
+      "formula": "KAlSi3O8",
+      "category": "flux",
+      "notes": "助熔剂，高温熔融"
+    },
+    {
+      "id": "ing_kaolin",
+      "name": "Kaolin (高岭土)",
+      "formula": "Al2Si2O5(OH)4",
+      "category": "filler",
+      "notes": "增加粘度和白度"
+    },
+    {
+      "id": "ing_ball_clay",
+      "name": "Ball Clay (球土)",
+      "category": "filler",
+      "notes": "塑性粘土，增加生坯强度"
+    },
+    {
+      "id": "ing_whiting",
+      "name": "Whiting (石灰石)",
+      "formula": "CaCO3",
+      "category": "flux",
+      "notes": "钙助熔剂"
+    },
+    {
+      "id": "ing_dolomite",
+      "name": "Dolomite (白云石)",
+      "formula": "CaMg(CO3)2",
+      "category": "flux",
+      "notes": "钙镁助熔剂"
+    },
+    {
+      "id": "ing_zinc",
+      "name": "Zinc Oxide (氧化锌)",
+      "formula": "ZnO",
+      "category": "flux",
+      "notes": "助熔剂，影响光泽"
+    },
+    {
+      "id": "ing_talc",
+      "name": "Talc (滑石)",
+      "formula": "Mg3Si4O10(OH)2",
+      "category": "flux",
+      "notes": "镁助熔剂"
+    },
+    {
+      "id": "ing_borax",
+      "name": "Borax (硼砂)",
+      "formula": "Na2B4O7·10H2O",
+      "category": "flux",
+      "notes": "低温助熔剂"
+    },
+    {
+      "id": "ing_soda_ash",
+      "name": "Soda Ash (纯碱)",
+      "formula": "Na2CO3",
+      "category": "flux",
+      "notes": "钠助熔剂"
+    },
+    {
+      "id": "ing_titanium",
+      "name": "Titanium Dioxide (钛白)",
+      "formula": "TiO2",
+      "category": "opacifier",
+      "notes": "乳浊剂"
+    },
+    {
+      "id": "ing_zircon",
+      "name": "Zircon (锆英石)",
+      "formula": "ZrSiO4",
+      "category": "opacifier",
+      "notes": "乳浊剂，增加白度"
+    },
+    {
+      "id": "ing_iron_oxide",
+      "name": "Iron Oxide (氧化铁)",
+      "formula": "Fe2O3",
+      "category": "colorant",
+      "notes": "红色/棕色着色剂"
+    },
+    {
+      "id": "ing_cobalt",
+      "name": "Cobalt Oxide (氧化钴)",
+      "formula": "CoO",
+      "category": "colorant",
+      "notes": "蓝色着色剂"
+    },
+    {
+      "id": "ing_copper",
+      "name": "Copper Carbonate (碳酸铜)",
+      "formula": "CuCO3",
+      "category": "colorant",
+      "notes": "绿色/蓝色着色剂"
+    },
+    {
+      "id": "ing_manganese",
+      "name": "Manganese Dioxide (二氧化锰)",
+      "formula": "MnO2",
+      "category": "colorant",
+      "notes": "紫色/棕色着色剂"
+    },
+    {
+      "id": "ing_nickel",
+      "name": "Nickel Oxide (氧化镍)",
+      "formula": "NiO",
+      "category": "colorant",
+      "notes": "灰色/棕色着色剂"
+    },
+    {
+      "id": "ing_chromium",
+      "name": "Chromium Oxide (氧化铬)",
+      "formula": "Cr2O3",
+      "category": "colorant",
+      "notes": "绿色着色剂"
+    },
+    {
+      "id": "ing_bentonite",
+      "name": "Bentonite (膨润土)",
+      "category": "stabilizer",
+      "notes": "悬浮剂，防止沉淀"
+    },
+    {
+      "id": "ing_cmc",
+      "name": "CMC (羧甲基纤维素)",
+      "category": "stabilizer",
+      "notes": "增稠剂，粘结剂"
+    }
+  ],
+  "lastUpdated": "2026-06-17T17:13:26.434Z"
+}
