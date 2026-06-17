@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 
 const dataDir = path.join(process.cwd(), 'data');
@@ -137,7 +138,7 @@ const samplePhotos = {
   ]
 };
 
-function initSampleData() {
+export function initSampleData() {
   ensureDataDir();
   
   const db = {
@@ -331,4 +332,7 @@ function initSampleData() {
   console.log('  启动命令: npm run dev\n');
 }
 
-initSampleData();
+const __filename = fileURLToPath(import.meta.url);
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  initSampleData();
+}
