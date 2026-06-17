@@ -1,0 +1,209 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getProjectById } from '../../../lib/projects';
+import { generateExportSummary, generateMarkdownReport, exportToJSON } from '../../../lib/export';
+
+const { id } = Astro.params;
+if (!id) throw new Error('Project ID is required');
+
+const project = getProjectById(id);
+if (!project) {
+  return Astro.redirect('/404');
+}
+
+const summary = generateExportSummary(id);
+const markdownReport = generateMarkdownReport(id);
+const jsonExport = exportToJSON(id);
+
+const exportFormat = Astro.url.searchParams.get('format') || 'summary';
+---
+
+<BaseLayout title={`导出报告 - ${project.name}`} activeNav="home">
+  <div style="margin-bottom: 16px;">
+    <a href={`/projects/${id}`} style="color: var(--color-text-muted); text-decoration: none; font-size: 13px;">
+      ← 返回项目详情
+    </a>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">导出报告</h1>
+      <p class="page-subtitle">{project.name} · {project.code}</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-primary" onclick="downloadJSON()">📄 下载 JSON</button>
+      <button class="btn btn-primary" onclick="downloadMarkdown()">📝 下载 Markdown</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div 
+      class={`tab ${exportFormat === 'summary' ? 'active' : ''}`}
+      onclick={`window.location.search='?format=summary'`}
+    >
+      摘要概览
+    </div>
+    <div 
+      class={`tab ${exportFormat === 'markdown' ? 'active' : ''}`}
+      onclick={`window.location.search='?format=markdown'`}
+    >
+      Markdown 报告
+    </div>
+    <div 
+      class={`tab ${exportFormat === 'json' ? 'active' : ''}`}
+      onclick={`window.location.search='?format=json'`}
+    >
+      JSON 数据
+    </div>
+  </div>
+
+  {exportFormat === 'summary' && (
+    <div class="card">
+      <h3 class="card-title">📋 项目信息</h3>
+      <div class="form-row" style="margin-bottom: 24px;">
+        <div>
+          <div class="form-label">项目名称</div>
+          <div style="font-weight: 500;">{summary.project.name}</div>
+        </div>
+        <div>
+          <div class="form-label">项目编号</div>
+          <div style="font-family: monospace;">{summary.project.code}</div>
+        </div>
+        <div>
+          <div class="form-label">发掘地点</div>
+          <div>{summary.project.location || '-'}</div>
+        </div>
+        <div>
+          <div class="form-label">项目负责人</div>
+          <div>{summary.project.director || '-'}</div>
+        </div>
+      </div>
+
+      <h3 class="card-title">📊 基本统计</h3>
+      <div class="stats-grid" style="margin-bottom: 24px;">
+        <div class="stat-card">
+          <div class="stat-value">{summary.unitCount}</div>
+          <div class="stat-label">层位单元</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{summary.artifactCount}</div>
+          <div class="stat-label">出土物</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{summary.photoCount}</div>
+          <div class="stat-label">照片</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{summary.relationCount}</div>
+          <div class="stat-label">层位关系</div>
+        </div>
+      </div>
+
+      <h3 class="card-title">🎯 主要发现</h3>
+      <ul style="margin-bottom: 24px;">
+        {summary.keyFindings.map((finding, i) => (
+          <li key={i} style="margin-bottom: 8px;">{finding}</li>
+        ))}
+      </ul>
+
+      <h3 class="card-title">📐 发掘进度</h3>
+      <div class="form-row" style="margin-bottom: 24px;">
+        <div>
+          <div class="form-label">覆盖深度</div>
+          <div>{summary.periodCoverage}</div>
+        </div>
+        <div>
+          <div class="form-label">发掘进度</div>
+          <div>{summary.excavationProgress}</div>
+        </div>
+      </div>
+
+      {summary.anomalies.length > 0 && (
+        <>
+          <h3 class="card-title">⚠️ 数据异常提示</h3>
+          {summary.anomalies.map(anomaly => (
+            <div class={`alert alert-${anomaly.severity}`} style="margin-bottom: 12px;">
+              <span class="alert-icon">
+                {anomaly.severity === 'error' ? '🔴' : anomaly.severity === 'warning' ? '🟡' : '🔵'}
+              </span>
+              <div>
+                <div style="font-weight: 500; margin-bottom: 4px;">{anomaly.title}</div>
+                <div style="font-size: 13px;">{anomaly.description}</div>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border); text-align: right; color: var(--color-text-muted); font-size: 12px;">
+        报告生成时间: {new Date(summary.exportDate).toLocaleString('zh-CN')}
+      </div>
+    </div>
+  )}
+
+  {exportFormat === 'markdown' && (
+    <div class="card">
+      <pre style={{ 
+        background: 'var(--color-bg)', 
+        padding: 16, 
+        borderRadius: 8, 
+        overflow: 'auto',
+        fontSize: 13,
+        lineHeight: 1.6
+      }}>{markdownReport}</pre>
+    </div>
+  )}
+
+  {exportFormat === 'json' && (
+    <div class="card">
+      <pre style={{ 
+        background: 'var(--color-bg)', 
+        padding: 16, 
+        borderRadius: 8, 
+        overflow: 'auto',
+        fontSize: 12,
+        lineHeight: 1.5,
+        maxHeight: 600
+      }}>{jsonExport}</pre>
+    </div>
+  )}
+</BaseLayout>
+
+<script is:inline>
+  function downloadJSON() {
+    const jsonData = document.querySelector('pre')?.textContent || '';
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'archaeology_export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadMarkdown() {
+    const currentFormat = new URLSearchParams(window.location.search).get('format');
+    if (currentFormat !== 'markdown') {
+      window.location.search = '?format=markdown';
+      setTimeout(() => {
+        const mdData = document.querySelector('pre')?.textContent || '';
+        const blob = new Blob([mdData], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'archaeology_report.md';
+        a.click();
+        URL.revokeObjectURL(url);
+      }, 500);
+    } else {
+      const mdData = document.querySelector('pre')?.textContent || '';
+      const blob = new Blob([mdData], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'archaeology_report.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  }
+</script>

@@ -1,0 +1,29 @@
+{
+  "name": "archaeology-stratigraphy-editor",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "考古探方出土层位关系编辑器",
+  "scripts": {
+    "dev": "node scripts/run-astro.js dev",
+    "start": "node scripts/run-astro.js dev",
+    "build": "node scripts/run-astro.js check && node scripts/run-astro.js build",
+    "preview": "node scripts/run-astro.js preview",
+    "astro": "node scripts/run-astro.js",
+    "init-data": "node scripts/init-data.js",
+    "setup": "node scripts/ensure-node.js"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/react": "^4.2.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "astro": "^5.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.2",
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2"
+  }
+}

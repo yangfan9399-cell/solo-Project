@@ -1,0 +1,169 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getProjectById } from '../../../lib/projects';
+import { listVersionHistory, getBatches } from '../../../lib/versionHistory';
+
+const { id } = Astro.params;
+if (!id) throw new Error('Project ID is required');
+
+const project = getProjectById(id);
+if (!project) {
+  return Astro.redirect('/404');
+}
+
+const page = Number(Astro.url.searchParams.get('page')) || 1;
+const pageSize = 20;
+const entityType = Astro.url.searchParams.get('type') || '';
+const batchId = Astro.url.searchParams.get('batch') || '';
+
+const history = listVersionHistory(id, { page, pageSize, entityType, batchId });
+const batches = getBatches(id);
+---
+
+<BaseLayout title={`版本历史 - ${project.name}`} activeNav="home">
+  <div style="margin-bottom: 16px;">
+    <a href={`/projects/${id}`} style="color: var(--color-text-muted); text-decoration: none; font-size: 13px;">
+      ← 返回项目详情
+    </a>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">版本历史</h1>
+      <p class="page-subtitle">{project.name} · 共 {history.total} 条操作记录</p>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 250px 1fr; gap: 20px;">
+    <div>
+      <div class="card" style="margin-bottom: 16px;">
+        <h3 class="card-title">🔍 筛选</h3>
+        <div class="form-group">
+          <label class="form-label">实体类型</label>
+          <select 
+            class="select" 
+            style="width: 100%;"
+            onchange={`window.location.search='?type='+this.value+'&batch=${batchId}'`}
+          >
+            <option value="">全部</option>
+            <option value="project" selected={entityType === 'project'}>项目</option>
+            <option value="unit" selected={entityType === 'unit'}>层位</option>
+            <option value="relation" selected={entityType === 'relation'}>关系</option>
+            <option value="artifact" selected={entityType === 'artifact'}>出土物</option>
+            <option value="photo" selected={entityType === 'photo'}>照片</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">📦 批次记录</h3>
+        <div style="font-size: 13px;">
+          {batches.length > 0 ? (
+            batches.map(batch => (
+              <div 
+                key={batch.batchId}
+                onclick={`window.location.search='?batch=${batch.batchId}&type=${entityType}'`}
+                style={{
+                  padding: '10px 12px',
+                  cursor: 'pointer',
+                  borderRadius: 6,
+                  marginBottom: 4,
+                  background: batchId === batch.batchId ? 'var(--color-bg)' : 'transparent',
+                  border: batchId === batch.batchId ? '1px solid var(--color-primary)' : '1px solid transparent'
+                }}
+              >
+                <div style={{ 
+                  fontFamily: 'monospace', 
+                  fontSize: 11, 
+                  color: 'var(--color-text-muted)',
+                  marginBottom: 4
+                }}>
+                  {batch.batchId.slice(0, 16)}...
+                </div>
+                <div style={{ fontSize: 12 }}>
+                  {batch.count} 项变更
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                  {new Date(batch.lastTimestamp).toLocaleDateString('zh-CN')}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '20px 0' }}>
+              暂无批次记录
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="timeline">
+          {history.items.map(version => (
+            <div key={version.id} class="timeline-item">
+              <div class="timeline-time">
+                {new Date(version.timestamp).toLocaleString('zh-CN')}
+                <span class={`badge badge-${version.action === 'create' ? 'info' : version.action === 'delete' ? 'error' : 'warning'}`} style="margin-left: 8px;">
+                  {version.action === 'create' ? '创建' : version.action === 'update' ? '更新' : '删除'}
+                </span>
+                <span class="badge badge-layer" style="margin-left: 4px;">
+                  {version.entityType === 'project' ? '项目' : 
+                   version.entityType === 'unit' ? '层位' :
+                   version.entityType === 'relation' ? '关系' :
+                   version.entityType === 'artifact' ? '出土物' : '照片'}
+                </span>
+              </div>
+              <div class="timeline-title">{version.description}</div>
+              <div class="timeline-desc">
+                操作人: {version.userName}
+                {version.batchId && ` · 批次: ${version.batchId.slice(0, 8)}...`}
+              </div>
+              {Object.keys(version.changes).length > 0 && (
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--color-border);">
+                  <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 6 }}>变更详情:</div>
+                  <div style={{ 
+                    background: 'var(--color-bg)', 
+                    padding: 8, 
+                    borderRadius: 6, 
+                    fontFamily: 'monospace', 
+                    fontSize: 11,
+                    overflow: 'auto'
+                  }}>
+                    {Object.entries(version.changes).map(([key, value]) => (
+                      <div key={key} style="margin-bottom: 2px;">
+                        <span style="color: var(--color-primary);">{key}</span>: 
+                        <span style="color: #c0392b; text-decoration: line-through;"> {JSON.stringify(value.old)}</span>
+                        <span style="color: #27ae60;"> → {JSON.stringify(value.new)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {history.items.length === 0 && (
+            <div class="empty-state">
+              <div class="empty-icon">📜</div>
+              <div class="empty-title">暂无操作记录</div>
+              <div class="empty-desc">所有数据变更都将记录在此</div>
+            </div>
+          )}
+        </div>
+
+        {history.totalPages > 1 && (
+          <div class="pagination" style="margin-top: 20px;">
+            {Array.from({ length: history.totalPages }, (_, i) => i + 1).map(p => (
+              <button 
+                class={`page-btn ${p === page ? 'active' : ''}`}
+                onclick={`window.location.search='?page=${p}&type=${entityType}&batch=${batchId}'`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</BaseLayout>

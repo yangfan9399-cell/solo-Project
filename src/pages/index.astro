@@ -1,0 +1,116 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { listProjects } from '../lib/projects';
+import { getProjectStats } from '../lib/projects';
+
+const page = Number(Astro.url.searchParams.get('page')) || 1;
+const search = Astro.url.searchParams.get('search') || '';
+const status = Astro.url.searchParams.get('status') || '';
+const pageSize = 10;
+
+const result = listProjects({ page, pageSize, search, status, sortBy: 'updatedAt', sortOrder: 'desc' });
+
+const projectsWithStats = result.items.map(p => ({
+  ...p,
+  stats: getProjectStats(p.id)
+}));
+---
+
+<BaseLayout title="项目台账 - 考古探方出土层位关系编辑器" activeNav="home">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">项目台账</h1>
+      <p class="page-subtitle">管理所有考古发掘项目的层位关系数据</p>
+    </div>
+    <button class="btn btn-primary" onclick="alert('新建项目功能将在后续版本支持')">
+      <span>+</span> 新建项目
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="filter-bar">
+      <input 
+        type="text" 
+        class="input" 
+        placeholder="搜索项目名称、编号、地点..." 
+        style="flex: 1; min-width: 250px;"
+        id="searchInput"
+        value={search}
+        onkeyup="if(event.key==='Enter'){window.location.search='?search='+encodeURIComponent(this.value)+'&status='+document.getElementById('statusFilter').value}"
+      />
+      <select class="select" id="statusFilter" onchange="window.location.search='?search='+encodeURIComponent(document.getElementById('searchInput').value)+'&status='+this.value">
+        <option value="">全部状态</option>
+        <option value="active" selected={status === 'active'}>进行中</option>
+        <option value="completed" selected={status === 'completed'}>已完成</option>
+        <option value="paused" selected={status === 'paused'}>已暂停</option>
+      </select>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>项目编号</th>
+          <th>项目名称</th>
+          <th>地点</th>
+          <th>负责人</th>
+          <th>层位数</th>
+          <th>出土物</th>
+          <th>状态</th>
+          <th>更新时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {projectsWithStats.map(project => (
+          <tr>
+            <td style="font-family: monospace; font-weight: 500;">{project.code}</td>
+            <td>
+              <a href={`/projects/${project.id}`} style="color: var(--color-primary); text-decoration: none; font-weight: 500;">
+                {project.name}
+              </a>
+            </td>
+            <td>{project.location || '-'}</td>
+            <td>{project.director || '-'}</td>
+            <td>{project.stats.unitCount}</td>
+            <td>{project.stats.artifactCount}</td>
+            <td>
+              <span class={`badge badge-${project.status}`}>
+                {project.status === 'active' ? '进行中' : project.status === 'completed' ? '已完成' : '已暂停'}
+              </span>
+            </td>
+            <td style="font-size: 12px; color: var(--color-text-muted);">
+              {new Date(project.updatedAt).toLocaleDateString('zh-CN')}
+            </td>
+            <td>
+              <a href={`/projects/${project.id}`} class="btn btn-sm">查看</a>
+            </td>
+          </tr>
+        ))}
+        {result.items.length === 0 && (
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <div class="empty-title">暂无项目</div>
+                <div class="empty-desc">创建第一个考古发掘项目开始记录层位关系</div>
+              </div>
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+
+    {result.totalPages > 1 && (
+      <div class="pagination">
+        {Array.from({ length: result.totalPages }, (_, i) => i + 1).map(p => (
+          <button 
+            class={`page-btn ${p === page ? 'active' : ''}`}
+            onclick={`window.location.search='?page=${p}&search=${encodeURIComponent(search)}&status=${status}'`}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+</BaseLayout>

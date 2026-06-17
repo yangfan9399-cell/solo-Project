@@ -1,0 +1,429 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getProjectById, getProjectStats } from '../../lib/projects';
+import { getAllUnits, listUnits } from '../../lib/units';
+import { getRelationsByProject } from '../../lib/relations';
+import { listArtifacts } from '../../lib/artifacts';
+import { getPhotosByProject } from '../../lib/photos';
+import { listVersionHistory, getBatches } from '../../lib/versionHistory';
+import { detectAnomalies, getAnomalySummary } from '../../lib/anomalies';
+import { generateHarrisMatrix } from '../../lib/harrisMatrix';
+import { generateExportSummary, generateMarkdownReport } from '../../lib/export';
+import HarrisMatrix from '../../components/HarrisMatrix.tsx';
+import UnitEditor from '../../components/UnitEditor.tsx';
+
+const { id } = Astro.params;
+if (!id) throw new Error('Project ID is required');
+
+const project = getProjectById(id);
+if (!project) {
+  return Astro.redirect('/404');
+}
+
+const stats = getProjectStats(id);
+const units = getAllUnits(id);
+const relations = getRelationsByProject(id);
+const artifacts = listArtifacts(id, { page: 1, pageSize: 50 });
+const photos = getPhotosByProject(id);
+const anomalies = detectAnomalies(id);
+const anomalySummary = getAnomalySummary(anomalies);
+const harrisData = generateHarrisMatrix(id);
+const versionHistory = listVersionHistory(id, { page: 1, pageSize: 20 });
+const batches = getBatches(id);
+const exportSummary = generateExportSummary(id);
+
+const activeTab = Astro.url.searchParams.get('tab') || 'overview';
+---
+
+<BaseLayout title={`${project.name} - 考古探方出土层位关系编辑器`} activeNav="home">
+  <div style="margin-bottom: 16px;">
+    <a href="/" style="color: var(--color-text-muted); text-decoration: none; font-size: 13px;">
+      ← 返回项目台账
+    </a>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        {project.name}
+        <span class={`badge badge-${project.status}`} style="margin-left: 10px; font-size: 12px;">
+          {project.status === 'active' ? '进行中' : project.status === 'completed' ? '已完成' : '已暂停'}
+        </span>
+      </h1>
+      <p class="page-subtitle">
+        编号: {project.code} · 地点: {project.location || '未知'} · 负责人: {project.director || '未知'}
+      </p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <a href={`/projects/${id}/export`} class="btn">
+        📄 导出报告
+      </a>
+      <a href={`/projects/${id}/history`} class="btn">
+        📜 版本历史
+      </a>
+    </div>
+  </div>
+
+  {anomalies.length > 0 && (
+    <div class="alert alert-warning">
+      <span class="alert-icon">⚠️</span>
+      <div>
+        <div style="font-weight: 500; margin-bottom: 4px;">
+          检测到 {anomalySummary.errors + anomalySummary.warnings + anomalySummary.infos} 个数据异常
+          {anomalySummary.errors > 0 && `（${anomalySummary.errors} 个错误）`}
+          {anomalySummary.warnings > 0 && `（${anomalySummary.warnings} 个警告）`}
+        </div>
+        <div style="font-size: 13px;">
+          请前往「异常检测」标签页查看详情并处理
+        </div>
+      </div>
+    </div>
+  )}
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">{stats.unitCount}</div>
+      <div class="stat-label">层位单元</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{stats.layerCount}</div>
+      <div class="stat-label">地层</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{stats.featureCount}</div>
+      <div class="stat-label">遗迹</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{stats.relationCount}</div>
+      <div class="stat-label">层位关系</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{stats.artifactCount}</div>
+      <div class="stat-label">出土物</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{stats.photoCount}</div>
+      <div class="stat-label">照片</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    {[
+      { key: 'overview', label: '概览' },
+      { key: 'units', label: '层位单元' },
+      { key: 'harris', label: 'Harris矩阵' },
+      { key: 'artifacts', label: '出土物' },
+      { key: 'photos', label: '照片' },
+      { key: 'anomalies', label: `异常检测 ${anomalies.length > 0 ? '(' + anomalies.length + ')' : ''}` },
+      { key: 'history', label: '版本历史' },
+    ].map(tab => (
+      <div 
+        class={`tab ${activeTab === tab.key ? 'active' : ''}`}
+        onclick={`window.location.search='?tab=${tab.key}'`}
+      >
+        {tab.label}
+      </div>
+    ))}
+  </div>
+
+  {activeTab === 'overview' && (
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+      <div class="card">
+        <h3 class="card-title">📋 项目信息</h3>
+        <div class="form-row">
+          <div>
+            <div class="form-label">项目编号</div>
+            <div style="font-family: monospace;">{project.code}</div>
+          </div>
+          <div>
+            <div class="form-label">项目状态</div>
+            <div>
+              <span class={`badge badge-${project.status}`}>
+                {project.status === 'active' ? '进行中' : project.status === 'completed' ? '已完成' : '已暂停'}
+              </span>
+            </div>
+          </div>
+          <div>
+            <div class="form-label">发掘地点</div>
+            <div>{project.location || '-'}</div>
+          </div>
+          <div>
+            <div class="form-label">项目负责人</div>
+            <div>{project.director || '-'}</div>
+          </div>
+          <div>
+            <div class="form-label">开始时间</div>
+            <div>{project.startDate || '-'}</div>
+          </div>
+          <div>
+            <div class="form-label">结束时间</div>
+            <div>{project.endDate || '进行中'}</div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <div class="form-label">项目描述</div>
+          <div style="font-size: 14px; line-height: 1.8;">
+            {project.description || '暂无描述'}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom: 20px;">
+          <h3 class="card-title">🏺 最新出土物</h3>
+          {artifacts.items.length > 0 ? (
+            <div style="font-size: 13px;">
+              {artifacts.items.slice(0, 5).map(a => (
+                <div style="padding: 8px 0; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between;">
+                  <span style="font-family: monospace;">{a.catalogNumber}</span>
+                  <span style="color: var(--color-text-muted);">{a.name || a.type}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div class="empty-state" style="padding: 20px;">
+              <div class="empty-icon" style="font-size: 32px;">🏺</div>
+              <div class="empty-desc">暂无出土物记录</div>
+            </div>
+          )}
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">📸 最近照片</h3>
+          <div class="photo-grid" style="grid-template-columns: repeat(2, 1fr);">
+            {photos.slice(0, 4).map(photo => (
+              <div class="photo-item">
+                <div class="photo-placeholder">
+                  <div style="font-size: 24px;">📷</div>
+                  <div style="font-size: 10px; margin-top: 4px;">{photo.photoType}</div>
+                </div>
+                <div class="photo-caption">{photo.fileName}</div>
+              </div>
+            ))}
+          </div>
+          {photos.length === 0 && (
+            <div class="empty-state" style="padding: 20px;">
+              <div class="empty-icon" style="font-size: 32px;">📷</div>
+              <div class="empty-desc">暂无照片</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )}
+
+  {activeTab === 'units' && (
+    <div class="card">
+      <UnitEditor client:load
+        projectId={id}
+        units={units}
+        relations={relations}
+      />
+    </div>
+  )}
+
+  {activeTab === 'harris' && (
+    <div class="card">
+      <h3 class="card-title">
+        📊 Harris矩阵
+        <span style="font-size: 12px; color: var(--color-text-muted); font-weight: normal; margin-left: 8px;">
+          共 {harrisData.nodes.length} 个单元，{harrisData.edges.length} 条关系
+        </span>
+      </h3>
+      <div class="harris-matrix" id="harrisMatrix">
+        <svg class="harris-svg" id="harrisSvg">
+          <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#7a6c5d" />
+            </marker>
+          </defs>
+        </svg>
+        {harrisData.nodes.map(node => (
+          <div 
+            class={`harris-node ${node.type}`}
+            style={`left: calc(50% + ${node.x}px); top: ${node.y + 50}px;`}
+          >
+            <div class="harris-node-number">{node.unitNumber}</div>
+            <div class="harris-node-name">{node.designation || node.type}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {activeTab === 'artifacts' && (
+    <div class="card">
+      <h3 class="card-title">
+        🏺 出土物列表
+        <span style="font-size: 12px; color: var(--color-text-muted); font-weight: normal; margin-left: 8px;">
+          共 {artifacts.total} 件/组
+        </span>
+      </h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>编目号</th>
+            <th>名称</th>
+            <th>类型</th>
+            <th>材质</th>
+            <th>数量</th>
+            <th>出土层位</th>
+            <th>深度</th>
+          </tr>
+        </thead>
+        <tbody>
+          {artifacts.items.map(artifact => {
+            const unit = units.find(u => u.id === artifact.unitId);
+            return (
+              <tr>
+                <td style="font-family: monospace;">{artifact.catalogNumber}</td>
+                <td>{artifact.name || '-'}</td>
+                <td>{artifact.type || '-'}</td>
+                <td>{artifact.material || '-'}</td>
+                <td>{artifact.quantity}</td>
+                <td>{unit ? unit.unitNumber : '-'}</td>
+                <td>{artifact.depthFound ? artifact.depthFound + 'm' : '-'}</td>
+              </tr>
+            );
+          })}
+          {artifacts.items.length === 0 && (
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <div class="empty-icon">🏺</div>
+                  <div class="empty-title">暂无出土物记录</div>
+                  <div class="empty-desc">添加出土物以记录发掘成果</div>
+                </div>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  {activeTab === 'photos' && (
+    <div class="card">
+      <h3 class="card-title">
+        📸 照片资料
+        <span style="font-size: 12px; color: var(--color-text-muted); font-weight: normal; margin-left: 8px;">
+          共 {photos.length} 张
+        </span>
+      </h3>
+      <div class="filter-bar">
+        <select class="select">
+          <option value="">全部类型</option>
+          <option value="overview">总览照</option>
+          <option value="detail">细节照</option>
+          <option value="section">剖面图</option>
+          <option value="plan">平面图</option>
+          <option value="artifact">器物照</option>
+        </select>
+      </div>
+      <div class="photo-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
+        {photos.map(photo => (
+          <div class="photo-item" title={photo.description}>
+            <div class="photo-placeholder">
+              <div style="font-size: 36px;">📷</div>
+              <div style="font-size: 11px; margin-top: 8px;">
+                <span class="badge badge-info">{photo.photoType}</span>
+              </div>
+            </div>
+            <div class="photo-caption">
+              <div style="font-weight: 500;">{photo.fileName}</div>
+              <div style="font-size: 10px; opacity: 0.8;">{photo.takenDate || ''}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {photos.length === 0 && (
+        <div class="empty-state">
+          <div class="empty-icon">📷</div>
+          <div class="empty-title">暂无照片</div>
+          <div class="empty-desc">上传发掘现场和出土物照片</div>
+        </div>
+      )}
+    </div>
+  )}
+
+  {activeTab === 'anomalies' && (
+    <div class="card">
+      <h3 class="card-title">
+        ⚠️ 异常数据检测
+        <span style="font-size: 12px; color: var(--color-text-muted); font-weight: normal; margin-left: 8px;">
+          {anomalySummary.errors} 错误 · {anomalySummary.warnings} 警告 · {anomalySummary.infos} 提示
+        </span>
+      </h3>
+      {anomalies.map(anomaly => (
+        <div class={`alert alert-${anomaly.severity}`} style="margin-bottom: 12px;">
+          <span class="alert-icon">
+            {anomaly.severity === 'error' ? '🔴' : anomaly.severity === 'warning' ? '🟡' : '🔵'}
+          </span>
+          <div style="flex: 1;">
+            <div style="font-weight: 500; margin-bottom: 4px;">{anomaly.title}</div>
+            <div style="font-size: 13px; margin-bottom: 8px;">{anomaly.description}</div>
+            <div style="font-size: 12px; color: var(--color-text-muted);">
+              相关层位: {anomaly.relatedUnitIds.map(uid => {
+                const u = units.find(x => x.id === uid);
+                return u ? u.unitNumber : uid;
+              }).join(', ')}
+            </div>
+          </div>
+        </div>
+      ))}
+      {anomalies.length === 0 && (
+        <div class="empty-state">
+          <div class="empty-icon">✅</div>
+          <div class="empty-title">数据状态良好</div>
+          <div class="empty-desc">未检测到任何数据异常</div>
+        </div>
+      )}
+    </div>
+  )}
+
+  {activeTab === 'history' && (
+    <div class="card">
+      <h3 class="card-title">
+        📜 版本历史
+        <span style="font-size: 12px; color: var(--color-text-muted); font-weight: normal; margin-left: 8px;">
+          共 {versionHistory.total} 条记录
+        </span>
+      </h3>
+      <div class="timeline">
+        {versionHistory.items.map(version => (
+          <div class="timeline-item">
+            <div class="timeline-time">
+              {new Date(version.timestamp).toLocaleString('zh-CN')}
+              <span style="margin-left: 8px;" class={`badge badge-${version.action === 'create' ? 'info' : version.action === 'delete' ? 'error' : 'warning'}`}>
+                {version.action === 'create' ? '创建' : version.action === 'update' ? '更新' : '删除'}
+              </span>
+              <span style="margin-left: 8px; color: var(--color-text-muted);">
+                {version.entityType === 'project' ? '项目' : 
+                 version.entityType === 'unit' ? '层位' :
+                 version.entityType === 'relation' ? '关系' :
+                 version.entityType === 'artifact' ? '出土物' : '照片'}
+              </span>
+            </div>
+            <div class="timeline-title">{version.description}</div>
+            <div class="timeline-desc">
+              操作人: {version.userName}
+              {version.batchId && ` · 批次: ${version.batchId.slice(0, 8)}`}
+            </div>
+            {Object.keys(version.changes).length > 0 && (
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); font-size: 12px;">
+                <div style="color: var(--color-text-muted); margin-bottom: 4px;">变更内容:</div>
+                {Object.entries(version.changes).map(([key, value]) => (
+                  <div key={key} style="margin-bottom: 2px;">
+                    <span style="font-family: monospace;">{key}</span>: 
+                    <span style="color: #c0392b; text-decoration: line-through;"> {JSON.stringify(value.old)}</span>
+                    <span style="color: #27ae60;"> → {JSON.stringify(value.new)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</BaseLayout>

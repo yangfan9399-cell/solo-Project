@@ -1,0 +1,228 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="使用说明 - 考古探方出土层位关系编辑器" activeNav="about">
+  <div class="page-header">
+    <h1 class="page-title">使用说明</h1>
+    <p class="page-subtitle">考古探方出土层位关系编辑器操作指南</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 250px 1fr; gap: 24px;">
+    <div class="card" style="height: fit-content; position: sticky; top: 20px;">
+      <h3 class="card-title">📑 目录</h3>
+      <div style="font-size: 14px; line-height: 2;">
+        <div><a href="#intro" style="color: var(--color-primary); text-decoration: none;">简介</a></div>
+        <div><a href="#harris" style="color: var(--color-text); text-decoration: none;">Harris矩阵原理</a></div>
+        <div><a href="#units" style="color: var(--color-text); text-decoration: none;">层位单元管理</a></div>
+        <div><a href="#relations" style="color: var(--color-text); text-decoration: none;">层位关系</a></div>
+        <div><a href="#artifacts" style="color: var(--color-text); text-decoration: none;">出土物管理</a></div>
+        <div><a href="#photos" style="color: var(--color-text); text-decoration: none;">照片资料</a></div>
+        <div><a href="#anomalies" style="color: var(--color-text); text-decoration: none;">异常检测</a></div>
+        <div><a href="#version" style="color: var(--color-text); text-decoration: none;">版本历史</a></div>
+        <div><a href="#export" style="color: var(--color-text); text-decoration: none;">导出报告</a></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom: 20px;" id="intro">
+        <h3 class="card-title">🏺 简介</h3>
+        <p>
+          考古探方出土层位关系编辑器是一款专业的考古地层学工具，基于 <strong>Harris 矩阵</strong> 原理，
+          帮助考古工作者系统化地管理发掘现场的层位关系、遗迹现象、出土器物和照片资料。
+        </p>
+        <p>
+          本工具支持层位关系的可视化展示、矛盾检测、版本追踪和报告导出，
+          旨在提高田野考古记录的规范性和数据质量。
+        </p>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;" id="harris">
+        <h3 class="card-title">📊 Harris 矩阵原理</h3>
+        <p>
+          <strong>Harris 矩阵</strong>（又称 Harris 序列）是由英国考古学家 Edward Cecil Harris 
+          在 1970 年代提出的一种地层学分析方法，用于表示考古遗址中各层位单元之间的时间先后关系。
+        </p>
+        <div class="form-row" style="margin: 16px 0;">
+          <div class="stat-card">
+            <div class="stat-value" style="font-size: 20px;">⬆️</div>
+            <div class="stat-label">在上关系 (above)</div>
+            <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 4px;">
+              A层在B层之上，A晚于B
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size: 20px;">✂️</div>
+            <div class="stat-label">打破关系 (cut)</div>
+            <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 4px;">
+              A遗迹打破B层，A晚于B
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size: 20px;">🔄</div>
+            <div class="stat-label">填充关系 (fills)</div>
+            <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 4px;">
+              A填充B，A晚于B
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size: 20px;">⏱️</div>
+            <div class="stat-label">同期关系 (equal)</div>
+            <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 4px;">
+              A与B属同一时期
+            </div>
+          </div>
+        </div>
+        <p style="font-size: 13px; color: var(--color-text-muted);">
+          系统会自动根据层位关系构建 Harris 矩阵，并检测是否存在循环矛盾等逻辑错误。
+        </p>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;" id="units">
+        <h3 class="card-title">📋 层位单元管理</h3>
+        <p>
+          <strong>层位单元</strong>是考古地层记录的基本单位，包括三种类型：
+        </p>
+        <ul>
+          <li><strong>地层 (Layer)</strong>：自然堆积形成的土层</li>
+          <li><strong>遗迹 (Feature)</strong>：人类活动形成的遗迹现象，如灰坑、墓葬、房址等</li>
+          <li><strong>扰动 (Disturbance)</strong>：后期活动对地层造成的破坏，如盗洞、现代沟等</li>
+        </ul>
+        <p>
+          每个层位单元需要记录：编号、名称/定名、深度范围、厚度、土色、质地、包含物、
+          发掘者、发掘日期等信息。
+        </p>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;" id="relations">
+        <h3 class="card-title">🔗 层位关系</h3>
+        <p>
+          层位关系描述两个层位单元之间的时间先后关系，是构建 Harris 矩阵的基础。
+          系统支持以下关系类型：
+        </p>
+        <table class="table" style="margin: 16px 0;">
+          <thead>
+            <tr>
+              <th>关系类型</th>
+              <th>含义</th>
+              <th>时间关系</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>在...之上 (above)</td>
+              <td>A层堆积在B层之上</td>
+              <td>A 晚于 B</td>
+            </tr>
+            <tr>
+              <td>在...之下 (below)</td>
+              <td>A层堆积在B层之下</td>
+              <td>A 早于 B</td>
+            </tr>
+            <tr>
+              <td>打破 (cut)</td>
+              <td>A遗迹打破B层</td>
+              <td>A 晚于 B</td>
+            </tr>
+            <tr>
+              <td>被...填充 (fills)</td>
+              <td>A被B填充</td>
+              <td>A 早于 B</td>
+            </tr>
+            <tr>
+              <td>同期 (equal/contemporary)</td>
+              <td>A与B属于同一时期</td>
+              <td>A 与 B 同期</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;" id="artifacts">
+        <h3 class="card-title">🏺 出土物管理</h3>
+        <p>
+          <strong>出土物</strong>是考古发掘中发现的各类遗物，包括陶器、瓷器、青铜器、
+          玉器、骨器、石器等。每件出土物都需要记录：
+        </p>
+        <ul>
+          <li>编目号（唯一标识符）</li>
+          <li>名称、类型、材质</li>
+          <li>出土层位、深度、坐标</li>
+          <li>数量、描述、照片</li>
+          <li>编目人、编目日期</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;" id="photos">
+        <h3 class="card-title">📸 照片资料</h3>
+        <p>
+          考古照片是发掘记录的重要组成部分，系统支持以下类型的照片：
+        </p>
+        <ul>
+          <li><strong>总览照 (overview)</strong>：探方全景、发掘区全貌</li>
+          <li><strong>细节照 (detail)</strong>：遗迹现象特写、重要发现</li>
+          <li><strong>剖面图 (section)</strong>：探方四壁剖面图</li>
+          <li><strong>平面图 (plan)</strong>：各层位平面图</li>
+          <li><strong>器物照 (artifact)</strong>：出土器物照片</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;" id="anomalies">
+        <h3 class="card-title">⚠️ 异常检测</h3>
+        <p>
+          系统内置数据质量检测功能，自动扫描并提示以下类型的数据异常：
+        </p>
+        <div style="margin-top: 12px;">
+          <div class="alert alert-error" style="margin-bottom: 8px;">
+            <span class="alert-icon">🔴</span>
+            <div>
+              <strong>错误</strong>：地层循环关系 — 违反地层学基本原理
+            </div>
+          </div>
+          <div class="alert alert-warning" style="margin-bottom: 8px;">
+            <span class="alert-icon">🟡</span>
+            <div>
+              <strong>警告</strong>：深度冲突、厚度不一致等数据质量问题
+            </div>
+          </div>
+          <div class="alert alert-info">
+            <span class="alert-icon">🔵</span>
+            <div>
+              <strong>提示</strong>：孤立层位、未确认关系等需关注项
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;" id="version">
+        <h3 class="card-title">📜 版本历史</h3>
+        <p>
+          系统自动记录所有数据变更操作，包括创建、更新、删除等，形成完整的版本历史。
+          每条记录包含：
+        </p>
+        <ul>
+          <li>操作时间、操作人</li>
+          <li>操作类型（创建/更新/删除）</li>
+          <li>变更前后的具体字段值</li>
+          <li>批次号（批量操作时）</li>
+        </ul>
+      </div>
+
+      <div class="card" id="export">
+        <h3 class="card-title">📄 导出报告</h3>
+        <p>
+          系统支持多种格式的数据导出：
+        </p>
+        <ul>
+          <li><strong>摘要概览</strong>：项目基本信息和统计数据</li>
+          <li><strong>Markdown 报告</strong>：可直接用于撰写发掘简报</li>
+          <li><strong>JSON 数据</strong>：结构化数据，用于数据交换和备份</li>
+        </ul>
+        <p>
+          导出报告自动包含项目基本信息、地层序列、主要发现、数据异常提示等内容，
+          方便考古工作者快速生成发掘报告初稿。
+        </p>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
