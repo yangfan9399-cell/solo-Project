@@ -374,7 +374,7 @@ function selectStation(id) {
 }
 
 function updateAnnotationStatus(id, status) {
-  fetch(`/annotations/${id}`, {
+  fetch('<%= project_run_chart_annotation_path(@run_chart.project, @run_chart, ':id') %>'.replace(':id', id), {
     method: 'PATCH',
     headers: { 
       'Content-Type': 'application/json',
