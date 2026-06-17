@@ -1,14 +1,14 @@
 import type { Project, InspectionFrame, Defect, ReviewBatch, Version, Anomaly } from "./types";
 import { storage } from "./storage";
 
-let _seeded = false;
-
-export function ensureSeedData() {
-  if (typeof window === "undefined") return;
-  if (_seeded) return;
-  if (storage.isInitialized()) return;
-  _seeded = true;
-
+export function generateSeedData(): {
+  projects: Project[];
+  frames: InspectionFrame[];
+  defects: Defect[];
+  reviews: ReviewBatch[];
+  versions: Version[];
+  anomalies: Anomaly[];
+} {
   const now = new Date().toISOString();
 
   const projects: Project[] = [
@@ -81,12 +81,47 @@ export function ensureSeedData() {
     { id: "a5", projectId: "p4", type: "unreviewed_overdue", description: "缺陷 d11 已超过3个工作日未复核", severity: "warning", resolved: false, createdAt: "2026-06-09T09:00:00Z", resolvedAt: "", relatedDefectId: "d11" },
   ];
 
-  projects.forEach((p) => storage.projects.create(p));
-  frames.forEach((f) => storage.frames.create(f));
-  defects.forEach((d) => storage.defects.create(d));
-  reviews.forEach((r) => storage.reviews.create(r));
-  versions.forEach((v) => storage.versions.create(v));
-  anomalies.forEach((a) => storage.anomalies.create(a));
+  return { projects, frames, defects, reviews, versions, anomalies };
+}
 
-  storage.markInitialized();
+export function ensureSeedData(): boolean {
+  if (typeof window === "undefined") return false;
+
+  if (storage.isInitialized()) {
+    const projects = storage.projects.getAll();
+    if (projects.length > 0) {
+      return true;
+    }
+  }
+
+  try {
+    const { projects, frames, defects, reviews, versions, anomalies } = generateSeedData();
+
+    projects.forEach((p) => storage.projects.create(p));
+    frames.forEach((f) => storage.frames.create(f));
+    defects.forEach((d) => storage.defects.create(d));
+    reviews.forEach((r) => storage.reviews.create(r));
+    versions.forEach((v) => storage.versions.create(v));
+    anomalies.forEach((a) => storage.anomalies.create(a));
+
+    storage.markInitialized();
+    console.log("[Seed] 初始化样例数据完成", {
+      projects: projects.length,
+      frames: frames.length,
+      defects: defects.length,
+      reviews: reviews.length,
+      versions: versions.length,
+      anomalies: anomalies.length,
+    });
+    return true;
+  } catch (e) {
+    console.error("[Seed] 初始化样例数据失败", e);
+    return false;
+  }
+}
+
+export function resetSeedData(): void {
+  if (typeof window === "undefined") return;
+  storage.reset();
+  ensureSeedData();
 }

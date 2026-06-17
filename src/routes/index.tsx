@@ -1,7 +1,7 @@
 import { createSignal, onMount, For, Show } from "solid-js";
 import { A } from "@solidjs/router";
 import { storage } from "../lib/storage";
-import { ensureSeedData } from "../lib/seed";
+import { ensureSeedData, resetSeedData } from "../lib/seed";
 import type { Project, ProjectStatus } from "../lib/types";
 import { PROJECT_STATUS_LABELS } from "../lib/types";
 import { projectStatusLabel, projectStatusBadgeClass, formatDate, uid } from "../lib/utils";
@@ -21,12 +21,16 @@ export default function ProjectLedger() {
   const [newAnnotator, setNewAnnotator] = createSignal("");
 
   onMount(() => {
-    ensureSeedData();
+    const ok = ensureSeedData();
+    console.log("[ProjectLedger] ensureSeedData result:", ok);
     refreshProjects();
+    console.log("[ProjectLedger] projects loaded:", projects().length);
   });
 
   const refreshProjects = () => {
-    setProjects(storage.projects.getAll());
+    const all = storage.projects.getAll();
+    console.log("[ProjectLedger] storage.projects.getAll():", all.length, all);
+    setProjects(all);
   };
 
   const filtered = () => {
@@ -162,7 +166,25 @@ export default function ProjectLedger() {
           </thead>
           <tbody>
             <For each={filtered()} fallback={
-              <tr><td colspan={11} class="text-center py-8 text-gray-400 text-sm">暂无匹配项目</td></tr>
+              <tr>
+                <td colspan={11} class="text-center py-12">
+                  <Show when={projects().length === 0}>
+                    <div class="text-gray-400 text-sm mb-3">暂无项目数据</div>
+                    <button
+                      class="px-4 py-2 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors"
+                      onClick={() => {
+                        resetSeedData();
+                        refreshProjects();
+                      }}
+                    >
+                      加载样例数据
+                    </button>
+                  </Show>
+                  <Show when={projects().length > 0}>
+                    <div class="text-gray-400 text-sm">暂无匹配项目</div>
+                  </Show>
+                </td>
+              </tr>
             }>
               {(p) => (
                 <tr class="border-b border-gray-100 hover:bg-gray-50">

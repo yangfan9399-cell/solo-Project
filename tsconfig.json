@@ -10,9 +10,14 @@
     "noEmit": true,
     "strict": true,
     "isolatedModules": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": [],
     "paths": {
       "~/*": ["./src/*"]
     },
     "baseUrl": "."
-  }
+  },
+  "include": ["src"],
+  "exclude": ["src/entry-server.tsx", "vite.config.ts", "app.config.ts", "dev-server.mjs", "build.mjs", "preview.mjs"]
 }
