@@ -16,6 +16,7 @@ export default class extends Controller {
     this.annotationListPanel = document.getElementById('annotation-list-panel')
     this.annotationListContainer = document.getElementById('annotation-list-container')
     this.annotationEmptyState = document.getElementById('annotation-empty-state')
+    this.toastContainer = document.getElementById('toast-container')
 
     this.scale = 1
     this.panX = 0
@@ -67,6 +68,9 @@ export default class extends Controller {
     this.bindPropertyEvents()
     this.fitView()
     this.updateZoomDisplay()
+    setTimeout(() => {
+      this.showToast('工作台加载完成，点击左侧工具开始标注', 'info')
+    }, 500)
   }
 
   disconnect() {
@@ -320,9 +324,11 @@ export default class extends Controller {
       this.addAnnotationToList(annotation)
       this.selectAnnotation(String(annotation.id))
       this.updateAnnotationCount()
+      this.showToast('标注创建成功')
     })
     .catch(error => {
       console.error('Create annotation error:', error)
+      this.showToast('创建标注失败', 'error')
     })
   }
 
@@ -525,6 +531,7 @@ export default class extends Controller {
         const colorDot = item.querySelector('.w-3.h-3')
         if (colorDot) colorDot.style.backgroundColor = color
       }
+      this.showToast('标注已保存')
     })
   }
 
@@ -552,6 +559,7 @@ export default class extends Controller {
       document.getElementById('annotation-properties').classList.add('hidden')
       document.getElementById('selected-info').textContent = '未选择标注'
       this.updateAnnotationCount()
+      this.showToast('标注已删除', 'warning')
     })
   }
 
@@ -687,6 +695,7 @@ export default class extends Controller {
     .then(marker => {
       this.addScaleMarkerToCanvas(marker)
       this.updateAnnotationCount()
+      this.showToast(`尺度尺已添加 (${marker.length_cm}cm)`)
     })
   }
 
@@ -718,10 +727,12 @@ export default class extends Controller {
 
   zoomIn() {
     this.zoomAt(1.2, this.canvasContainer.clientWidth / 2, this.canvasContainer.clientHeight / 2)
+    this.showToast('放大', 'info')
   }
 
   zoomOut() {
     this.zoomAt(0.8, this.canvasContainer.clientWidth / 2, this.canvasContainer.clientHeight / 2)
+    this.showToast('缩小', 'info')
   }
 
   zoomAt(factor, cx, cy) {
@@ -762,11 +773,39 @@ export default class extends Controller {
 
     this.applyTransform()
     this.updateZoomDisplay()
+    this.showToast('视图已适应画布', 'info')
   }
 
   updateZoomDisplay() {
     const el = document.getElementById('zoom-level')
     if (el) el.textContent = Math.round(this.scale * 100) + '%'
+  }
+
+  showToast(message, type = 'success') {
+    if (!this.toastContainer) return
+    const colors = {
+      success: 'bg-emerald-600 text-white',
+      error: 'bg-red-600 text-white',
+      warning: 'bg-amber-600 text-white',
+      info: 'bg-blue-600 text-white'
+    }
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warning: '⚠',
+      info: 'ℹ'
+    }
+    const toast = document.createElement('div')
+    toast.className = `px-4 py-3 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2 transform translate-x-full transition-transform duration-300 ${colors[type] || colors.success}`
+    toast.innerHTML = `<span>${icons[type] || '✓'}</span><span>${message}</span>`
+    this.toastContainer.appendChild(toast)
+    requestAnimationFrame(() => {
+      toast.classList.remove('translate-x-full')
+    })
+    setTimeout(() => {
+      toast.classList.add('translate-x-full')
+      setTimeout(() => toast.remove(), 300)
+    }, 2500)
   }
 
   updateAnnotationCount() {
