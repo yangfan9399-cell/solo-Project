@@ -3,14 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev --port 3100",
-    "dev:esbuild": "node dev-server.mjs",
-    "build": "vinxi build",
-    "build:esbuild": "node build.mjs",
-    "start": "vinxi start --port 3100",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "postinstall": "node fix-rollup-sign.mjs"
+    "dev": "PATH=\"/usr/local/bin:$PATH\" vinxi dev --port 3100",
+    "build": "PATH=\"/usr/local/bin:$PATH\" vinxi build",
+    "start": "PATH=\"/usr/local/bin:$PATH\" vinxi start --port 3100",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@solidjs/router": "^0.14.10",
@@ -18,13 +14,10 @@
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.43.0",
     "autoprefixer": "^10.4.20",
-    "esbuild": "^0.24.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.16",
     "typescript": "^5.6.3",
-    "vite": "^5.4.19",
-    "vite-plugin-solid": "^2.11.12"
+    "vite": "^6.4.3"
   }
 }
