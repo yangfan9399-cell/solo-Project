@@ -615,7 +615,7 @@ function saveStation() {
     }
   };
   
-  fetch(`/train_routes/${trainRouteId}/stations`, {
+  fetch('<%= project_run_chart_train_route_stations_path(@run_chart.project, @run_chart, ':train_route_id') %>'.replace(':train_route_id', trainRouteId), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

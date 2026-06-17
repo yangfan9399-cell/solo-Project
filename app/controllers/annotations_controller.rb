@@ -45,8 +45,15 @@ class AnnotationsController < ApplicationController
   end
 
   def annotation_params
-    params.require(:annotation).permit(
-      :type, :content, :x_coordinate, :y_coordinate, :severity, :status
+    permitted = params.require(:annotation).permit(
+      :type, :content, :x_coordinate, :y_coordinate, :x, :y, :severity, :status
     )
+    if permitted[:x].present?
+      permitted[:x_coordinate] = permitted.delete(:x)
+    end
+    if permitted[:y].present?
+      permitted[:y_coordinate] = permitted.delete(:y)
+    end
+    permitted
   end
 end
