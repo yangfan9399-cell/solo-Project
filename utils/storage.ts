@@ -6,12 +6,29 @@ const STORAGE_KEYS = {
   RANKING: 'abacus_ranking'
 }
 
+const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+
+function getStorageItem(key: string): string | null {
+  if (!isBrowser) return null
+  return localStorage.getItem(key)
+}
+
+function setStorageItem(key: string, value: string): void {
+  if (!isBrowser) return
+  localStorage.setItem(key, value)
+}
+
+function removeStorageItem(key: string): void {
+  if (!isBrowser) return
+  localStorage.removeItem(key)
+}
+
 export function savePlayer(player: Player): void {
-  localStorage.setItem(STORAGE_KEYS.PLAYER, JSON.stringify(player))
+  setStorageItem(STORAGE_KEYS.PLAYER, JSON.stringify(player))
 }
 
 export function getPlayer(): Player | null {
-  const data = localStorage.getItem(STORAGE_KEYS.PLAYER)
+  const data = getStorageItem(STORAGE_KEYS.PLAYER)
   return data ? JSON.parse(data) : null
 }
 
@@ -34,11 +51,11 @@ export function createPlayer(name: string): Player {
 export function saveGameRecord(record: GameRecord): void {
   const records = getGameRecords()
   records.push(record)
-  localStorage.setItem(STORAGE_KEYS.GAME_RECORDS, JSON.stringify(records))
+  setStorageItem(STORAGE_KEYS.GAME_RECORDS, JSON.stringify(records))
 }
 
 export function getGameRecords(): GameRecord[] {
-  const data = localStorage.getItem(STORAGE_KEYS.GAME_RECORDS)
+  const data = getStorageItem(STORAGE_KEYS.GAME_RECORDS)
   return data ? JSON.parse(data) : []
 }
 
@@ -76,7 +93,7 @@ export function updatePlayerStats(player: Player, score: number, levelId: number
 }
 
 export function getRanking(): RankEntry[] {
-  const data = localStorage.getItem(STORAGE_KEYS.RANKING)
+  const data = getStorageItem(STORAGE_KEYS.RANKING)
   return data ? JSON.parse(data) : []
 }
 
@@ -100,11 +117,11 @@ export function updateRanking(player: Player): void {
   
   ranking.sort((a, b) => b.score - a.score)
   
-  localStorage.setItem(STORAGE_KEYS.RANKING, JSON.stringify(ranking.slice(0, 100)))
+  setStorageItem(STORAGE_KEYS.RANKING, JSON.stringify(ranking.slice(0, 100)))
 }
 
 export function clearAllData(): void {
-  localStorage.removeItem(STORAGE_KEYS.PLAYER)
-  localStorage.removeItem(STORAGE_KEYS.GAME_RECORDS)
-  localStorage.removeItem(STORAGE_KEYS.RANKING)
+  removeStorageItem(STORAGE_KEYS.PLAYER)
+  removeStorageItem(STORAGE_KEYS.GAME_RECORDS)
+  removeStorageItem(STORAGE_KEYS.RANKING)
 }

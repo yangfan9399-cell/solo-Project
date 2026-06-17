@@ -32,7 +32,7 @@ export const useGameStore = defineStore('game', () => {
 
   const currentQuestion = computed(() => currentQuestions.value[currentIndex.value] || null)
   const unlockedLevels = computed(() => getUnlockedLevels(player.value?.level || 1))
-  const gameRecords = computed(() => getGameRecords())
+  const gameRecords = ref<GameRecord[]>([])
   const ranking = computed(() => getRanking())
 
   function initPlayer() {
@@ -42,6 +42,7 @@ export const useGameStore = defineStore('game', () => {
     } else {
       player.value = createPlayer('新手玩家')
     }
+    gameRecords.value = getGameRecords()
   }
 
   function setPlayerName(name: string) {

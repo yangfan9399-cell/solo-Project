@@ -1,4 +1,4 @@
-<script setup lang="ts">import { ref } from 'vue';
+<script setup lang="ts">import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '~/stores/gameStore';
 import { getLevelById } from '~/data/levels';
@@ -8,6 +8,10 @@ const router = useRouter();
 const gameStore = useGameStore();
 const selectedRecord = ref<GameRecord | null>(null);
 const showDetail = ref(false);
+const isClientReady = ref(false);
+onMounted(() => {
+  isClientReady.value = true;
+});
 function getLevelName(levelId: number): string {
  const level = getLevelById(levelId);
  return level?.name || `练习模式`;
@@ -73,7 +77,7 @@ function formatOperationTime(timestamp: number): string {
     </header>
 
     <main class="main-content">
-      <div class="summary-cards">
+      <div v-if="isClientReady" class="summary-cards">
         <div class="summary-card">
           <div class="summary-value">{{ gameStore.gameRecords.length }}</div>
           <div class="summary-label">总游戏次数</div>
@@ -92,7 +96,7 @@ function formatOperationTime(timestamp: number): string {
         </div>
       </div>
 
-      <div class="records-list">
+      <div v-if="isClientReady" class="records-list">
         <div
           v-for="record in gameStore.gameRecords.slice().reverse()"
           :key="record.id"
