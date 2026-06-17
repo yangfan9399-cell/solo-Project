@@ -9,13 +9,17 @@
     "postinstall": ""
   },
   "dependencies": {
+    "@pinia/nuxt": "^0.5.1",
+    "@rollup/rollup-darwin-arm64": "4.62.0",
+    "@rollup/wasm-node": "^4.62.0",
     "nuxt": "3.8.2",
-    "vue": "^3.3.13",
     "pinia": "^2.1.7",
-    "@pinia/nuxt": "^0.5.1"
+    "rollup": "^3.29.4",
+    "vue": "^3.3.13"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vue-tsc": "^3.3.5"
   }
 }
