@@ -698,12 +698,15 @@ for (const p of seedProjects) {
       p.impactCoefficient
     );
   }
-  if (p.versionHistory.length === 0 && p.currentVersion !== 'v1.0') {
+  if (p.versionHistory.length === 0) {
     const major = parseFloat(p.currentVersion.replace('v', ''));
+    const batchNum = parseInt(p.currentBatch.replace('B', ''), 10);
+    const prevBatch = isNaN(batchNum) ? 1000 : Math.max(1000, batchNum - 100);
+    const prevVersion = major > 1 ? `v${(major - 0.1).toFixed(1)}` : 'v0.1';
     p.versionHistory = [
       {
-        version: `v${(major - 0.1).toFixed(1)}`,
-        batch: `B${parseInt(p.currentBatch) - 100}`,
+        version: prevVersion,
+        batch: `B${prevBatch}`,
         createdAt: p.createdAt,
         createdBy: p.createdBy,
         changeLog: '初始版本创建，完成基础吊点布置和初步载荷计算。',
@@ -715,9 +718,27 @@ for (const p of seedProjects) {
           dynamicCoefficient: p.dynamicCoefficient,
           impactCoefficient: p.impactCoefficient,
         },
-        calculationResults: [],
+        calculationResults: JSON.parse(JSON.stringify(p.calculationResults)),
       },
     ];
+    if (major > 1.1) {
+      p.versionHistory.unshift({
+        version: `v${(major - 0.2).toFixed(1)}`,
+        batch: `B${Math.max(1000, prevBatch - 100)}`,
+        createdAt: p.createdAt,
+        createdBy: p.createdBy,
+        changeLog: '早期设计草稿，仅包含核心吊点配置。',
+        snapshot: {
+          liftPoints: JSON.parse(JSON.stringify(p.liftPoints.slice(0, Math.max(1, Math.floor(p.liftPoints.length / 2))))),
+          performers: JSON.parse(JSON.stringify(p.performers.slice(0, Math.max(1, Math.floor(p.performers.length / 2))))),
+          motionPaths: JSON.parse(JSON.stringify(p.motionPaths.slice(0, Math.max(1, Math.floor(p.motionPaths.length / 2))))),
+          defaultSafetyFactor: p.defaultSafetyFactor,
+          dynamicCoefficient: p.dynamicCoefficient,
+          impactCoefficient: p.impactCoefficient,
+        },
+        calculationResults: JSON.parse(JSON.stringify(p.calculationResults.slice(0, Math.max(1, Math.floor(p.calculationResults.length / 2))))),
+      });
+    }
   }
 }
 

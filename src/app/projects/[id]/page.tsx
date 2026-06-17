@@ -1106,11 +1106,30 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
                   <PenLine size={16} className="text-indigo-600"/> 新增审批签名
                 </h4>
-                {project.approvalSignatures.length >= 3 ? (
+                {project.approvalSignatures.length >= 3 && project.status === 'approved' ? (
                   <div className="text-center py-4">
                     <CheckCircle2 size={32} className="mx-auto mb-2 text-emerald-500"/>
                     <p className="text-sm font-medium text-emerald-700">三方审批已全部完成</p>
                     <p className="text-xs text-slate-500 mt-1">项目状态已自动更新为「已通过」</p>
+                  </div>
+                ) : project.approvalSignatures.length >= 3 && project.status !== 'approved' ? (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5"/>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-amber-800">审批签名与项目状态不一致</p>
+                        <p className="text-xs text-amber-700 mt-1">项目状态为「{statusLabel(project.status)}」但三方签名已存在，旧签名可能对应已变更的内容。</p>
+                        <button
+                          onClick={() => {
+                            if (!confirm('确认清除所有已有签名？清除后需重新走审批流程。')) return;
+                            update({ approvalSignatures: [] });
+                          }}
+                          className="mt-3 px-4 py-1.5 rounded-lg border border-amber-400 bg-amber-100 text-amber-800 text-xs font-medium hover:bg-amber-200 transition"
+                        >
+                          清除旧签名，重新审批
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <>
