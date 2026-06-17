@@ -22,7 +22,7 @@ class VersionsController < ApplicationController
 
   def create
     version = Version.generate_batch(@run_chart.project, @run_chart)
-    redirect_to workbench_project_run_chart_path(@run_chart.project, @run_chart), notice: "版本 #{version.version_no} 已生成"
+    redirect_to project_run_chart_workbench_path(@run_chart.project, @run_chart), notice: "版本 #{version.version_no} 已生成"
   end
 
   def export_json

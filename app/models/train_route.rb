@@ -2,6 +2,7 @@ class TrainRoute < ApplicationRecord
   belongs_to :run_chart
   has_many :stations, dependent: :destroy
   has_many :annotations, as: :annotatable, dependent: :destroy
+  accepts_nested_attributes_for :stations, allow_destroy: true
 
   validates :train_no, presence: true, length: { maximum: 50 }
   validates :train_type, inclusion: { in: ['G', 'D', 'Z', 'T', 'K', 'L', 'Y', 'S'] }
@@ -21,7 +22,7 @@ class TrainRoute < ApplicationRecord
   end
 
   def train_type_label
-    train_type_options.detect { |_, v| v == train_type }&.first || train_type
+    self.class.train_type_options.detect { |_, v| v == train_type }&.first || train_type
   end
 
   def status_label

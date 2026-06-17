@@ -15,7 +15,7 @@ class Version < ApplicationRecord
   end
 
   def status_label
-    status_options.detect { |_, v| v == status }&.first || status
+    self.class.status_options.detect { |_, v| v == status }&.first || status
   end
 
   def export_summary

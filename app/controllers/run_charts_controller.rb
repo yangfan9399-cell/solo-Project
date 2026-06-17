@@ -54,7 +54,7 @@ class RunChartsController < ApplicationController
       offset_x: params[:offset_x].to_f,
       offset_y: params[:offset_y].to_f
     )
-    redirect_to workbench_project_run_chart_path(@run_chart.project, @run_chart), notice: '坐标轴标定完成'
+    redirect_to project_run_chart_workbench_path(@run_chart.project, @run_chart), notice: '坐标轴标定完成'
   end
 
   def detect_anomalies
@@ -101,7 +101,7 @@ class RunChartsController < ApplicationController
       end
     end
 
-    redirect_to workbench_project_run_chart_path(@run_chart.project, @run_chart), notice: "检测完成，发现 #{anomalies.count} 个异常"
+    redirect_to project_run_chart_workbench_path(@run_chart.project, @run_chart), notice: "检测完成，发现 #{anomalies.count} 个异常"
   end
 
   def export_json
@@ -171,7 +171,7 @@ class RunChartsController < ApplicationController
   end
 
   def set_run_chart
-    @run_chart = RunChart.find(params[:id])
+    @run_chart = RunChart.find(params[:id] || params[:run_chart_id])
   end
 
   def run_chart_params

@@ -25,11 +25,11 @@ class Annotation < ApplicationRecord
   end
 
   def type_label
-    type_options.detect { |_, v| v == type }&.first || type
+    self.class.type_options.detect { |_, v| v == type }&.first || type
   end
 
   def status_label
-    status_options.detect { |_, v| v == status }&.first || status
+    self.class.status_options.detect { |_, v| v == status }&.first || status
   end
 
   def severity_level

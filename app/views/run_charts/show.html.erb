@@ -7,7 +7,7 @@
       </div>
       <div class="btn-group">
         <a href="<%= project_path(@run_chart.project) %>" class="btn btn-outline-secondary">返回项目</a>
-        <a href="<%= workbench_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-success"><i class="fa-solid fa-wrench"></i>工作台</a>
+        <a href="<%= project_run_chart_workbench_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-success"><i class="fa-solid fa-wrench"></i>工作台</a>
         <a href="<%= edit_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-primary">编辑</a>
       </div>
     </div>
@@ -160,10 +160,10 @@
           </div>
           <div class="card-body">
             <div class="grid gap-2">
-              <a href="<%= export_json_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-success w-100">
+              <a href="<%= project_run_chart_export_json_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-success w-100">
                 <i class="fa-solid fa-file-json me-2"></i>导出完整JSON
               </a>
-              <a href="<%= export_summary_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-primary w-100">
+              <a href="<%= project_run_chart_export_summary_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-primary w-100">
                 <i class="fa-solid fa-file-text me-2"></i>导出摘要
               </a>
               <button onclick="generateVersion()" class="btn btn-outline-warning w-100">
@@ -198,7 +198,7 @@ function generateVersion() {
 }
 
 function runDetection() {
-  fetch('<%= detect_anomalies_project_run_chart_path(@run_chart.project, @run_chart) %>', {
+  fetch('<%= project_run_chart_detect_anomalies_path(@run_chart.project, @run_chart) %>', {
     method: 'GET'
   }).then(() => location.reload());
 }

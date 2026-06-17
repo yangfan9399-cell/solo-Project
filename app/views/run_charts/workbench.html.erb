@@ -212,8 +212,8 @@
               <hr>
               <button onclick="runDetection()" class="btn btn-danger w-100"><i class="fa-solid fa-search-minus me-2"></i>检测异常</button>
               <hr>
-              <a href="<%= export_json_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-success w-100"><i class="fa-solid fa-download me-2"></i>导出JSON</a>
-              <a href="<%= export_summary_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-primary w-100"><i class="fa-solid fa-file-export me-2"></i>导出摘要</a>
+              <a href="<%= project_run_chart_export_json_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-success w-100"><i class="fa-solid fa-download me-2"></i>导出JSON</a>
+              <a href="<%= project_run_chart_export_summary_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-primary w-100"><i class="fa-solid fa-file-export me-2"></i>导出摘要</a>
             </div>
           </div>
         </div>
@@ -277,6 +277,14 @@
             <span><i class="fa-solid fa-map-pin me-2"></i>添加站点</span>
           </div>
           <div class="card-body">
+            <div class="mb-3">
+              <label>所属列车径路</label>
+              <select id="station-train-route" class="form-select">
+                <% @train_routes.each do |route| %>
+                  <option value="<%= route.id %>"><%= route.train_no %> (<%= route.train_type_label %>)</option>
+                <% end %>
+              </select>
+            </div>
             <div class="mb-3">
               <label>站点名称</label>
               <input type="text" id="station-name" class="form-control" placeholder="输入站点名称">
@@ -349,7 +357,7 @@ function toggleCalibration() {
 function submitCalibration() {
   const form = document.getElementById('calibration-form');
   const data = new FormData(form);
-  fetch('<%= calibrate_project_run_chart_path(@run_chart.project, @run_chart) %>', {
+  fetch('<%= project_run_chart_calibrate_path(@run_chart.project, @run_chart) %>', {
     method: 'POST',
     body: data,
     headers: { 'X-CSRF-Token': '<%= form_authenticity_token %>' }
@@ -388,7 +396,7 @@ function generateVersion() {
 }
 
 function runDetection() {
-  fetch('<%= detect_anomalies_project_run_chart_path(@run_chart.project, @run_chart) %>', {
+  fetch('<%= project_run_chart_detect_anomalies_path(@run_chart.project, @run_chart) %>', {
     method: 'GET'
   }).then(() => location.reload());
 }
@@ -594,8 +602,33 @@ function saveStation() {
     return;
   }
   
-  alert(`站点 "${name}" 将被添加到位置 (${Math.round(currentStation.x)}, ${Math.round(currentStation.y)})`);
-  cancelStation();
+  const trainRouteId = document.getElementById('station-train-route').value;
+  const data = {
+    station: {
+      name: name,
+      arrival_time: document.getElementById('station-arrival').value,
+      departure_time: document.getElementById('station-departure').value,
+      stop_duration: document.getElementById('station-duration').value,
+      x_coordinate: currentStation.x,
+      y_coordinate: currentStation.y,
+      order: 0
+    }
+  };
+  
+  fetch(`/train_routes/${trainRouteId}/stations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': '<%= form_authenticity_token %>'
+    },
+    body: JSON.stringify(data)
+  }).then(response => {
+    if (response.ok) {
+      location.reload();
+    } else {
+      alert('保存失败');
+    }
+  });
 }
 
 function saveAnnotation() {
