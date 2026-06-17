@@ -136,11 +136,11 @@ projects.each do |project|
     is_abnormal = (project.code == "MGK-017-CJD" && i >= 2) || (project.code == "MGK-257-XB" && i == 3)
 
     image_url_map = {
-      "MGK-257-XB" => "/mural_images/mgk-257.svg",
-      "MGK-320-NB" => "/mural_images/mgk-320.svg",
-      "MGK-017-CJD" => "/mural_images/mgk-017.svg",
-      "YLK-025-MAIN" => "/mural_images/ylk-025.svg",
-      "BLS-169-MAIN" => "/mural_images/bls-169.svg"
+      "MGK-257-XB" => "/mural_images/mgk-257.jpg",
+      "MGK-320-NB" => "/mural_images/mgk-320.jpg",
+      "MGK-017-CJD" => "/mural_images/mgk-017.jpg",
+      "YLK-025-MAIN" => "/mural_images/ylk-025.jpg",
+      "BLS-169-MAIN" => "/mural_images/bls-169.jpg"
     }
 
     record = project.records.create!(

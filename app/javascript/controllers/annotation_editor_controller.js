@@ -13,6 +13,9 @@ export default class extends Controller {
     this.canvasContent = document.getElementById('canvas-content')
     this.annotationsLayer = document.getElementById('annotations-layer')
     this.baseImage = document.getElementById('base-image')
+    this.annotationListPanel = document.getElementById('annotation-list-panel')
+    this.annotationListContainer = document.getElementById('annotation-list-container')
+    this.annotationEmptyState = document.getElementById('annotation-empty-state')
 
     this.scale = 1
     this.panX = 0
@@ -31,7 +34,7 @@ export default class extends Controller {
     this.drawStartY = 0
     this.tempRect = null
 
-    this.selectedAnnotation = null
+    this.selectedAnnotationId = null
     this.isDragging = false
     this.dragStartX = 0
     this.dragStartY = 0
@@ -39,7 +42,6 @@ export default class extends Controller {
     this.dragOffsetY = 0
 
     this.isResizing = false
-    this.resizeHandle = null
     this.resizeStartX = 0
     this.resizeStartY = 0
     this.resizeStartWidth = 0
@@ -50,20 +52,36 @@ export default class extends Controller {
     this.scaleStartY = 0
     this.tempScaleLine = null
 
-    this.bindEvents()
+    this._boundMouseDown = this.onMouseDown.bind(this)
+    this._boundMouseMove = this.onMouseMove.bind(this)
+    this._boundMouseUp = this.onMouseUp.bind(this)
+    this._boundWheel = this.onWheel.bind(this)
+
+    this.canvasContainer.addEventListener('mousedown', this._boundMouseDown)
+    window.addEventListener('mousemove', this._boundMouseMove)
+    window.addEventListener('mouseup', this._boundMouseUp)
+    this.canvasContainer.addEventListener('wheel', this._boundWheel, { passive: false })
+
+    this.bindToolEvents()
+    this.bindListEvents()
+    this.bindPropertyEvents()
+    this.fitView()
     this.updateZoomDisplay()
   }
 
-  bindEvents() {
-    this.canvasContainer.addEventListener('mousedown', this.onMouseDown.bind(this))
-    this.canvasContainer.addEventListener('mousemove', this.onMouseMove.bind(this))
-    this.canvasContainer.addEventListener('mouseup', this.onMouseUp.bind(this))
-    this.canvasContainer.addEventListener('mouseleave', this.onMouseUp.bind(this))
-    this.canvasContainer.addEventListener('wheel', this.onWheel.bind(this))
+  disconnect() {
+    this.canvasContainer.removeEventListener('mousedown', this._boundMouseDown)
+    window.removeEventListener('mousemove', this._boundMouseMove)
+    window.removeEventListener('mouseup', this._boundMouseUp)
+    this.canvasContainer.removeEventListener('wheel', this._boundWheel)
+  }
 
+  bindToolEvents() {
     document.querySelectorAll('.tool-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('bg-amber-50', 'text-amber-700', 'ring-2', 'ring-amber-200'))
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tool-btn').forEach(b =>
+          b.classList.remove('bg-amber-50', 'text-amber-700', 'ring-2', 'ring-amber-200')
+        )
         btn.classList.add('bg-amber-50', 'text-amber-700', 'ring-2', 'ring-amber-200')
         this.currentTool = btn.dataset.tool
         if (btn.dataset.disease) {
@@ -75,7 +93,7 @@ export default class extends Controller {
     })
 
     document.querySelectorAll('.severity-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', () => {
         document.querySelectorAll('.severity-btn').forEach(b => {
           b.classList.remove('ring-2', 'ring-offset-1', 'ring-slate-300')
           b.classList.add('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200')
@@ -86,7 +104,7 @@ export default class extends Controller {
           severe: 'bg-red-100 text-red-700'
         }
         btn.classList.remove('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200')
-        btn.classList.add(...sevClasses[btn.dataset.severity].split(' '), 'ring-2', 'ring-offset-1', 'ring-slate-300')
+        btn.classList.add(...(sevClasses[btn.dataset.severity] || '').split(' '), 'ring-2', 'ring-offset-1', 'ring-slate-300')
         this.currentSeverity = btn.dataset.severity
       })
     })
@@ -94,19 +112,23 @@ export default class extends Controller {
     document.getElementById('zoom-in').addEventListener('click', () => this.zoomIn())
     document.getElementById('zoom-out').addEventListener('click', () => this.zoomOut())
     document.getElementById('fit-view').addEventListener('click', () => this.fitView())
+  }
 
+  bindListEvents() {
     document.querySelectorAll('.annotation-item').forEach(item => {
       item.addEventListener('click', () => {
-        const id = item.dataset.id
-        this.selectAnnotation(id)
+        this.selectAnnotation(item.dataset.id)
       })
     })
+  }
 
+  bindPropertyEvents() {
     document.getElementById('save-annotation').addEventListener('click', () => this.saveAnnotationProperties())
     document.getElementById('delete-annotation').addEventListener('click', () => this.deleteSelectedAnnotation())
 
     ;['prop-disease', 'prop-severity', 'prop-x', 'prop-y', 'prop-width', 'prop-height', 'prop-description'].forEach(id => {
-      document.getElementById(id).addEventListener('change', () => this.updateAnnotationFromProps())
+      const el = document.getElementById(id)
+      if (el) el.addEventListener('change', () => this.updateAnnotationFromProps())
     })
   }
 
@@ -127,16 +149,31 @@ export default class extends Controller {
     return { x: Math.round(x), y: Math.round(y) }
   }
 
+  getSelectedBox() {
+    if (!this.selectedAnnotationId) return null
+    return this.annotationsLayer.querySelector(`.annotation-box[data-id="${this.selectedAnnotationId}"]`)
+  }
+
   onMouseDown(e) {
-    if (e.target.closest('.resize-handle')) {
-      this.startResize(e)
-      return
+    if (e.button !== 0) return
+
+    const resizeHandle = e.target.closest('.resize-handle')
+    if (resizeHandle) {
+      const box = resizeHandle.closest('.annotation-box')
+      if (box) {
+        this.selectAnnotation(box.dataset.id)
+        this.startResize(e)
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
     }
 
-    if (e.target.closest('.annotation-box')) {
-      const box = e.target.closest('.annotation-box')
-      this.selectAnnotation(box.dataset.id)
+    const annotationBox = e.target.closest('.annotation-box')
+    if (annotationBox) {
+      this.selectAnnotation(annotationBox.dataset.id)
       this.startDrag(e)
+      e.preventDefault()
       return
     }
 
@@ -151,7 +188,8 @@ export default class extends Controller {
 
   onMouseMove(e) {
     const coords = this.getImageCoords(e)
-    document.getElementById('cursor-pos').textContent = `X: ${coords.x}, Y: ${coords.y}`
+    const cursorEl = document.getElementById('cursor-pos')
+    if (cursorEl) cursorEl.textContent = `X: ${coords.x}, Y: ${coords.y}`
 
     if (this.isPanning) {
       this.doPan(e)
@@ -195,11 +233,12 @@ export default class extends Controller {
 
   endPan() {
     this.isPanning = false
-    this.canvasContainer.style.cursor = 'grab'
+    this.updateCursor()
   }
 
   applyTransform() {
     this.canvasContent.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`
+    this.canvasContent.style.transformOrigin = '0 0'
   }
 
   startDraw(e) {
@@ -233,6 +272,7 @@ export default class extends Controller {
   }
 
   endDraw(e) {
+    this.isDrawing = false
     if (!this.tempRect) return
     const coords = this.getImageCoords(e)
     const x = Math.min(this.drawStartX, coords.x)
@@ -240,15 +280,12 @@ export default class extends Controller {
     const w = Math.abs(coords.x - this.drawStartX)
     const h = Math.abs(coords.y - this.drawStartY)
 
+    this.tempRect.remove()
+    this.tempRect = null
+
     if (w > 5 && h > 5) {
       this.createAnnotation(x, y, w, h)
     }
-
-    if (this.tempRect) {
-      this.tempRect.remove()
-      this.tempRect = null
-    }
-    this.isDrawing = false
   }
 
   createAnnotation(x, y, width, height) {
@@ -274,12 +311,18 @@ export default class extends Controller {
       },
       body: JSON.stringify(data)
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok')
+      return response.json()
+    })
     .then(annotation => {
       this.addAnnotationToCanvas(annotation)
       this.addAnnotationToList(annotation)
-      this.selectAnnotation(annotation.id)
+      this.selectAnnotation(String(annotation.id))
       this.updateAnnotationCount()
+    })
+    .catch(error => {
+      console.error('Create annotation error:', error)
     })
   }
 
@@ -293,25 +336,15 @@ export default class extends Controller {
     }
     const color = annotation.color || this.defaultColor(annotation.disease_type)
 
-    let listContainer = document.querySelector('.flex-1.overflow-y-auto > .divide-y')
-    let emptyState = document.querySelector('.flex-1.overflow-y-auto > .p-8.text-center')
-
-    if (!listContainer) {
-      if (emptyState) emptyState.remove()
-      listContainer = document.createElement('div')
-      listContainer.className = 'divide-y divide-slate-100'
-      document.querySelector('.flex-1.overflow-y-auto').insertBefore(
-        listContainer,
-        document.getElementById('annotation-properties')
-      )
+    if (this.annotationEmptyState) {
+      this.annotationEmptyState.style.display = 'none'
     }
+
+    if (!this.annotationListContainer) return
 
     const item = document.createElement('div')
     item.className = 'annotation-item p-3 hover:bg-slate-50 cursor-pointer'
-    item.dataset.id = annotation.id
-    item.dataset.disease = annotation.disease_type
-    item.dataset.severity = annotation.severity
-    item.dataset.description = annotation.description || ''
+    item.dataset.id = String(annotation.id)
 
     item.innerHTML = `
       <div class="flex items-start gap-3">
@@ -328,10 +361,10 @@ export default class extends Controller {
     `
 
     item.addEventListener('click', () => {
-      this.selectAnnotation(annotation.id)
+      this.selectAnnotation(String(annotation.id))
     })
 
-    listContainer.insertBefore(item, listContainer.firstChild)
+    this.annotationListContainer.insertBefore(item, this.annotationListContainer.firstChild)
   }
 
   addAnnotationToCanvas(annotation) {
@@ -339,8 +372,8 @@ export default class extends Controller {
     const color = annotation.color || this.defaultColor(annotation.disease_type)
 
     const box = document.createElement('div')
-    box.className = 'annotation-box absolute border-2 cursor-pointer pointer-events-auto'
-    box.dataset.id = annotation.id
+    box.className = 'annotation-box absolute border-2 cursor-move pointer-events-auto'
+    box.dataset.id = String(annotation.id)
     box.dataset.disease = annotation.disease_type
     box.dataset.severity = annotation.severity
     box.dataset.description = annotation.description || ''
@@ -362,41 +395,44 @@ export default class extends Controller {
   }
 
   defaultColor(type) {
-    const colors = {
+    return {
       flaking: '#ef4444',
       efflorescence: '#f59e0b',
       discoloration: '#8b5cf6',
       crack: '#3b82f6',
       other: '#6b7280'
-    }
-    return colors[type] || '#6b7280'
+    }[type] || '#6b7280'
   }
 
   selectAnnotation(id) {
-    document.querySelectorAll('.annotation-box').forEach(box => {
+    this.selectedAnnotationId = String(id)
+
+    this.annotationsLayer.querySelectorAll('.annotation-box').forEach(box => {
       box.classList.remove('ring-2', 'ring-offset-1', 'ring-amber-500')
     })
-    document.querySelectorAll('.annotation-item').forEach(item => {
-      item.classList.remove('bg-amber-50')
-    })
+    if (this.annotationListContainer) {
+      this.annotationListContainer.querySelectorAll('.annotation-item').forEach(item => {
+        item.classList.remove('bg-amber-50')
+      })
+    }
 
-    const box = document.querySelector(`.annotation-box[data-id="${id}"]`)
-    const item = document.querySelector(`.annotation-item[data-id="${id}"]`)
+    const box = this.getSelectedBox()
+    const item = this.annotationListContainer
+      ? this.annotationListContainer.querySelector(`.annotation-item[data-id="${id}"]`)
+      : null
 
     if (box) {
       box.classList.add('ring-2', 'ring-offset-1', 'ring-amber-500')
-      this.selectedAnnotation = box
       this.showAnnotationProperties(box)
-    }
-    if (item) {
-      item.classList.add('bg-amber-50')
-    }
 
-    if (box) {
       const diseaseNames = { flaking: '起甲', efflorescence: '酥碱', discoloration: '变色', crack: '裂隙', other: '其他' }
       const sevNames = { mild: '轻微', moderate: '中等', severe: '重度' }
       document.getElementById('selected-info').textContent =
-        `${diseaseNames[box.dataset.disease]} (${sevNames[box.dataset.severity]}) - ${box.offsetWidth}×${box.offsetHeight}px`
+        `${diseaseNames[box.dataset.disease] || box.dataset.disease} (${sevNames[box.dataset.severity] || box.dataset.severity})`
+    }
+    if (item) {
+      item.classList.add('bg-amber-50')
+      item.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
   }
 
@@ -414,7 +450,8 @@ export default class extends Controller {
   }
 
   updateAnnotationFromProps() {
-    if (!this.selectedAnnotation) return
+    const box = this.getSelectedBox()
+    if (!box) return
 
     const disease = document.getElementById('prop-disease').value
     const severity = document.getElementById('prop-severity').value
@@ -423,36 +460,33 @@ export default class extends Controller {
     const width = parseInt(document.getElementById('prop-width').value) || 0
     const height = parseInt(document.getElementById('prop-height').value) || 0
     const description = document.getElementById('prop-description').value
-
     const color = this.defaultColor(disease)
 
-    this.selectedAnnotation.dataset.disease = disease
-    this.selectedAnnotation.dataset.severity = severity
-    this.selectedAnnotation.dataset.description = description
-    this.selectedAnnotation.style.left = x + 'px'
-    this.selectedAnnotation.style.top = y + 'px'
-    this.selectedAnnotation.style.width = width + 'px'
-    this.selectedAnnotation.style.height = height + 'px'
-    this.selectedAnnotation.style.borderColor = color
-    this.selectedAnnotation.style.backgroundColor = color + '20'
+    box.dataset.disease = disease
+    box.dataset.severity = severity
+    box.dataset.description = description
+    box.style.left = x + 'px'
+    box.style.top = y + 'px'
+    box.style.width = width + 'px'
+    box.style.height = height + 'px'
+    box.style.borderColor = color
+    box.style.backgroundColor = color + '20'
 
-    const label = this.selectedAnnotation.querySelector('div:first-child')
+    const label = box.querySelector('div:first-child')
     if (label) {
       const diseaseNames = { flaking: '起甲', efflorescence: '酥碱', discoloration: '变色', crack: '裂隙', other: '其他' }
       label.textContent = diseaseNames[disease] || disease
       label.style.backgroundColor = color
     }
-
-    const handle = this.selectedAnnotation.querySelector('.resize-handle')
-    if (handle) {
-      handle.style.borderColor = color
-    }
+    const handle = box.querySelector('.resize-handle')
+    if (handle) handle.style.borderColor = color
   }
 
   saveAnnotationProperties() {
-    if (!this.selectedAnnotation) return
+    const box = this.getSelectedBox()
+    if (!box) return
 
-    const id = this.selectedAnnotation.dataset.id
+    const id = box.dataset.id
     const data = {
       annotation: {
         disease_type: document.getElementById('prop-disease').value,
@@ -477,14 +511,28 @@ export default class extends Controller {
     .then(response => response.json())
     .then(() => {
       this.updateAnnotationCount()
+      const item = this.annotationListContainer
+        ? this.annotationListContainer.querySelector(`.annotation-item[data-id="${id}"]`)
+        : null
+      if (item) {
+        const diseaseNames = { flaking: '起甲', efflorescence: '酥碱', discoloration: '变色', crack: '裂隙', other: '其他' }
+        const sevNames = { mild: '轻微', moderate: '中等', severe: '重度' }
+        const color = this.defaultColor(data.annotation.disease_type)
+        const nameEl = item.querySelector('.text-sm.font-medium')
+        if (nameEl) nameEl.textContent = diseaseNames[data.annotation.disease_type] || data.annotation.disease_type
+        const sizeEl = item.querySelector('.text-xs.text-slate-500')
+        if (sizeEl) sizeEl.textContent = `${data.annotation.width} × ${data.annotation.height} px`
+        const colorDot = item.querySelector('.w-3.h-3')
+        if (colorDot) colorDot.style.backgroundColor = color
+      }
     })
   }
 
   deleteSelectedAnnotation() {
-    if (!this.selectedAnnotation) return
+    if (!this.selectedAnnotationId) return
     if (!confirm('确定删除此标注吗？')) return
 
-    const id = this.selectedAnnotation.dataset.id
+    const id = this.selectedAnnotationId
 
     fetch(`/projects/${this.projectIdValue}/records/${this.recordIdValue}/annotations/${id}`, {
       method: 'DELETE',
@@ -494,10 +542,13 @@ export default class extends Controller {
       }
     })
     .then(() => {
-      this.selectedAnnotation.remove()
-      const item = document.querySelector(`.annotation-item[data-id="${id}"]`)
+      const box = this.getSelectedBox()
+      if (box) box.remove()
+      const item = this.annotationListContainer
+        ? this.annotationListContainer.querySelector(`.annotation-item[data-id="${id}"]`)
+        : null
       if (item) item.remove()
-      this.selectedAnnotation = null
+      this.selectedAnnotationId = null
       document.getElementById('annotation-properties').classList.add('hidden')
       document.getElementById('selected-info').textContent = '未选择标注'
       this.updateAnnotationCount()
@@ -505,22 +556,23 @@ export default class extends Controller {
   }
 
   startDrag(e) {
-    if (this.currentTool !== 'select') return
     this.isDragging = true
+    const box = this.getSelectedBox()
+    if (!box) return
     const coords = this.getImageCoords(e)
-    this.dragStartX = coords.x
-    this.dragStartY = coords.y
-    this.dragOffsetX = coords.x - parseInt(this.selectedAnnotation.style.left)
-    this.dragOffsetY = coords.y - parseInt(this.selectedAnnotation.style.top)
+    this.dragOffsetX = coords.x - parseInt(box.style.left)
+    this.dragOffsetY = coords.y - parseInt(box.style.top)
+    this.canvasContainer.style.cursor = 'move'
   }
 
   doDrag(e) {
-    if (!this.selectedAnnotation) return
+    const box = this.getSelectedBox()
+    if (!box) return
     const coords = this.getImageCoords(e)
     const x = Math.round(coords.x - this.dragOffsetX)
     const y = Math.round(coords.y - this.dragOffsetY)
-    this.selectedAnnotation.style.left = x + 'px'
-    this.selectedAnnotation.style.top = y + 'px'
+    box.style.left = x + 'px'
+    box.style.top = y + 'px'
     document.getElementById('prop-x').value = x
     document.getElementById('prop-y').value = y
   }
@@ -529,28 +581,30 @@ export default class extends Controller {
     if (!this.isDragging) return
     this.isDragging = false
     this.saveAnnotationProperties()
+    this.updateCursor()
   }
 
   startResize(e) {
-    e.stopPropagation()
-    if (!this.selectedAnnotation) return
+    const box = this.getSelectedBox()
+    if (!box) return
     this.isResizing = true
     const coords = this.getImageCoords(e)
     this.resizeStartX = coords.x
     this.resizeStartY = coords.y
-    this.resizeStartWidth = parseInt(this.selectedAnnotation.style.width)
-    this.resizeStartHeight = parseInt(this.selectedAnnotation.style.height)
+    this.resizeStartWidth = parseInt(box.style.width)
+    this.resizeStartHeight = parseInt(box.style.height)
   }
 
   doResize(e) {
-    if (!this.selectedAnnotation) return
+    const box = this.getSelectedBox()
+    if (!box) return
     const coords = this.getImageCoords(e)
     const dx = coords.x - this.resizeStartX
     const dy = coords.y - this.resizeStartY
-    const w = Math.max(5, this.resizeStartWidth + dx)
-    const h = Math.max(5, this.resizeStartHeight + dy)
-    this.selectedAnnotation.style.width = w + 'px'
-    this.selectedAnnotation.style.height = h + 'px'
+    const w = Math.max(10, this.resizeStartWidth + dx)
+    const h = Math.max(10, this.resizeStartHeight + dy)
+    box.style.width = Math.round(w) + 'px'
+    box.style.height = Math.round(h) + 'px'
     document.getElementById('prop-width').value = Math.round(w)
     document.getElementById('prop-height').value = Math.round(h)
   }
@@ -559,6 +613,7 @@ export default class extends Controller {
     if (!this.isResizing) return
     this.isResizing = false
     this.saveAnnotationProperties()
+    this.updateCursor()
   }
 
   startDrawScale(e) {
@@ -587,9 +642,13 @@ export default class extends Controller {
   }
 
   endDrawScale(e) {
+    this.isDrawingScale = false
     if (!this.tempScaleLine) return
     const coords = this.getImageCoords(e)
     const lengthPixels = Math.abs(coords.x - this.scaleStartX)
+
+    this.tempScaleLine.remove()
+    this.tempScaleLine = null
 
     if (lengthPixels > 10) {
       const lengthCm = prompt('请输入实际长度（厘米）：', '10')
@@ -602,12 +661,6 @@ export default class extends Controller {
         )
       }
     }
-
-    if (this.tempScaleLine) {
-      this.tempScaleLine.remove()
-      this.tempScaleLine = null
-    }
-    this.isDrawingScale = false
   }
 
   createScaleMarker(x, y, lengthPixels, lengthCm) {
@@ -633,7 +686,7 @@ export default class extends Controller {
     .then(response => response.json())
     .then(marker => {
       this.addScaleMarkerToCanvas(marker)
-      this.updateScaleCount()
+      this.updateAnnotationCount()
     })
   }
 
@@ -680,39 +733,48 @@ export default class extends Controller {
     const imageY = (cy - rect.top) / oldScale
 
     this.scale = newScale
-
-    this.panX = cx - imageX * newScale
-    this.panY = cy - imageY * newScale
+    this.panX = cx - imageX * newScale - this.canvasContainer.getBoundingClientRect().left
+    this.panY = cy - imageY * newScale - this.canvasContainer.getBoundingClientRect().top
 
     this.applyTransform()
     this.updateZoomDisplay()
   }
 
   fitView() {
+    if (!this.baseImage) return
     const containerRect = this.canvasContainer.getBoundingClientRect()
-    const contentRect = this.baseImage.getBoundingClientRect()
 
-    const scaleX = (containerRect.width - 40) / (this.baseImage.width || 1200)
-    const scaleY = (containerRect.height - 40) / (this.baseImage.height || 800)
+    let imgW, imgH
+    if (this.baseImage.tagName === 'IMG') {
+      imgW = this.baseImage.naturalWidth || 1832
+      imgH = this.baseImage.naturalHeight || 1832
+    } else {
+      imgW = parseInt(this.baseImage.getAttribute('width')) || 1200
+      imgH = parseInt(this.baseImage.getAttribute('height')) || 800
+    }
+
+    const scaleX = (containerRect.width - 40) / imgW
+    const scaleY = (containerRect.height - 40) / imgH
 
     this.scale = Math.min(scaleX, scaleY, 1)
-    this.panX = 0
-    this.panY = 0
+    this.panX = (containerRect.width - imgW * this.scale) / 2
+    this.panY = (containerRect.height - imgH * this.scale) / 2
 
     this.applyTransform()
     this.updateZoomDisplay()
   }
 
   updateZoomDisplay() {
-    document.getElementById('zoom-level').textContent = Math.round(this.scale * 100) + '%'
+    const el = document.getElementById('zoom-level')
+    if (el) el.textContent = Math.round(this.scale * 100) + '%'
   }
 
   updateAnnotationCount() {
-    const count = document.querySelectorAll('.annotation-box').length
-    const scaleCount = document.querySelectorAll('.scale-marker').length
-    const infoEl = document.querySelector('.space-y-2 .text-xs')
-    if (infoEl) {
-      infoEl.innerHTML = `
+    const count = this.annotationsLayer.querySelectorAll('.annotation-box').length
+    const scaleCount = this.annotationsLayer.querySelectorAll('.scale-marker').length
+    const el = document.getElementById('annotation-count-info')
+    if (el) {
+      el.innerHTML = `
         <span>标注总数:</span>
         <span class="font-medium text-slate-700">${count}</span>
         <span class="mx-2">·</span>
@@ -720,9 +782,5 @@ export default class extends Controller {
         <span class="font-medium text-slate-700">${scaleCount}</span>
       `
     }
-  }
-
-  updateScaleCount() {
-    this.updateAnnotationCount()
   }
 }
