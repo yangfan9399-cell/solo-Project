@@ -1,0 +1,148 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ batch.name }} - 批量推算{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2>{{ batch.name }}</h2>
+                <span class="badge badge-{{ batch.status }}">{{ batch.get_status_display }}</span>
+            </div>
+            <div class="action-buttons">
+                <a href="{% url 'batch_new' %}" class="btn btn-secondary">新建批次</a>
+                {% if batch.status != 'calculating' %}
+                    <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" name="calculate" class="btn btn-success">执行批量推算</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="grid-3">
+            <div class="stat-card">
+                <div class="stat-value">{{ batch.total_records }}</div>
+                <div class="stat-label">总记录数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: #27ae60;">{{ batch.success_count }}</div>
+                <div class="stat-label">成功数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: #e74c3c;">{{ batch.error_count }}</div>
+                <div class="stat-label">异常数</div>
+            </div>
+        </div>
+        
+        <div class="grid-2">
+            <div class="card" style="margin-bottom: 0;">
+                <h3 style="margin-bottom: 1rem; color: #2c3e50;">批次参数</h3>
+                <div class="info-row">
+                    <span class="info-label">开始日期</span>
+                    <span class="info-value">{{ batch.start_date }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">结束日期</span>
+                    <span class="info-value">{{ batch.end_date }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">纬度</span>
+                    <span class="info-value">{{ batch.latitude }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">经度</span>
+                    <span class="info-value">{{ batch.longitude }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">时区</span>
+                    <span class="info-value">UTC+{{ batch.timezone_offset }}</span>
+                </div>
+                {% if batch.description %}
+                    <div class="info-row">
+                        <span class="info-label">描述</span>
+                        <span class="info-value">{{ batch.description }}</span>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="card" style="margin-bottom: 0;">
+                <h3 style="margin-bottom: 1rem; color: #2c3e50;">时间信息</h3>
+                <div class="info-row">
+                    <span class="info-label">创建时间</span>
+                    <span class="info-value">{{ batch.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                {% if batch.completed_at %}
+                    <div class="info-row">
+                        <span class="info-label">完成时间</span>
+                        <span class="info-value">{{ batch.completed_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% if records %}
+        <div class="card">
+            <div class="card-header">
+                <h2>推算记录列表</h2>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>农历</th>
+                        <th>干支</th>
+                        <th>月相</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            <td>{{ record.target_date }}</td>
+                            <td>
+                                {% if record.lunar_year %}
+                                    {{ record.lunar_year }}年{{ record.lunar_month_name }}{% if record.is_leap_month %}闰{% endif %}{{ record.lunar_day_name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ record.year_gan_zhi }}年 {{ record.month_gan_zhi }}月 {{ record.day_gan_zhi }}日</td>
+                            <td>{{ record.moon_phase or '-' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ record.status }}">
+                                    {{ record.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'record_detail' record.pk %}" class="btn btn-sm btn-primary">详情</a>
+                                <a href="{% url 'record_export' record.pk %}" class="btn btn-sm btn-secondary">导出</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+    
+    {% if batch.abnormalities.exists %}
+        <div class="card">
+            <div class="card-header">
+                <h2>异常数据</h2>
+            </div>
+            <div class="abnormal-list">
+                {% for abnormal in batch.abnormalities.all %}
+                    <div class="abnormal-item">
+                        <div class="abnormal-type">{{ abnormal.get_type_display }}</div>
+                        <div class="abnormal-message">{{ abnormal.message }}</div>
+                        {% if abnormal.details %}
+                            <div style="margin-top: 0.25rem; font-size: 0.875rem;">日期: {{ abnormal.details.date }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

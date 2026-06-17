@@ -1,0 +1,52 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ record.title }} - 版本历史{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2>版本历史</h2>
+                <p>{{ record.title }}</p>
+            </div>
+            <a href="{% url 'record_detail' record.pk %}" class="btn btn-secondary">返回详情</a>
+        </div>
+        
+        {% if versions %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>版本号</th>
+                        <th>变更说明</th>
+                        <th>农历日期</th>
+                        <th>干支</th>
+                        <th>月相</th>
+                        <th>创建时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for version in versions %}
+                        <tr>
+                            <td>版本 {{ version.version_number }}</td>
+                            <td>{{ version.changes }}</td>
+                            <td>
+                                {% if version.lunar_year %}
+                                    {{ version.lunar_year }}年{{ version.lunar_month }}月{{ version.lunar_day }}日
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ version.year_gan_zhi }}年 {{ version.month_gan_zhi }}月 {{ version.day_gan_zhi }}日</td>
+                            <td>{{ version.moon_phase or '-' }}</td>
+                            <td>{{ version.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div style="text-align: center; padding: 3rem; color: #999;">
+                暂无版本历史
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

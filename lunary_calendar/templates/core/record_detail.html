@@ -1,0 +1,165 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ record.title }} - 极简农历历法推算工具{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2>{{ record.title }}</h2>
+                <span class="status-badge status-{{ record.status }}">{{ record.get_status_display }}</span>
+            </div>
+            <div class="action-buttons">
+                <a href="{% url 'record_edit' record.pk %}" class="btn btn-secondary">编辑</a>
+                {% if record.status != 'calculated' %}
+                    <a href="{% url 'calculate_record' record.pk %}" class="btn btn-success">执行推算</a>
+                {% else %}
+                    <a href="{% url 'verify_record' record.pk %}" class="btn btn-warning">验证结果</a>
+                {% endif %}
+                <a href="{% url 'record_export' record.pk %}" class="btn btn-primary">导出报告</a>
+                <a href="{% url 'record_history' record.pk %}" class="btn btn-secondary">版本历史</a>
+            </div>
+        </div>
+        
+        {% if record.error_message %}
+            <div class="error-message">
+                <strong>异常信息:</strong> {{ record.error_message }}
+            </div>
+        {% endif %}
+        
+        {% if record.calculated_at %}
+            <div class="success-message">
+                <strong>推算完成:</strong> {{ record.calculated_at.strftime('%Y-%m-%d %H:%M:%S') }}
+            </div>
+        {% endif %}
+        
+        <div class="grid-2">
+            <div class="card" style="margin-bottom: 0;">
+                <h3 style="margin-bottom: 1rem; color: #2c3e50;">输入参数</h3>
+                <div class="info-row">
+                    <span class="info-label">目标日期</span>
+                    <span class="info-value">{{ record.target_date }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">时间</span>
+                    <span class="info-value">{{ record.time_hour }}:{{ record.time_minute|stringformat:"02d" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">地点</span>
+                    <span class="info-value">{{ record.location_name or '未指定' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">纬度</span>
+                    <span class="info-value">{{ record.latitude }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">经度</span>
+                    <span class="info-value">{{ record.longitude }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">时区</span>
+                    <span class="info-value">UTC+{{ record.timezone_offset }}</span>
+                </div>
+                {% if record.description %}
+                    <div class="info-row">
+                        <span class="info-label">描述</span>
+                        <span class="info-value">{{ record.description }}</span>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="card" style="margin-bottom: 0;">
+                <h3 style="margin-bottom: 1rem; color: #2c3e50;">推算结果</h3>
+                
+                {% if record.lunar_year %}
+                    <div class="lunar-date" style="text-align: center; padding: 1rem;">
+                        <div>{{ record.lunar_year }}年</div>
+                        <div style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">
+                            {{ record.lunar_month_name }}{% if record.is_leap_month %}闰{% endif %}
+                        </div>
+                        <div>{{ record.lunar_day_name }}</div>
+                    </div>
+                    
+                    <div class="ganzhi-display" style="text-align: center; margin-top: 1rem;">
+                        <div>{{ record.year_gan_zhi }}年</div>
+                        <div>{{ record.month_gan_zhi }}月</div>
+                        <div>{{ record.day_gan_zhi }}日</div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
+                        <div class="moon-icon">{{ record.moon_phase }}</div>
+                        <div style="margin-top: 0.5rem;">{{ record.moon_phase_type }}</div>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 3rem; color: #999;">
+                        点击"执行推算"获取结果
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% if record.solar_terms %}
+        <div class="card">
+            <div class="card-header">
+                <h2>节气信息</h2>
+            </div>
+            <div class="grid-3">
+                {% for term in record.solar_terms %}
+                    <div class="stat-card">
+                        <div class="stat-value">{{ term.name }}</div>
+                        <div class="stat-label">
+                            {% if term.days_diff == 0 %}
+                                今天
+                            {% elif term.days_diff > 0 %}
+                                {{ term.days_diff }}天后
+                            {% else %}
+                                {{ term.days_diff|abs }}天前
+                            {% endif %}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #999;">{{ term.date.strftime('%m-%d %H:%M') }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    
+    {% if record.calculation_steps %}
+        <div class="card">
+            <div class="card-header">
+                <h2>推算步骤对照</h2>
+            </div>
+            <div class="steps-list">
+                {% for step in record.calculation_steps %}
+                    <div class="step-item">
+                        <div>
+                            <span class="step-number">{{ step.step }}.</span>
+                            <span class="step-name">{{ step.name }}</span>
+                            <span class="step-value">{{ step.value }}</span>
+                        </div>
+                        <div class="step-desc">{{ step.description }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    
+    {% if record.abnormalities.exists %}
+        <div class="card">
+            <div class="card-header">
+                <h2>异常记录</h2>
+            </div>
+            <div class="abnormal-list">
+                {% for abnormal in record.abnormalities.all %}
+                    <div class="abnormal-item">
+                        <div class="abnormal-type">{{ abnormal.get_type_display }}</div>
+                        <div class="abnormal-message">{{ abnormal.message }}</div>
+                        {% if abnormal.resolved %}
+                            <div style="margin-top: 0.5rem; color: #27ae60;">已处理: {{ abnormal.resolution_note }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

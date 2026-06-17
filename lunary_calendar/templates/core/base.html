@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}极简农历历法推算工具{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; color: #333; }
+        .header { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 1rem 2rem; }
+        .header h1 { font-size: 1.5rem; font-weight: 600; }
+        .header p { font-size: 0.875rem; opacity: 0.8; margin-top: 0.25rem; }
+        .nav { display: flex; gap: 1rem; margin-top: 1rem; }
+        .nav a { color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; transition: background 0.2s; }
+        .nav a:hover { background: rgba(255,255,255,0.1); }
+        .nav .active { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 1.5rem; margin-bottom: 1rem; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+        .card-header h2 { font-size: 1.25rem; color: #2c3e50; }
+        .btn { display: inline-flex; align-items: center; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #2ecc71; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #e67e22; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: #555; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #3498db; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
+        .table th { background: #f8f9fa; font-weight: 600; color: #555; }
+        .table tr:hover { background: #f8f9fa; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+        .badge-draft { background: #f0f0f0; color: #666; }
+        .badge-calculated { background: #d4edda; color: #155724; }
+        .badge-verified { background: #d1ecf1; color: #0c5460; }
+        .badge-abnormal { background: #f8d7da; color: #721c24; }
+        .badge-completed { background: #d4edda; color: #155724; }
+        .badge-calculating { background: #fff3cd; color: #856404; }
+        .badge-error { background: #f8d7da; color: #721c24; }
+        .status-badge { display: inline-flex; align-items: center; gap: 0.25rem; }
+        .status-badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; }
+        .status-draft::before { background: #999; }
+        .status-calculated::before { background: #27ae60; }
+        .status-verified::before { background: #3498db; }
+        .status-abnormal::before { background: #e74c3c; }
+        .search-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .search-bar input, .search-bar select { padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .error-message { background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .success-message { background: #d4edda; color: #155724; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .warning-message { background: #fff3cd; color: #856404; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .steps-list { margin-top: 1rem; }
+        .step-item { padding: 1rem; border-left: 3px solid #3498db; background: #f8f9fa; margin-bottom: 0.5rem; }
+        .step-number { font-weight: bold; color: #3498db; margin-right: 0.5rem; }
+        .step-name { font-weight: 500; color: #2c3e50; }
+        .step-value { color: #3498db; font-family: monospace; margin-left: 0.5rem; }
+        .step-desc { font-size: 0.875rem; color: #666; margin-top: 0.25rem; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .stat-card { background: white; border-radius: 8px; padding: 1.5rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-value { font-size: 2rem; font-weight: bold; color: #2c3e50; }
+        .stat-label { font-size: 0.875rem; color: #666; margin-top: 0.25rem; }
+        .moon-icon { font-size: 2rem; text-align: center; }
+        .ganzhi-display { font-size: 1.5rem; font-weight: bold; color: #2c3e50; }
+        .lunar-date { font-size: 1.25rem; color: #2c3e50; }
+        .abnormal-list { margin-top: 1rem; }
+        .abnormal-item { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 1rem; margin-bottom: 0.5rem; border-radius: 0 4px 4px 0; }
+        .abnormal-type { font-weight: bold; color: #721c24; }
+        .abnormal-message { margin-top: 0.25rem; color: #721c24; }
+        .pagination { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; }
+        .pagination a { padding: 0.5rem 1rem; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #333; }
+        .pagination a:hover { background: #f8f9fa; }
+        .pagination .active { background: #3498db; color: white; border-color: #3498db; }
+        .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .info-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
+        .info-label { color: #666; font-weight: 500; }
+        .info-value { color: #333; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div>
+            <h1>极简农历历法推算工具</h1>
+            <p>专业级农历历法推算工作台 - 节气、朔望月、干支、月相</p>
+        </div>
+        <nav class="nav">
+            <a href="{% url 'index' %}" {% if request.resolver_match.url_name == 'index' %}class="active"{% endif %}>项目台账</a>
+            <a href="{% url 'record_new' %}" {% if request.resolver_match.url_name == 'record_new' %}class="active"{% endif %}>新建记录</a>
+            <a href="{% url 'batch_new' %}" {% if request.resolver_match.url_name == 'batch_new' %}class="active"{% endif %}>批量推算</a>
+            <a href="{% url 'export_summary' %}">导出摘要</a>
+        </nav>
+    </header>
+    
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer style="text-align: center; padding: 2rem; color: #666; font-size: 0.875rem;">
+        <p>极简农历历法推算工具 - 专业级历法推算工作台</p>
+    </footer>
+</body>
+</html>
