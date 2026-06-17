@@ -55,7 +55,8 @@ export function generateGameRecord(
   levelId: number,
   answers: AnswerRecord[],
   timeUsed: number,
-  questions: Question[]
+  questions: Question[],
+  operationHistory: OperationHistory[] = []
 ): GameRecord {
   const correctCount = answers.filter(a => a.isCorrect).length
   const wrongCount = answers.filter(a => !a.isCorrect).length
@@ -70,7 +71,8 @@ export function generateGameRecord(
     wrongCount,
     timeUsed,
     timestamp: new Date().toISOString(),
-    answers
+    answers,
+    operationHistory
   }
 }
 

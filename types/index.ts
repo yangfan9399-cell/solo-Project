@@ -38,6 +38,7 @@ export interface GameRecord {
   timeUsed: number
   timestamp: string
   answers: AnswerRecord[]
+  operationHistory: OperationHistory[]
 }
 
 export interface AnswerRecord {

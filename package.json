@@ -9,9 +9,10 @@
     "postinstall": ""
   },
   "dependencies": {
-    "nuxt": "^3.10.0",
-    "vue": "^3.4.21",
-    "pinia": "^2.1.7"
+    "nuxt": "3.8.2",
+    "vue": "^3.3.13",
+    "pinia": "^2.1.7",
+    "@pinia/nuxt": "^0.5.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -4,7 +4,7 @@ import type { Player, Question, AnswerRecord, GameRecord, Level, MemoryCard, Ope
 import { levels, getLevelById, getUnlockedLevels } from '~/data/levels'
 import { practicePacks, getPracticePackById } from '~/data/practicePacks'
 import { getPlayer, createPlayer, savePlayer, saveGameRecord, updatePlayerStats, getGameRecords, getRanking } from '~/utils/storage'
-import { calculateScore, calculateTotalScore, analyzeErrorType, generateGameRecord, isLevelPassed, generateMemoryCards, generateListenQuestions } from '~/utils/gameLogic'
+import { calculateScore, analyzeErrorType, generateGameRecord, isLevelPassed, generateMemoryCards, generateListenQuestions } from '~/utils/gameLogic'
 
 export const useGameStore = defineStore('game', () => {
   const player = ref<Player | null>(null)
@@ -201,22 +201,45 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  function endGame() {
+  async function endGame() {
     if (!currentLevel.value || !player.value) return
 
     isPlaying.value = false
     const timeUsed = Math.round((Date.now() - startTime.value) / 1000)
-    const score = calculateTotalScore(answers.value, currentQuestions.value)
-    const passed = isLevelPassed(score, currentLevel.value)
     const correctCount = answers.value.filter(a => a.isCorrect).length
     const wrongCount = answers.value.filter(a => !a.isCorrect).length
+
+    let score = 0
+    try {
+      const response = await fetch('/api/score', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          answers: answers.value,
+          questions: currentQuestions.value
+        })
+      })
+      const data = await response.json()
+      if (data.success && data.data) {
+        score = data.data.score
+      } else {
+        score = answers.value.filter(a => a.isCorrect).length * 10
+      }
+    } catch {
+      score = answers.value.filter(a => a.isCorrect).length * 10
+    }
+
+    const passed = isLevelPassed(score, currentLevel.value)
 
     const record = generateGameRecord(
       player.value.id,
       currentLevel.value.id,
       answers.value,
       timeUsed,
-      currentQuestions.value
+      currentQuestions.value,
+      operationHistory.value
     )
     saveGameRecord(record)
 

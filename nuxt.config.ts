@@ -1,14 +1,11 @@
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt'],
   typescript: {
-    strict: true,
-    parserOptions: {
-      parser: 'babel-eslint'
-    }
+    strict: true
   },
-  experimental: {
-    parserOptions: {
-      parser: 'babel-eslint'
+  vite: {
+    optimizeDeps: {
+      exclude: ['oxc-parser']
     }
   },
   app: {
