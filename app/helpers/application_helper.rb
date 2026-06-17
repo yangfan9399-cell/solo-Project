@@ -16,10 +16,14 @@ module ApplicationHelper
     fields = f.fields_for(association, new_object, child_index: id) do |builder|
       render(association.to_s.singularize + '_fields', f: builder)
     end
-    link_to(name, '#', html_options.merge(class: "#{html_options[:class]} add_fields", data: { id: id, fields: fields.gsub("\n", "") }))
+    escaped_fields = URI.encode_www_form_component(fields.gsub("\n", ""))
+    html_options[:class] = "add_fields #{html_options[:class]}".strip
+    html_options[:data] = { id: id, fields: escaped_fields }
+    link_to(name, '#', html_options)
   end
 
   def link_to_remove_fields(name, f, html_options = {})
-    f.hidden_field(:_destroy) + link_to(name, '#', html_options.merge(class: "#{html_options[:class]} remove_fields"))
+    html_options[:class] = "remove_fields #{html_options[:class]}".strip
+    f.hidden_field(:_destroy) + link_to(name, '#', html_options)
   end
 end

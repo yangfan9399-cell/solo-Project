@@ -162,23 +162,23 @@ class RubbingsController < ApplicationController
 
     pdf = Prawn::Document.new(page_size: 'A4', page_layout: :portrait, margin: [40, 40, 40, 40])
 
-    # 使用支持中文的日文字体
-    font_path = '/System/Library/Fonts/Hiragino Sans GB.ttc'
+    # 使用项目内的中文字体
+    font_path = Rails.root.join('vendor', 'fonts', 'NotoSansSC.ttf').to_s
     if File.exist?(font_path)
-      pdf.font_families['Chinese'] = {
-        normal: { file: font_path, font: 0 },
-        bold: { file: font_path, font: 2 }
+      pdf.font_families['NotoSans'] = {
+        normal: font_path,
+        bold: font_path
       }
-      pdf.font 'Chinese'
+      pdf.font 'NotoSans'
     else
       pdf.font 'Helvetica'
     end
 
-    pdf.text "Rubbing Export Report", size: 18, align: :center, style: :bold
-    pdf.text "Date: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
+    pdf.text "旧城门铭文拓片导出报告", size: 18, align: :center, style: :bold
+    pdf.text "导出时间: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
     pdf.move_down 20
 
-    table_data = [['No', 'Title', 'Dynasty', 'Status', 'Inscriptions', 'Broken', 'CharBoxes']]
+    table_data = [['编号', '标题', '朝代', '状态', '释文数', '断字数', '字框数']]
     rubbings.each do |r|
       table_data << [
         r.no.to_s,
@@ -194,8 +194,8 @@ class RubbingsController < ApplicationController
     pdf.table(table_data, header: true, cell_style: { size: 8 }, column_widths: [60, 150, 60, 60, 50, 50, 50])
 
     pdf.move_down 20
-    pdf.text "Total: #{rubbings.count}", size: 10
-    pdf.text "With Broken: #{rubbings.select { |r| r.broken_count > 0 }.count}", size: 10
+    pdf.text "总记录数: #{rubbings.count}", size: 10
+    pdf.text "含断字记录: #{rubbings.select { |r| r.broken_count > 0 }.count}", size: 10
 
     send_data pdf.render, filename: "rubbings_export_#{Time.now.strftime('%Y%m%d')}.pdf", type: 'application/pdf', disposition: 'attachment'
   rescue => e
@@ -207,47 +207,47 @@ class RubbingsController < ApplicationController
   def export_summary_pdf(rubbings)
     require 'prawn'
 
-    # 使用支持中文的日文字体
+    # 使用项目内的中文字体
     pdf = Prawn::Document.new(page_size: 'A4', page_layout: :portrait, margin: [40, 40, 40, 40])
 
-    font_path = '/System/Library/Fonts/Hiragino Sans GB.ttc'
+    font_path = Rails.root.join('vendor', 'fonts', 'NotoSansSC.ttf').to_s
     if File.exist?(font_path)
-      pdf.font_families['Chinese'] = {
-        normal: { file: font_path, font: 0 },
-        bold: { file: font_path, font: 2 }
+      pdf.font_families['NotoSans'] = {
+        normal: font_path,
+        bold: font_path
       }
-      pdf.font 'Chinese'
+      pdf.font 'NotoSans'
     else
       pdf.font 'Helvetica'
     end
 
-    pdf.text "Rubbing Summary Report", size: 18, align: :center, style: :bold
-    pdf.text "Date: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
+    pdf.text "旧城门铭文拓片整理系统 - 摘要报告", size: 18, align: :center, style: :bold
+    pdf.text "报告时间: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
     pdf.move_down 30
 
-    pdf.text "Statistics Overview", size: 14, style: :bold
+    pdf.text "一、统计概览", size: 14, style: :bold
     pdf.move_down 10
 
     stats = [
-      ['Total Rubbings', rubbings.count.to_s],
-      ['Pending', rubbings.select { |r| r.status == '待整理' }.count.to_s],
-      ['In Progress', rubbings.select { |r| r.status == '整理中' }.count.to_s],
-      ['Completed', rubbings.select { |r| r.status == '已完成' }.count.to_s],
-      ['Pending Review', rubbings.select { |r| r.status == '待审核' }.count.to_s],
-      ['Reviewed', rubbings.select { |r| r.status == '已审核' }.count.to_s],
-      ['Total Inscriptions', rubbings.sum { |r| r.inscriptions.count }.to_s],
-      ['Total Characters', rubbings.sum { |r| r.char_count }.to_s],
-      ['Broken Characters', rubbings.sum { |r| r.broken_count }.to_s],
-      ['Total Footnotes', rubbings.sum { |r| r.footnotes.count }.to_s]
+      ['总拓片数', rubbings.count.to_s],
+      ['待整理', rubbings.select { |r| r.status == '待整理' }.count.to_s],
+      ['整理中', rubbings.select { |r| r.status == '整理中' }.count.to_s],
+      ['已完成', rubbings.select { |r| r.status == '已完成' }.count.to_s],
+      ['待审核', rubbings.select { |r| r.status == '待审核' }.count.to_s],
+      ['已审核', rubbings.select { |r| r.status == '已审核' }.count.to_s],
+      ['总释文数', rubbings.sum { |r| r.inscriptions.count }.to_s],
+      ['总字数', rubbings.sum { |r| r.char_count }.to_s],
+      ['断字总数', rubbings.sum { |r| r.broken_count }.to_s],
+      ['总脚注数', rubbings.sum { |r| r.footnotes.count }.to_s]
     ]
 
     pdf.table(stats, cell_style: { size: 10 }, column_widths: [150, 80])
 
     pdf.move_down 30
-    pdf.text "Rubbing List", size: 14, style: :bold
+    pdf.text "二、拓片清单", size: 14, style: :bold
     pdf.move_down 10
 
-    table_data = [['No', 'Title', 'Dynasty', 'Location', 'Dating', 'Status']]
+    table_data = [['编号', '标题', '朝代', '出土地点', '年代', '状态']]
     rubbings.each do |r|
       table_data << [
         r.no.to_s,
@@ -262,21 +262,21 @@ class RubbingsController < ApplicationController
     pdf.table(table_data, header: true, cell_style: { size: 8 }, column_widths: [60, 120, 60, 100, 80, 60])
 
     pdf.move_down 20
-    pdf.text "Data Warnings", size: 14, style: :bold
+    pdf.text "三、异常数据提示", size: 14, style: :bold
     pdf.move_down 10
 
     warning_items = []
     rubbings.each do |r|
       if r.broken_count > 0
-        warning_items << ["#{r.no} #{r.title}", "#{r.broken_count} broken chars"]
+        warning_items << ["#{r.no} #{r.title}", "存在 #{r.broken_count} 处断字"]
       end
       if r.inscriptions.empty?
-        warning_items << ["#{r.no} #{r.title}", "No inscriptions"]
+        warning_items << ["#{r.no} #{r.title}", "未添加释文"]
       end
     end
 
     if warning_items.empty?
-      pdf.text "No warnings", size: 10
+      pdf.text "无异常数据", size: 10
     else
       pdf.table(warning_items, cell_style: { size: 8 }, column_widths: [200, 200])
     end
