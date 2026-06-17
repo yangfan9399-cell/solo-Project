@@ -1,5 +1,7 @@
-import type { Project, InspectionFrame, Defect, ReviewBatch, Version, Anomaly } from "./types";
+import type { Project, InspectionFrame, Defect, ReviewBatch, Version, Anomaly, ExportRecord } from "./types";
 import { storage } from "./storage";
+
+const SEED_VERSION = 3;
 
 export function generateSeedData(): {
   projects: Project[];
@@ -8,6 +10,7 @@ export function generateSeedData(): {
   reviews: ReviewBatch[];
   versions: Version[];
   anomalies: Anomaly[];
+  exports: ExportRecord[];
 } {
   const now = new Date().toISOString();
 
@@ -81,21 +84,72 @@ export function generateSeedData(): {
     { id: "a5", projectId: "p4", type: "unreviewed_overdue", description: "缺陷 d11 已超过3个工作日未复核", severity: "warning", resolved: false, createdAt: "2026-06-09T09:00:00Z", resolvedAt: "", relatedDefectId: "d11" },
   ];
 
-  return { projects, frames, defects, reviews, versions, anomalies };
+  const exports: ExportRecord[] = [
+    { id: "e1", projectId: "p1", exportType: "summary", format: "csv", createdAt: "2026-05-14T10:30:00Z", createdBy: "张工", recordCount: 4, data: "defect_id,type,severity,mileage,position,description\nd1,crack,3,358.2,管顶 2点钟方向,纵向裂缝长约800mm\nd2,deposit,2,680.0,管底,管底沉积约占截面积15%\nd3,misalign,3,1050.3,管接口,接口错口约15mm\nd4,leak,4,1520.0,管侧 9点钟方向,渗漏严重" },
+    { id: "e2", projectId: "p2", exportType: "full", format: "json", createdAt: "2026-05-18T11:00:00Z", createdBy: "李工", recordCount: 3, data: '{"project":"中山大道污水管巡检","defects":3}' },
+    { id: "e3", projectId: "p1", exportType: "mileage", format: "csv", createdAt: "2026-05-14T14:00:00Z", createdBy: "张工", recordCount: 6, data: "mileage,defect_type,severity\n358.2,crack,3\n680.0,deposit,2\n1050.3,misalign,3\n1520.0,leak,4\n358.2,crack,4" },
+    { id: "e4", projectId: "p2", exportType: "review", format: "csv", createdAt: "2026-05-18T14:30:00Z", createdBy: "周审核", recordCount: 3, data: "defect_id,status,reviewer,comment\nd5,approved,周审核,腐蚀面积确认\nd6,approved,周审核,脱节量确认\nd7,approved,周审核,暗接确认" },
+  ];
+
+  return { projects, frames, defects, reviews, versions, anomalies, exports };
+}
+
+const EXPECTED_COUNTS = {
+  projects: 5,
+  frames: 19,
+  defects: 14,
+  reviews: 3,
+  versions: 6,
+  anomalies: 5,
+  exports: 4,
+};
+
+function checkDataIntegrity(): boolean {
+  if (typeof window === "undefined") return false;
+
+  const version = localStorage.getItem("pipeline_seed_version");
+  if (version && Number(version) >= SEED_VERSION) {
+    const counts = {
+      projects: storage.projects.getAll().length,
+      frames: storage.frames.getAll().length,
+      defects: storage.defects.getAll().length,
+      reviews: storage.reviews.getAll().length,
+      versions: storage.versions.getAll().length,
+      anomalies: storage.anomalies.getAll().length,
+      exports: storage.exports.getAll().length,
+    };
+
+    const allPresent =
+      counts.projects >= EXPECTED_COUNTS.projects &&
+      counts.frames >= EXPECTED_COUNTS.frames &&
+      counts.defects >= EXPECTED_COUNTS.defects &&
+      counts.reviews >= EXPECTED_COUNTS.reviews &&
+      counts.versions >= EXPECTED_COUNTS.versions &&
+      counts.anomalies >= EXPECTED_COUNTS.anomalies &&
+      counts.exports >= EXPECTED_COUNTS.exports;
+
+    if (allPresent) {
+      console.log("[Seed] 数据完整性校验通过", counts);
+      return true;
+    }
+
+    console.warn("[Seed] 数据不完整，需要补写", { counts, expected: EXPECTED_COUNTS });
+  }
+
+  return false;
 }
 
 export function ensureSeedData(): boolean {
   if (typeof window === "undefined") return false;
 
-  if (storage.isInitialized()) {
-    const projects = storage.projects.getAll();
-    if (projects.length > 0) {
-      return true;
-    }
+  if (checkDataIntegrity()) {
+    return true;
   }
 
   try {
-    const { projects, frames, defects, reviews, versions, anomalies } = generateSeedData();
+    storage.reset();
+
+    const { projects, frames, defects, reviews, versions, anomalies, exports } = generateSeedData();
 
     projects.forEach((p) => storage.projects.create(p));
     frames.forEach((f) => storage.frames.create(f));
@@ -103,8 +157,11 @@ export function ensureSeedData(): boolean {
     reviews.forEach((r) => storage.reviews.create(r));
     versions.forEach((v) => storage.versions.create(v));
     anomalies.forEach((a) => storage.anomalies.create(a));
+    exports.forEach((e) => storage.exports.create(e));
 
     storage.markInitialized();
+    localStorage.setItem("pipeline_seed_version", String(SEED_VERSION));
+
     console.log("[Seed] 初始化样例数据完成", {
       projects: projects.length,
       frames: frames.length,
@@ -112,6 +169,7 @@ export function ensureSeedData(): boolean {
       reviews: reviews.length,
       versions: versions.length,
       anomalies: anomalies.length,
+      exports: exports.length,
     });
     return true;
   } catch (e) {
@@ -123,5 +181,6 @@ export function ensureSeedData(): boolean {
 export function resetSeedData(): void {
   if (typeof window === "undefined") return;
   storage.reset();
+  localStorage.removeItem("pipeline_seed_version");
   ensureSeedData();
 }

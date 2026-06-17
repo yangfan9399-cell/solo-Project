@@ -18,6 +18,5 @@
     },
     "baseUrl": "."
   },
-  "include": ["src"],
-  "exclude": ["src/entry-server.tsx", "vite.config.ts", "app.config.ts", "dev-server.mjs", "build.mjs", "preview.mjs"]
+  "include": ["src", "vite.config.ts", "app.config.ts"]
 }

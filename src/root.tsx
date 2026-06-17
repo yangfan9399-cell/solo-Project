@@ -1,16 +1,16 @@
-import { onMount, createSignal, Show } from "solid-js";
-import { A, Router, Route } from "@solidjs/router";
+import { onMount, createSignal, Show, lazy, Suspense } from "solid-js";
+import { A, HashRouter, Route } from "@solidjs/router";
 import "./app.css";
 import { ensureSeedData, resetSeedData } from "./lib/seed";
 import { storage } from "./lib/storage";
 
-import ProjectLedger from "./routes/index";
-import ProjectDetail from "./routes/project/[id]";
-import ReviewWorkbench from "./routes/review/index";
-import AnomaliesPage from "./routes/anomalies/index";
-import MileagePage from "./routes/mileage/[id]";
-import HistoryPage from "./routes/history/[id]";
-import ExportPage from "./routes/export/[id]";
+const ProjectLedger = lazy(() => import("./routes/index"));
+const ProjectDetail = lazy(() => import("./routes/project/[id]"));
+const ReviewWorkbench = lazy(() => import("./routes/review/index"));
+const AnomaliesPage = lazy(() => import("./routes/anomalies/index"));
+const MileagePage = lazy(() => import("./routes/mileage/[id]"));
+const HistoryPage = lazy(() => import("./routes/history/[id]"));
+const ExportPage = lazy(() => import("./routes/export/[id]"));
 
 function Layout(props: { children: any }) {
   const [anomalyCount, setAnomalyCount] = createSignal(0);
@@ -75,9 +75,15 @@ function Layout(props: { children: any }) {
 
 export default function App() {
   return (
-    <Router root={(props) => (
+    <HashRouter root={(props) => (
       <Layout>
-        {props.children}
+        <Suspense fallback={
+          <div class="flex items-center justify-center h-64">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+          </div>
+        }>
+          {props.children}
+        </Suspense>
       </Layout>
     )}>
       <Route path="/" component={ProjectLedger} />
@@ -87,6 +93,6 @@ export default function App() {
       <Route path="/mileage/:id" component={MileagePage} />
       <Route path="/history/:id" component={HistoryPage} />
       <Route path="/export/:id" component={ExportPage} />
-    </Router>
+    </HashRouter>
   );
 }

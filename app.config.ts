@@ -1,13 +1,11 @@
-import { defineConfig } from "@solidjs/start/config";
+import { defineConfig } from "vite";
 
 export default defineConfig({
-  ssr: false,
   server: {
-    preset: "static",
+    port: 3100,
   },
-  vite: {
-    server: {
-      port: 3100,
-    },
+  build: {
+    outDir: "dist",
+    target: "esnext",
   },
 });
