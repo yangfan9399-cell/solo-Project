@@ -11,12 +11,12 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "types": ["@types/node"],
+    "types": ["node", "vite/client"],
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.ts"],
-  "exclude": ["node_modules", ".vinxi", "dist"]
+  "exclude": ["node_modules", "dist"]
 }

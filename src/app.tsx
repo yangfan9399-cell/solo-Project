@@ -1,5 +1,5 @@
 import { Router, Route } from "@solidjs/router";
-import { Suspense, Component, ParentProps } from "solid-js";
+import { Suspense } from "solid-js";
 import "./app.css";
 import Layout from "~/components/Layout";
 
