@@ -239,7 +239,8 @@ export const useGameStore = defineStore('game', () => {
       answers.value,
       timeUsed,
       currentQuestions.value,
-      operationHistory.value
+      operationHistory.value,
+      score
     )
     saveGameRecord(record)
 

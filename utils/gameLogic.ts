@@ -1,4 +1,4 @@
-import type { Question, AnswerRecord, GameRecord, Level } from '~/types'
+import type { Question, AnswerRecord, GameRecord, Level, OperationHistory } from '~/types'
 
 export function calculateScore(answerRecord: AnswerRecord, difficulty: number): number {
   if (!answerRecord.isCorrect) return 0
@@ -56,11 +56,12 @@ export function generateGameRecord(
   answers: AnswerRecord[],
   timeUsed: number,
   questions: Question[],
-  operationHistory: OperationHistory[] = []
+  operationHistory: OperationHistory[] = [],
+  serverScore?: number
 ): GameRecord {
   const correctCount = answers.filter(a => a.isCorrect).length
   const wrongCount = answers.filter(a => !a.isCorrect).length
-  const score = calculateTotalScore(answers, questions)
+  const score = serverScore ?? calculateTotalScore(answers, questions)
   
   return {
     id: `record_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
