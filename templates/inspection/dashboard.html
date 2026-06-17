@@ -140,8 +140,9 @@
     </div>
     <div class="card-body">
       <div class="chart-box" style="height:380px;">
-        <canvas data-chart='{"type":"bar","data":{"labels":{% for g in group_stats %}"{{ g.group }}组"{% if not forloop.last %},{% endif %}{% endfor %},"datasets":[{"label":"平均浓度(°Bé)","type":"bar","data":[{% for g in group_stats %}{{ g.avg_conc|floatformat:2 }}{% if not forloop.last %},{% endif %}{% endfor %}],"backgroundColor":"rgba(14,165,233,.7)","borderRadius":6,"yAxisID":"y"},{"label":"收盐量(吨)","type":"line","data":[{% for g in group_stats %}{{ g.total_yield|floatformat:3 }}{% if not forloop.last %},{% endif %}{% endfor %}],"borderColor":"#f59e0b","backgroundColor":"rgba(245,158,11,.1)","borderWidth":2,"fill":true,"tension":0.35,"yAxisID":"y1","pointRadius":5}]},"options":{"responsive":true,"maintainAspectRatio":false,"plugins":{"legend":{"position":"top"}},"scales":{"y":{"type":"linear","position":"left","title":{"display":true,"text":"浓度(°Bé)"},"suggestedMin":20,"suggestedMax":32},"y1":{"type":"linear","position":"right","title":{"display":true,"text":"产量(吨)"}}}}}'></canvas>
+        <canvas id="group-compare-chart"></canvas>
       </div>
+      <script id="group-compare-data" type="application/json">{"labels":[{% for g in group_stats %}"{{ g.group }}组"{% if not forloop.last %},{% endif %}{% endfor %}],"avg_conc":[{% for g in group_stats %}{{ g.avg_conc|floatformat:2 }}{% if not forloop.last %},{% endif %}{% endfor %}],"total_yield":[{% for g in group_stats %}{{ g.total_yield|floatformat:3 }}{% if not forloop.last %},{% endif %}{% endfor %}]}</script>
     </div>
   </div>
 </div>

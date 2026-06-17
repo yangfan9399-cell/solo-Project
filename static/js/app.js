@@ -1,7 +1,4 @@
 const App = (() => {
-  function csrfSafeMethod(method) {
-    return /^(GET|HEAD|OPTIONS|TRACE)$/.test(method);
-  }
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -18,25 +15,9 @@ const App = (() => {
   }
   const csrftoken = getCookie('csrftoken');
 
-  function initCharts(chartjsLoaded) {
-    if (!window.Chart) return;
-    document.querySelectorAll('canvas[data-chart]').forEach(canvas => {
-      const config = JSON.parse(canvas.getAttribute('data-chart'));
-      if (canvas._chart) return;
-      canvas._chart = new Chart(canvas.getContext('2d'), Object.assign({
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12, padding: 16 } },
-          tooltip: { mode: 'index', intersect: false }
-        }
-      }, config));
-    });
-  }
-
   async function loadTrendChart(container, days = 30, poolId = null) {
     const canvas = container.querySelector('canvas');
-    if (!canvas) return;
+    if (!canvas || !window.Chart) return;
     const params = new URLSearchParams({ days });
     if (poolId) params.set('pool_id', poolId);
     try {
@@ -100,8 +81,71 @@ const App = (() => {
         }
       });
     } catch (e) {
-      console.error(e);
+      console.error('Trend chart load failed:', e);
     }
+  }
+
+  function initGroupCompareChart() {
+    const canvas = document.getElementById('group-compare-chart');
+    const dataEl = document.getElementById('group-compare-data');
+    if (!canvas || !dataEl || !window.Chart) return;
+    let data;
+    try {
+      data = JSON.parse(dataEl.textContent);
+    } catch (e) {
+      console.error('Group compare data parse failed:', e);
+      return;
+    }
+    if (canvas._chart) canvas._chart.destroy();
+    canvas._chart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            label: '平均浓度(°Bé)',
+            type: 'bar',
+            data: data.avg_conc,
+            backgroundColor: 'rgba(14,165,233,.7)',
+            borderRadius: 6,
+            yAxisID: 'y'
+          },
+          {
+            label: '收盐量(吨)',
+            type: 'line',
+            data: data.total_yield,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245,158,11,.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.35,
+            yAxisID: 'y1',
+            pointRadius: 5
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 14, padding: 16 } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          y: {
+            type: 'linear', position: 'left',
+            title: { display: true, text: '浓度(°Bé)' },
+            suggestedMin: 20, suggestedMax: 32,
+            grid: { color: 'rgba(0,0,0,.05)' }
+          },
+          y1: {
+            type: 'linear', position: 'right',
+            title: { display: true, text: '产量(吨)' },
+            grid: { display: false }
+          }
+        }
+      }
+    });
   }
 
   function initPoolMap() {
@@ -229,7 +273,6 @@ const App = (() => {
     document.querySelectorAll('[data-export]').forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.dataset.export;
-        const base = btn.dataset.exportBase || window.location.pathname;
         const qs = window.location.search;
         const map = {
           csv: '/export/csv/',
@@ -245,8 +288,8 @@ const App = (() => {
     document.addEventListener('DOMContentLoaded', () => {
       initPoolMap();
       initDashboardTrend();
+      initGroupCompareChart();
       initPoolDetailTrend();
-      initCharts();
       initConfirmDialogs();
       initVersionCompare();
       initAutoDismiss();
