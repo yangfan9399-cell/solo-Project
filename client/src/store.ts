@@ -119,8 +119,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
         currentEvent: event,
         pendingAllocations: {},
         settleResult: null,
+        showSettle: false,
         isLoading: false
       });
+      if (state.gameOver) {
+        setTimeout(() => get().triggerSettle(), 400);
+      }
       return true;
     } catch (e) {
       set({ error: '恢复存档失败', isLoading: false });

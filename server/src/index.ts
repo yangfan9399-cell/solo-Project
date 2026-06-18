@@ -86,12 +86,13 @@ app.post('/api/game/step', (req, res) => {
   };
 
   const nextSteps = [...steps, record];
-  state.round = Math.min(state.maxRounds, round + 1);
+  const nextRound = round + 1;
+  state.round = nextRound;
   state.steps = nextSteps;
 
-  const nextEvent = pickEventForRound(phase, state.round, state.eventHistory);
-  const isLastRound = state.round > state.maxRounds;
+  const isLastRound = nextRound > state.maxRounds;
   state.gameOver = isLastRound;
+  const nextEvent = isLastRound ? undefined : pickEventForRound(phase, nextRound, state.eventHistory);
 
   res.json({
     state,

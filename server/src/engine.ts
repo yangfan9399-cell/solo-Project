@@ -198,7 +198,14 @@ export function rebuildStateFromSteps(phase: GamePhase, steps: StepRecord[]): Ga
       }
     }
 
-    state.round = Math.min(state.maxRounds, step.round + 1);
+    state.round = step.round + 1;
+  }
+
+  state.steps = steps;
+  if (steps.length > 0) {
+    const nextRound = steps[steps.length - 1].round + 1;
+    state.round = nextRound;
+    state.gameOver = nextRound > state.maxRounds;
   }
 
   return state;

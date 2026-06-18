@@ -24892,8 +24892,12 @@
           currentEvent: event,
           pendingAllocations: {},
           settleResult: null,
+          showSettle: false,
           isLoading: false
         });
+        if (state.gameOver) {
+          setTimeout(() => get().triggerSettle(), 400);
+        }
         return true;
       } catch (e) {
         set({ error: "\u6062\u590D\u5B58\u6863\u5931\u8D25", isLoading: false });
