@@ -1,0 +1,17 @@
+{
+  "name": "fog-harbor-lantern-array",
+  "version": "1.0.0",
+  "description": "雾港灯阵资源配给盘 - 资源调度挑战游戏",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n build,server -c magenta,blue \"node scripts/build-client.js watch\" \"npm:dev:server\"",
+    "dev:server": "cd server && npx tsx watch src/index.ts",
+    "build:client": "node scripts/build-client.js build",
+    "build": "npm run build:client && cd server && npx tsc",
+    "start": "cd server && node dist/index.js",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
