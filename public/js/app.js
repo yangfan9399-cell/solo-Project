@@ -45,11 +45,87 @@ const App = (function () {
 
     const restoredSteps = Timeline.resetWithScenario();
     if (restoredSteps && restoredSteps.length > 0) {
-      replaySteps(restoredSteps);
+      replayStepsWithBackend(restoredSteps);
     }
   }
 
-  function replaySteps(savedSteps) {
+  async function replayStepsWithBackend(savedSteps) {
+    const actionsOnly = savedSteps.map(s => ({ action: s.action }));
+    try {
+      const res = await fetch('/api/settle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenarioId: currentScenarioId,
+          steps: actionsOnly,
+          finalState: {}
+        })
+      });
+      const settleResult = await res.json();
+      if (settleResult.error) throw new Error(settleResult.error);
+      syncStateFromBackend(settleResult, savedSteps);
+      toast(`已恢复 ${savedSteps.length} 步，后端重算完成，已同步局面`, 'success');
+    } catch (e) {
+      console.warn('后端重算失败，降级本地重放:', e);
+      replayStepsLocal(savedSteps);
+    }
+  }
+
+  function syncStateFromBackend(settleResult, savedSteps) {
+    const finalState = settleResult.finalState || {};
+    gameState.sealedValue = finalState.sealedValue ?? gameState.sealedValue;
+    gameState.rewriteSlots = finalState.rewriteSlots ?? gameState.rewriteSlots;
+    gameState.traceMarks = finalState.traceMarks ?? gameState.traceMarks;
+    gameState.yiRisk = finalState.yiRisk ?? gameState.yiRisk;
+    gameState.renReward = finalState.renReward ?? gameState.renReward;
+    gameState.ziFailFactor = finalState.ziFailFactor ?? gameState.ziFailFactor;
+    gameState.hiddenUnlocked = !!finalState.hiddenUnlocked;
+    if (finalState.resources) {
+      gameState.resources = { ...gameState.resources, ...finalState.resources };
+    }
+    const stepRes = settleResult.stepResults || [];
+    gameState.nodeSeals = {};
+    let cumulativeSeals = {};
+    stepRes.forEach(sr => {
+      if (sr.action?.type === 'seal' && sr.action?.nodeId && sr.sealAmount) {
+        cumulativeSeals[sr.action.nodeId] = (cumulativeSeals[sr.action.nodeId] || 0) + sr.sealAmount;
+      }
+    });
+    gameState.nodeSeals = { ...cumulativeSeals };
+    if (gameState.nodeSeals['B'] >= 80) gameState.prismActivated = true;
+    if (gameState.nodeSeals['C'] >= 80) gameState.echoActivated = true;
+    currentRound = Math.min(savedSteps.length + 1, currentScenario.rounds + 999);
+    if (currentRound > currentScenario.rounds) currentRound = currentScenario.rounds + 1;
+    EventsBox.init(currentScenario, Math.min(currentRound, currentScenario.rounds));
+    stepRes.forEach(sr => {
+      if (sr.eventApplied) EventsBox.markFired(sr.eventApplied);
+    });
+    Board.init(currentScenario, gameState);
+    Board.render();
+    Board.renderMap();
+    Settlement.render && Settlement.clear();
+    Timeline.restoreSteps(savedSteps);
+    if (settleResult.stepResults && settleResult.stepResults.length > 0) {
+      const enriched = savedSteps.map((s, i) => {
+        const sr = settleResult.stepResults[i];
+        if (!sr) return s;
+        return {
+          ...s,
+          stateBefore: sr.before || s.stateBefore,
+          stateAfter: sr.after || s.stateAfter,
+          eventApplied: sr.eventApplied || s.eventApplied,
+          hiddenUnlocked: sr.hiddenUnlocked || s.hiddenUnlocked
+        };
+      });
+      localStorage.setItem(
+        `yanhu_balloon_timeline_${currentScenarioId}`,
+        JSON.stringify(enriched)
+      );
+      Timeline.restoreSteps(enriched);
+    }
+  }
+
+  function replayStepsLocal(savedSteps) {
     if (!savedSteps || savedSteps.length === 0) return;
     EventsBox.init(currentScenario, 1);
     currentRound = 1;
@@ -70,7 +146,7 @@ const App = (function () {
     Board.renderMap();
     Timeline.restoreSteps(savedSteps);
     const firedCount = EventsBox.getFiredIds().length;
-    toast(`已恢复 ${savedSteps.length} 步操作，已触发 ${firedCount} 个事件，当前第 ${Math.min(currentRound, currentScenario.rounds)} 回`, 'info');
+    toast(`本地重放：${savedSteps.length} 步，${firedCount} 个事件，第 ${Math.min(currentRound, currentScenario.rounds)} 回`, 'info');
   }
 
   function resetGame(keepTimeline) {

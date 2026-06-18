@@ -209,6 +209,8 @@ function recalculateSettlement(scenarioId, steps, finalState) {
   if (!scenario) return { error: '场景不存在' };
 
   let state = JSON.parse(JSON.stringify(scenario.initialState));
+  if (!state.nodeSeals) state.nodeSeals = {};
+  if (!state.resources) state.resources = { energy: 0, gas: 0, signal: 0 };
   const stepResults = [];
   let sealedValueByStep = [state.sealedValue];
   let yiRiskByStep = [state.yiRisk];
@@ -291,10 +293,6 @@ function recalculateSettlement(scenarioId, steps, finalState) {
     yiRiskByStep.push(state.yiRisk);
     renRewardByStep.push(state.renReward);
     ziFailByStep.push(state.ziFailFactor);
-  }
-
-  if (finalState && finalState.hiddenUnlocked !== undefined) {
-    state.hiddenUnlocked = finalState.hiddenUnlocked;
   }
 
   const isWin = scenario.winFormula(state);
