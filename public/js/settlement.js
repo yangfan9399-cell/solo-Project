@@ -20,6 +20,11 @@ async function refreshSettlement() {
 }
 
 function renderEmptySettlement() {
+  document.getElementById('settlementLevelName').textContent = '';
+  const badge = document.getElementById('settlementConditionBadge');
+  badge.textContent = '';
+  badge.style.cssText = 'display:inline-block;margin-left:16px;padding:6px 18px;border-radius:20px;font-size:12px;font-weight:700;';
+
   const hero = document.getElementById('settlementHero');
   hero.className = 'settlement-hero';
   document.getElementById('settlementStatus').className = 'settlement-status';
@@ -51,13 +56,68 @@ function renderEmptySettlement() {
   `;
 }
 
+function getLevelInfo() {
+  const id = Game.getLevelId();
+  const names = {
+    chen: { name: '星尘棋盘双人机关局·辰局', sub: '教学局', color: 'var(--accent-green)' },
+    mao: { name: '星尘棋盘双人机关局·卯局', sub: '资源匮乏局', color: 'var(--accent-gold)' },
+    xin: { name: '星尘棋盘双人机关局·辛局', sub: '隐藏秘境局', color: 'var(--accent-red)' }
+  };
+  return names[id] || { name: '未知关卡', sub: '', color: 'var(--accent-purple)' };
+}
+
 function renderSettlement(s) {
+  const levelInfo = getLevelInfo();
+  document.getElementById('settlementLevelName').textContent = levelInfo.name + ' · ' + levelInfo.sub;
+
+  const wc = s.conditions?.win;
+  const lc = s.conditions?.lose;
+
+  let statusText = '';
+  let statusClass = '';
+  let badgeText = '';
+  let badgeBg = '';
+  let badgeColor = '';
+
+  if (lc && lc.anyMet) {
+    const failCond = lc.conditions.find(c => c.met);
+    statusText = '💥 挑战失败';
+    statusClass = 'lose';
+    badgeText = '❌ 失败条件触发：' + (failCond?.name || '');
+    badgeBg = 'linear-gradient(135deg, rgba(239,68,68,0.25), rgba(249,115,22,0.2))';
+    badgeColor = 'var(--accent-red)';
+  } else if (wc && wc.allMet) {
+    statusText = '🏆 闯关成功！';
+    statusClass = 'win';
+    badgeText = '✅ 全部胜利条件达成';
+    badgeBg = 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(16,185,129,0.15))';
+    badgeColor = 'var(--accent-gold)';
+  } else if (wc && wc.hiddenMet) {
+    statusText = '🔮 隐藏条件胜利！';
+    statusClass = 'win';
+    badgeText = '✨ 隐藏胜利条件达成：' + (wc.hiddenCondition?.name || '');
+    badgeBg = 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(236,72,153,0.2))';
+    badgeColor = 'var(--accent-purple)';
+  } else {
+    statusText = '⏳ 闯关进行中';
+    statusClass = '';
+    const metCount = wc?.conditions?.filter(c => c.met).length || 0;
+    const totalCount = wc?.conditions?.length || 0;
+    badgeText = `🔄 条件进度 ${metCount}/${totalCount}`;
+    badgeBg = 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(6,182,212,0.15))';
+    badgeColor = 'var(--accent-cyan)';
+  }
+
+  const badge = document.getElementById('settlementConditionBadge');
+  badge.textContent = badgeText;
+  badge.style.cssText = `display:inline-block;margin-left:16px;padding:6px 18px;border-radius:20px;font-size:12px;font-weight:700;background:${badgeBg};color:${badgeColor};border:1px solid ${badgeColor}40;`;
+
   const hero = document.getElementById('settlementHero');
-  hero.className = 'settlement-hero ' + (s.success ? 'win' : 'lose');
+  hero.className = 'settlement-hero ' + statusClass;
 
   const statusEl = document.getElementById('settlementStatus');
-  statusEl.className = 'settlement-status ' + (s.success ? 'win' : 'lose');
-  statusEl.textContent = s.success ? '🏆 闯关成功！' : '💥 挑战失败';
+  statusEl.className = 'settlement-status ' + statusClass;
+  statusEl.textContent = statusText;
 
   document.getElementById('settlementScore').textContent = s.finalScore;
 
