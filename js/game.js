@@ -16,9 +16,7 @@ const Game = {
         document.getElementById('btn-start').style.display = 'none';
         document.getElementById('btn-restart').style.display = '';
         
-        setTimeout(() => {
-            this.nextTurn();
-        }, 500);
+        this.nextTurn();
 
         return true;
     },
@@ -37,15 +35,24 @@ const Game = {
         if (GameState.gameOver) {
             const result = Settlement.calculate();
             Settlement.render(result);
-            Events.clear();
+            Events.renderEnd();
             UI.updateStatus('游戏已结束，点击"重新开始"开始新游戏');
         } else {
             const config = GameState.getGameConfig();
-            const turn = GameState.currentTurn + 1;
-            if (turn <= config.turns) {
-                const event = Events.getEventForTurn(turn);
-                Events.render(event);
-                UI.updateStatus(`回合 ${turn}/${config.turns} - 继续你的经营之旅`);
+            const nextTurnNum = GameState.history.length + 1;
+
+            if (nextTurnNum > config.turns) {
+                this.endGame();
+            } else {
+                GameState.currentTurn = nextTurnNum;
+                const event = Events.getEventForTurn(nextTurnNum);
+                if (event) {
+                    Events.render(event);
+                    UI.updateStatus(`回合 ${nextTurnNum}/${config.turns} - ${event.title}`);
+                    GameState.save();
+                } else {
+                    this.endGame();
+                }
             }
         }
 
@@ -55,20 +62,25 @@ const Game = {
     nextTurn() {
         if (GameState.gameOver) return;
 
-        GameState.currentTurn++;
         const config = GameState.getGameConfig();
+        GameState.currentTurn = GameState.history.length + 1;
         
         if (GameState.currentTurn > config.turns) {
             this.endGame();
             return;
         }
 
-        UI.updateHeader();
-        
         const event = Events.getEventForTurn(GameState.currentTurn);
+        if (!event) {
+            this.endGame();
+            return;
+        }
+
+        UI.updateHeader();
+        Board.renderMap();
         Events.render(event);
         
-        UI.updateStatus(`回合 ${GameState.currentTurn}/${config.turns} - ${event ? event.title : '等待事件'}`);
+        UI.updateStatus(`回合 ${GameState.currentTurn}/${config.turns} - ${event.title}`);
         
         GameState.save();
     },
@@ -104,7 +116,7 @@ const Game = {
         }
         
         Settlement.render(result);
-        Events.clear();
+        Events.renderEnd();
         GameState.save();
 
         let message = '';
@@ -119,6 +131,8 @@ const Game = {
             message = '游戏结束，但未达成胜利条件。再接再厉！';
         }
 
+        UI.updateHeader();
+        Board.renderMap();
         UI.updateStatus(message.split('\n')[0]);
         UI.showModal('游戏结束', message);
     },

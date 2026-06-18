@@ -25,7 +25,7 @@ const GameConfig = {
             id: 'mao',
             name: '卯局 - 教学入门',
             description: '适合新手的教学局，资源充足，引导清晰',
-            turns: 8,
+            turns: 7,
             startStats: {
                 shimingValue: 10,
                 calibrationSlots: 6,
@@ -37,6 +37,16 @@ const GameConfig = {
                 crystal: 8,
                 parts: 5
             },
+            mapType: 'tower',
+            mapNodes: [
+                { turn: 1, label: '初绽层', icon: '🌸' },
+                { turn: 2, label: '能源层', icon: '⚡' },
+                { turn: 3, label: '晶核层', icon: '💎' },
+                { turn: 4, label: '校准层', icon: '🎯' },
+                { turn: 5, label: '霜风层', icon: '🌬️' },
+                { turn: 6, label: '嘉奖层', icon: '🏆' },
+                { turn: 7, label: '冲刺层', icon: '🚀' }
+            ],
             winCondition: (stats) => stats.shimingValue >= 60 && stats.maoRisk < 40,
             failCondition: (stats) => stats.maoRisk >= 80 || stats.energy <= 0,
             victoryFormula: (stats, steps) => {
@@ -138,7 +148,7 @@ const GameConfig = {
             id: 'ren',
             name: '壬局 - 资源短缺',
             description: '资源极度匮乏，每一个选择都关乎生死',
-            turns: 10,
+            turns: 9,
             startStats: {
                 shimingValue: 5,
                 calibrationSlots: 3,
@@ -150,6 +160,18 @@ const GameConfig = {
                 crystal: 2,
                 parts: 1
             },
+            mapType: 'wasteland',
+            mapNodes: [
+                { turn: 1, label: '枯竭站', icon: '🏜️' },
+                { turn: 2, label: '物资点', icon: '📦' },
+                { turn: 3, label: '黑市', icon: '🤝' },
+                { turn: 4, label: '维护站', icon: '⚙️' },
+                { turn: 5, label: '险地', icon: '⚠️' },
+                { turn: 6, label: '校准台', icon: '🔧' },
+                { turn: 7, label: '补给舰', icon: '🚢' },
+                { turn: 8, label: '断粮点', icon: '🪫' },
+                { turn: 9, label: '终末站', icon: '🏁' }
+            ],
             winCondition: (stats) => stats.shimingValue >= 50 && stats.energy > 0 && stats.maoRisk < 50,
             failCondition: (stats) => stats.maoRisk >= 70 || stats.energy <= 0 || (stats.crystal <= 0 && stats.parts <= 0 && stats.energy <= 0),
             victoryFormula: (stats, steps) => {
@@ -273,7 +295,7 @@ const GameConfig = {
             id: 'shen',
             name: '申局 - 隐藏挑战',
             description: '传说中的隐藏关卡，触发特定条件可解锁特殊结局',
-            turns: 12,
+            turns: 11,
             startStats: {
                 shimingValue: 0,
                 calibrationSlots: 4,
@@ -285,6 +307,20 @@ const GameConfig = {
                 crystal: 6,
                 parts: 4
             },
+            mapType: 'spiral',
+            mapNodes: [
+                { turn: 1, label: '入口', icon: '🌀' },
+                { turn: 2, label: '符文', icon: '🔮' },
+                { turn: 3, label: '共鸣', icon: '🎵' },
+                { turn: 4, label: '矩阵', icon: '🔷' },
+                { turn: 5, label: '因子', icon: '⚠️' },
+                { turn: 6, label: '商客', icon: '👤' },
+                { turn: 7, label: '深处', icon: '🕳️' },
+                { turn: 8, label: '终极', icon: '✨' },
+                { turn: 9, label: '赏赐', icon: '👑' },
+                { turn: 10, label: '命运', icon: '🎲' },
+                { turn: 11, label: '终局', icon: '🌟' }
+            ],
             winCondition: (stats) => stats.shimingValue >= 70 && stats.shenFailure < 50 && stats.maoRisk < 60,
             failCondition: (stats) => stats.maoRisk >= 75 || stats.shenFailure >= 80 || stats.energy <= 0,
             victoryFormula: (stats, steps, hiddenTriggered) => {

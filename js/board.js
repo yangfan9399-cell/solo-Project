@@ -1,5 +1,6 @@
 const Board = {
     elements: {},
+    mapContainer: null,
 
     init() {
         this.elements = {
@@ -19,6 +20,7 @@ const Board = {
             crystal: document.getElementById('resource-crystal'),
             parts: document.getElementById('resource-parts')
         };
+        this.mapContainer = document.getElementById('board-map');
     },
 
     render() {
@@ -38,6 +40,83 @@ const Board = {
         this.elements.energy.textContent = stats.energy;
         this.elements.crystal.textContent = stats.crystal;
         this.elements.parts.textContent = stats.parts;
+
+        this.renderMap();
+    },
+
+    renderMap() {
+        const config = GameState.getGameConfig();
+        if (!config || !this.mapContainer) return;
+
+        const mapType = config.mapType;
+        const nodes = config.mapNodes || [];
+        const currentTurn = GameState.history.length;
+
+        let html = `<div class="map-layout map-${mapType}">`;
+
+        if (mapType === 'tower') {
+            html += '<div class="map-tower-container">';
+            nodes.forEach(node => {
+                const completed = node.turn <= currentTurn;
+                const isCurrent = node.turn === currentTurn + 1 && !GameState.gameOver;
+                html += `
+                    <div class="map-node map-tower-node ${completed ? 'completed' : ''} ${isCurrent ? 'current' : ''}">
+                        <div class="map-node-icon">${node.icon}</div>
+                        <div class="map-node-label">${node.label}</div>
+                        <div class="map-node-turn">第${node.turn}层</div>
+                        ${completed ? '<div class="map-node-check">✓</div>' : ''}
+                        ${isCurrent ? '<div class="map-node-pulse">●</div>' : ''}
+                    </div>
+                `;
+            });
+            html += '</div>';
+        } else if (mapType === 'wasteland') {
+            html += '<div class="map-wasteland-container">';
+            nodes.forEach((node, index) => {
+                const completed = node.turn <= currentTurn;
+                const isCurrent = node.turn === currentTurn + 1 && !GameState.gameOver;
+                html += `
+                    <div class="map-node map-wasteland-node ${completed ? 'completed' : ''} ${isCurrent ? 'current' : ''}">
+                        <div class="map-node-icon">${node.icon}</div>
+                        <div class="map-node-label">${node.label}</div>
+                        <div class="map-node-turn">站点${node.turn}</div>
+                        ${completed ? '<div class="map-node-check">✓</div>' : ''}
+                        ${isCurrent ? '<div class="map-node-pulse">●</div>' : ''}
+                    </div>
+                `;
+                if (index < nodes.length - 1) {
+                    html += '<div class="map-path-connector"></div>';
+                }
+            });
+            html += '</div>';
+        } else if (mapType === 'spiral') {
+            html += '<div class="map-spiral-container">';
+            const centerX = 50;
+            const centerY = 50;
+            nodes.forEach((node, index) => {
+                const angle = (index / nodes.length) * Math.PI * 3 - Math.PI / 2;
+                const radius = 15 + (index / nodes.length) * 30;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                const completed = node.turn <= currentTurn;
+                const isCurrent = node.turn === currentTurn + 1 && !GameState.gameOver;
+                html += `
+                    <div class="map-node map-spiral-node ${completed ? 'completed' : ''} ${isCurrent ? 'current' : ''}"
+                         style="left: ${x}%; top: ${y}%;">
+                        <div class="map-node-icon">${node.icon}</div>
+                        <div class="map-node-label">${node.label}</div>
+                        <div class="map-node-turn">${node.turn}</div>
+                        ${completed ? '<div class="map-node-check">✓</div>' : ''}
+                        ${isCurrent ? '<div class="map-node-pulse">●</div>' : ''}
+                    </div>
+                `;
+            });
+            html += '<div class="map-spiral-center">🌀</div>';
+            html += '</div>';
+        }
+
+        html += '</div>';
+        this.mapContainer.innerHTML = html;
     },
 
     updateStat(key, value, max) {

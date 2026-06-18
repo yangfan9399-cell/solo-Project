@@ -107,6 +107,17 @@ const Events = {
         }, 300);
     },
 
+    renderEnd() {
+        this.container.innerHTML = `
+            <div class="event-card success" style="text-align: center; padding: 30px 16px;">
+                <div style="font-size: 32px; margin-bottom: 12px;">🏁</div>
+                <div class="event-title" style="font-size: 16px;">本局已结束</div>
+                <div class="event-desc">查看结算簿获取详细成绩</div>
+            </div>
+        `;
+        this.currentEvent = null;
+    },
+
     handleSpecialEffect(specialType, baseEffects) {
         const stats = GameState.stats;
         const effects = { ...baseEffects };
