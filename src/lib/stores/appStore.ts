@@ -11,9 +11,14 @@ import {
 	addDraft as storageAddDraft,
 	updateDraft as storageUpdateDraft,
 	addVersion as storageAddVersion,
+	updateVersion as storageUpdateVersion,
 	addReview as storageAddReview,
+	updateReview as storageUpdateReview,
+	addReviewComment as storageAddReviewComment,
+	addAnomaly as storageAddAnomaly,
 	getUnresolvedAnomalies,
-	resolveAnomaly as storageResolveAnomaly
+	resolveAnomaly as storageResolveAnomaly,
+	generateId
 } from '$lib/stores/storage';
 import { initializeSampleData } from '$lib/utils/sampleData';
 import type { SealDraft, DraftVersion, Review, Anomaly, FilterState } from '$lib/types';
@@ -68,6 +73,24 @@ function createVersionsStore() {
 				return [...versions, version];
 			});
 		},
+		updateVersion: (id: string, updates: Partial<DraftVersion>) => {
+			update((versions) => {
+				storageUpdateVersion(id, updates);
+				return versions.map((v) => (v.id === id ? { ...v, ...updates } : v));
+			});
+		},
+		setCurrentVersion: (draftId: string, versionId: string) => {
+			update((versions) => {
+				const updated = versions.map((v) => {
+					if (v.draftId === draftId) {
+						return { ...v, isCurrent: v.id === versionId };
+					}
+					return v;
+				});
+				saveVersions(updated);
+				return updated;
+			});
+		},
 		refresh: () => {
 			set(getVersions());
 		}
@@ -90,6 +113,27 @@ function createReviewsStore() {
 				return [...reviews, review];
 			});
 		},
+		updateReview: (id: string, updates: Partial<Review>) => {
+			update((reviews) => {
+				storageUpdateReview(id, updates);
+				return reviews.map((r) => (r.id === id ? { ...r, ...updates, updatedAt: Date.now() } : r));
+			});
+		},
+		addComment: (reviewId: string, comment: import('$lib/types').ReviewComment) => {
+			update((reviews) => {
+				storageAddReviewComment(reviewId, comment);
+				return reviews.map((r) => {
+					if (r.id === reviewId) {
+						return {
+							...r,
+							comments: [...r.comments, comment],
+							updatedAt: Date.now()
+						};
+					}
+					return r;
+				});
+			});
+		},
 		refresh: () => {
 			set(getReviews());
 		}
@@ -105,6 +149,12 @@ function createAnomaliesStore() {
 			if (typeof window !== 'undefined') {
 				set(getAnomalies());
 			}
+		},
+		addAnomaly: (anomaly: Anomaly) => {
+			update((anomalies) => {
+				storageAddAnomaly(anomaly);
+				return [...anomalies, anomaly];
+			});
 		},
 		resolve: (id: string) => {
 			update((anomalies) => {

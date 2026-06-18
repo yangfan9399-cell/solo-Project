@@ -1,20 +1,45 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { draftsStore, versionsStore, reviewsStore } from '$lib/stores/appStore';
-	import { getStatusLabel, getStatusColor, getPriorityLabel, getPriorityColor, formatDate, getShapeLabel, generateExportFilename, downloadFile } from '$lib/utils/helpers';
+	import { goto } from '$app/navigation';
+	import { draftsStore, versionsStore, reviewsStore, anomaliesStore } from '$lib/stores/appStore';
+	import { generateId } from '$lib/stores/storage';
+	import { 
+		getStatusLabel, getStatusColor, getPriorityLabel, getPriorityColor, 
+		formatDate, getShapeLabel, generateExportFilename, downloadFile 
+	} from '$lib/utils/helpers';
+	import { 
+		generateSealSvg, generateBorderAssessment, generateZhuBaiAnalysis,
+		generateDensityAssessment, generateKnifeTechniqueSuggestion, getScriptTypeName 
+	} from '$lib/utils/sealGenerator';
 	import VersionHistory from '$lib/components/VersionHistory.svelte';
 	import ZhuBaiAnalysisPanel from '$lib/components/ZhuBaiAnalysisPanel.svelte';
 	import BorderAssessmentPanel from '$lib/components/BorderAssessmentPanel.svelte';
 	import DensityPanel from '$lib/components/DensityPanel.svelte';
 	import KnifeTechniquePanel from '$lib/components/KnifeTechniquePanel.svelte';
 	import ReviewPanel from '$lib/components/ReviewPanel.svelte';
-	import { getScriptTypeName } from '$lib/utils/sealGenerator';
-	import type { DraftExport } from '$lib/types';
+	import type { DraftExport, SealDraft, DraftVersion, Review, ReviewComment, DraftStatus, ZhuBaiAnalysis, BorderAssessment, DensityAssessment, KnifeTechniqueSuggestion } from '$lib/types';
 	
 	let activeTab = 'zhubai';
 	let selectedVersionId = '';
 	let showExportMenu = false;
+	let isEditing = false;
+	let hasUnsavedChanges = false;
+	let showNewVersionModal = false;
+	let newVersionSummary = '';
+	let showReviewModal = false;
+	let showEditInfo = false;
+	
+	let editDraft: Partial<SealDraft> = {};
+	let editVersion: {
+		zhuBai: ZhuBaiAnalysis;
+		border: BorderAssessment;
+		density: DensityAssessment;
+		knifeTechnique: KnifeTechniqueSuggestion;
+	} | null = null;
+	
+	let originalDraft: SealDraft | null = null;
+	let originalVersion: DraftVersion | null = null;
 	
 	const tabs = [
 		{ id: 'zhubai', label: '朱白文分析', icon: '🔴' },
@@ -41,7 +66,220 @@
 	}
 	
 	function selectVersion(versionId: string) {
+		if (isEditing) {
+			if (!confirm('当前有未保存的更改，切换版本将丢失更改。是否继续？')) {
+				return;
+			}
+			cancelEdit();
+		}
 		selectedVersionId = versionId;
+	}
+	
+	function startEdit() {
+		if (!draft || !currentVersion) return;
+		
+		originalDraft = { ...draft };
+		originalVersion = { ...currentVersion };
+		
+		editDraft = {
+			title: draft.title,
+			description: draft.description,
+			tags: [...draft.tags],
+			priority: draft.priority
+		};
+		
+		editVersion = {
+			zhuBai: JSON.parse(JSON.stringify(currentVersion.zhuBai)),
+			border: JSON.parse(JSON.stringify(currentVersion.border)),
+			density: JSON.parse(JSON.stringify(currentVersion.density)),
+			knifeTechnique: JSON.parse(JSON.stringify(currentVersion.knifeTechnique))
+		};
+		
+		isEditing = true;
+		hasUnsavedChanges = false;
+	}
+	
+	function cancelEdit() {
+		editDraft = {};
+		editVersion = null;
+		originalDraft = null;
+		originalVersion = null;
+		isEditing = false;
+		hasUnsavedChanges = false;
+		showEditInfo = false;
+	}
+	
+	function saveEdit() {
+		if (!draft || !currentVersion || !editVersion) return;
+		
+		draftsStore.updateDraft(draft.id, {
+			title: editDraft.title,
+			description: editDraft.description,
+			tags: editDraft.tags,
+			priority: editDraft.priority
+		});
+		
+		versionsStore.updateVersion(currentVersion.id, {
+			zhuBai: editVersion.zhuBai,
+			border: editVersion.border,
+			density: editVersion.density,
+			knifeTechnique: editVersion.knifeTechnique
+		});
+		
+		anomaliesStore.addAnomaly({
+			id: generateId(),
+			draftId: draft.id,
+			versionId: currentVersion.id,
+			type: 'data_incomplete',
+			severity: 'low',
+			message: `印稿"${draft.title}"数据已更新`,
+			details: { updatedAt: Date.now() },
+			resolved: true,
+			createdAt: Date.now()
+		});
+		
+		cancelEdit();
+	}
+	
+	function updateZhuBai(data: ZhuBaiAnalysis) {
+		if (!editVersion) return;
+		editVersion.zhuBai = data;
+		hasUnsavedChanges = true;
+	}
+	
+	function updateBorder(data: BorderAssessment) {
+		if (!editVersion) return;
+		editVersion.border = data;
+		hasUnsavedChanges = true;
+	}
+	
+	function updateDensity(data: DensityAssessment) {
+		if (!editVersion) return;
+		editVersion.density = data;
+		hasUnsavedChanges = true;
+	}
+	
+	function updateKnife(data: KnifeTechniqueSuggestion) {
+		if (!editVersion) return;
+		editVersion.knifeTechnique = data;
+		hasUnsavedChanges = true;
+	}
+	
+	function handleAddReview(review: Review) {
+		reviewsStore.addReview(review);
+		
+		if (draft) {
+			draftsStore.updateDraft(draft.id, {
+				status: review.status,
+				reviewCount: draft.reviewCount + 1
+			});
+			
+			anomaliesStore.addAnomaly({
+				id: generateId(),
+				draftId: draft.id,
+				versionId: review.versionId,
+				type: review.status === 'rejected' ? 'score_outlier' : 'data_incomplete',
+				severity: review.status === 'rejected' ? 'high' : 'low',
+				message: `新评审已提交：${review.reviewer} - ${getStatusLabel(review.status)} (${review.overallScore}分)`,
+				details: { reviewId: review.id, score: review.overallScore },
+				resolved: review.status !== 'rejected',
+				createdAt: Date.now()
+			});
+		}
+	}
+	
+	function handleUpdateReview(id: string, updates: Partial<Review>) {
+		reviewsStore.updateReview(id, updates);
+		
+		if (updates.status && draft) {
+			draftsStore.updateDraft(draft.id, {
+				status: updates.status as DraftStatus
+			});
+		}
+	}
+	
+	function handleAddComment(reviewId: string, comment: ReviewComment) {
+		reviewsStore.addComment(reviewId, comment);
+	}
+	
+	function handleUpdateStatus(status: DraftStatus) {
+		if (draft) {
+			draftsStore.updateDraft(draft.id, { status });
+		}
+	}
+	
+	function openNewVersionModal() {
+		if (isEditing) {
+			if (!confirm('当前有未保存的更改，创建新版本将丢失更改。是否继续？')) {
+				return;
+			}
+			cancelEdit();
+		}
+		newVersionSummary = '';
+		showNewVersionModal = true;
+	}
+	
+	function createNewVersion() {
+		if (!draft || !currentVersion) return;
+		
+		const nextVersionNumber = draftVersions.length + 1;
+		const chars = currentVersion.characters.map(c => c.character);
+		
+		const newImageData = generateSealSvg({
+			shape: draft.shape,
+			scriptType: currentVersion.zhuBai.type,
+			borderType: currentVersion.border.type,
+			characters: chars,
+			size: 200
+		});
+		
+		const newVersion: DraftVersion = {
+			id: generateId(),
+			draftId: draft.id,
+			versionNumber: nextVersionNumber,
+			label: `V${nextVersionNumber}`,
+			description: newVersionSummary || `基于${currentVersion.label}创建的新版本`,
+			imageData: newImageData,
+			characters: JSON.parse(JSON.stringify(currentVersion.characters)),
+			border: generateBorderAssessment(currentVersion.border.type),
+			zhuBai: generateZhuBaiAnalysis(currentVersion.zhuBai.type, chars.length),
+			density: generateDensityAssessment(chars.length),
+			knifeTechnique: generateKnifeTechniqueSuggestion(chars.length),
+			createdAt: Date.now(),
+			createdBy: draft.creator,
+			parentVersionId: currentVersion.id,
+			changeSummary: newVersionSummary ? [newVersionSummary] : [],
+			isCurrent: true
+		};
+		
+		versionsStore.setCurrentVersion(draft.id, newVersion.id);
+		versionsStore.addVersion(newVersion);
+		
+		draftsStore.updateDraft(draft.id, {
+			currentVersionId: newVersion.id,
+			versionCount: draft.versionCount + 1,
+			status: 'draft'
+		});
+		
+		anomaliesStore.addAnomaly({
+			id: generateId(),
+			draftId: draft.id,
+			versionId: newVersion.id,
+			type: 'data_incomplete',
+			severity: 'medium',
+			message: `新版本${newVersion.label}已创建`,
+			details: { parentVersionId: currentVersion.id, changeSummary: newVersionSummary },
+			resolved: false,
+			createdAt: Date.now()
+		});
+		
+		selectedVersionId = newVersion.id;
+		showNewVersionModal = false;
+		newVersionSummary = '';
+	}
+	
+	function startReview() {
+		activeTab = 'review';
 	}
 	
 	function handleExport(format: 'json' | 'txt') {
@@ -140,8 +378,22 @@
 	}
 	
 	function goBack() {
+		if (isEditing && hasUnsavedChanges) {
+			if (!confirm('当前有未保存的更改，是否放弃更改并返回？')) {
+				return;
+			}
+		}
 		window.history.back();
 	}
+	
+	onMount(() => {
+		document.addEventListener('click', (e) => {
+			const target = e.target as HTMLElement;
+			if (!target.closest('.export-wrapper')) {
+				showExportMenu = false;
+			}
+		});
+	});
 </script>
 
 <svelte:head>
@@ -157,7 +409,17 @@
 			</button>
 			
 			<div class="draft-title-section">
-				<h1 class="draft-title">{draft.title}</h1>
+				{#if isEditing}
+					<input 
+						type="text" 
+						class="title-input"
+						bind:value={editDraft.title}
+						on:input={() => hasUnsavedChanges = true}
+						placeholder="印稿标题"
+					/>
+				{:else}
+					<h1 class="draft-title">{draft.title}</h1>
+				{/if}
 				<div class="draft-tags">
 					<span class="status-badge" style="background-color: {getStatusColor(draft.status)}">
 						{getStatusLabel(draft.status)}
@@ -165,43 +427,72 @@
 					<span class="priority-badge" style="background-color: {getPriorityColor(draft.priority)}">
 						{getPriorityLabel(draft.priority)}优先级
 					</span>
-					{#each draft.tags as tag}
+					{#each (isEditing ? (editDraft.tags || []) : draft.tags) as tag}
 						<span class="tag">{tag}</span>
 					{/each}
 				</div>
 			</div>
 			
 			<div class="header-actions">
-				<div class="export-wrapper">
-					<button class="btn btn-outline" on:click={() => showExportMenu = !showExportMenu}>
-						<span>📤</span>
-						导出
+				{#if isEditing}
+					<button class="btn btn-outline" on:click={cancelEdit}>
+						<span>✕</span>
+						取消
 					</button>
-					{#if showExportMenu}
-						<div class="export-menu" on:click|stopPropagation>
-							<button class="export-item" on:click={() => handleExport('json')}>
-								<span>📄</span>
-								<div>
-									<div class="export-name">JSON 格式</div>
-									<div class="export-desc">完整数据导出</div>
-								</div>
-							</button>
-							<button class="export-item" on:click={() => handleExport('txt')}>
-								<span>📝</span>
-								<div>
-									<div class="export-name">文本摘要</div>
-									<div class="export-desc">评审摘要导出</div>
-								</div>
-							</button>
-						</div>
-					{/if}
-				</div>
-				<button class="btn btn-primary">
-					<span>✍️</span>
-					发起评审
-				</button>
+					<button 
+						class="btn btn-primary" 
+						on:click={saveEdit}
+						disabled={!hasUnsavedChanges}
+					>
+						<span>💾</span>
+						保存
+					</button>
+				{:else}
+					<div class="export-wrapper">
+						<button class="btn btn-outline" on:click={() => showExportMenu = !showExportMenu}>
+							<span>📤</span>
+							导出
+						</button>
+						{#if showExportMenu}
+							<div class="export-menu" on:click|stopPropagation>
+								<button class="export-item" on:click={() => handleExport('json')}>
+									<span>📄</span>
+									<div>
+										<div class="export-name">JSON 格式</div>
+										<div class="export-desc">完整数据导出</div>
+									</div>
+								</button>
+								<button class="export-item" on:click={() => handleExport('txt')}>
+									<span>📝</span>
+									<div>
+										<div class="export-name">文本摘要</div>
+										<div class="export-desc">评审摘要导出</div>
+									</div>
+								</button>
+							</div>
+						{/if}
+					</div>
+					<button class="btn btn-outline" on:click={startEdit}>
+						<span>✏️</span>
+						编辑
+					</button>
+					<button class="btn btn-outline" on:click={openNewVersionModal}>
+						<span>📋</span>
+						新建版本
+					</button>
+					<button class="btn btn-primary" on:click={startReview}>
+						<span>✍️</span>
+						发起评审
+					</button>
+				{/if}
 			</div>
 		</div>
+		
+		{#if isEditing && hasUnsavedChanges}
+			<div class="unsaved-banner">
+				<span>⚠️ 有未保存的更改</span>
+			</div>
+		{/if}
 		
 		<div class="detail-content">
 			<div class="main-area">
@@ -236,7 +527,17 @@
 					
 					<div class="description-section">
 						<h3 class="section-title">设计说明</h3>
-						<p class="description-text">{draft.description}</p>
+						{#if isEditing}
+							<textarea 
+								class="description-edit"
+								bind:value={editDraft.description}
+								on:input={() => hasUnsavedChanges = true}
+								placeholder="请输入设计说明..."
+								rows="4"
+							></textarea>
+						{:else}
+							<p class="description-text">{draft.description}</p>
+						{/if}
 						{#if currentVersion.changeSummary.length > 0}
 							<div class="change-log">
 								<h4 class="change-title">本次更新</h4>
@@ -253,7 +554,10 @@
 				<div class="analysis-tabs">
 					<div class="tab-nav">
 						{#each tabs as tab}
-							<button class="tab-btn {activeTab === tab.id ? 'active' : ''}" on:click={() => activeTab = tab.id}>
+							<button 
+								class="tab-btn {activeTab === tab.id ? 'active' : ''}" 
+								on:click={() => activeTab = tab.id}
+							>
 								<span class="tab-icon">{tab.icon}</span>
 								<span class="tab-label">{tab.label}</span>
 							</button>
@@ -262,15 +566,40 @@
 					
 					<div class="tab-content">
 						{#if activeTab === 'zhubai'}
-							<ZhuBaiAnalysisPanel analysis={currentVersion.zhuBai} />
+							<ZhuBaiAnalysisPanel 
+								analysis={isEditing && editVersion ? editVersion.zhuBai : currentVersion.zhuBai}
+								editable={isEditing}
+								onChange={updateZhuBai}
+							/>
 						{:else if activeTab === 'border'}
-							<BorderAssessmentPanel border={currentVersion.border} />
+							<BorderAssessmentPanel 
+								border={isEditing && editVersion ? editVersion.border : currentVersion.border}
+								editable={isEditing}
+								onChange={updateBorder}
+							/>
 						{:else if activeTab === 'density'}
-							<DensityPanel density={currentVersion.density} />
+							<DensityPanel 
+								density={isEditing && editVersion ? editVersion.density : currentVersion.density}
+								editable={isEditing}
+								onChange={updateDensity}
+							/>
 						{:else if activeTab === 'knife'}
-							<KnifeTechniquePanel technique={currentVersion.knifeTechnique} />
+							<KnifeTechniquePanel 
+								technique={isEditing && editVersion ? editVersion.knifeTechnique : currentVersion.knifeTechnique}
+								editable={isEditing}
+								onChange={updateKnife}
+							/>
 						{:else if activeTab === 'review'}
-							<ReviewPanel reviews={draftReviews} />
+							<ReviewPanel 
+								reviews={draftReviews}
+								draftId={draft.id}
+								versionId={currentVersion.id}
+								editable={true}
+								onAddReview={handleAddReview}
+								onUpdateReview={handleUpdateReview}
+								onAddComment={handleAddComment}
+								onUpdateStatus={handleUpdateStatus}
+							/>
 						{/if}
 					</div>
 				</div>
@@ -319,6 +648,35 @@
 			</div>
 		</div>
 	</div>
+	
+	{#if showNewVersionModal}
+		<div class="modal-overlay" on:click={() => showNewVersionModal = false}>
+			<div class="modal-content" on:click|stopPropagation>
+				<h3 class="modal-title">新建版本</h3>
+				<p class="modal-desc">
+					基于当前版本 <strong>{currentVersion.label}</strong> 创建新版本
+				</p>
+				<div class="form-group">
+					<label class="form-label">变更摘要</label>
+					<textarea 
+						class="form-textarea"
+						bind:value={newVersionSummary}
+						placeholder="请输入本次版本的变更内容..."
+						rows="4"
+					></textarea>
+				</div>
+				<div class="modal-actions">
+					<button class="btn btn-outline" on:click={() => showNewVersionModal = false}>
+						取消
+					</button>
+					<button class="btn btn-primary" on:click={createNewVersion}>
+						<span>📋</span>
+						创建新版本
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
 {:else}
 	<div class="loading">
 		<p>加载中...</p>
@@ -354,6 +712,7 @@
 		color: var(--color-text-secondary);
 		font-size: 14px;
 		transition: all var(--transition-fast);
+		cursor: pointer;
 	}
 	
 	.back-btn:hover {
@@ -371,6 +730,19 @@
 		font-weight: 600;
 		color: var(--color-text);
 		margin: 0 0 8px 0;
+	}
+	
+	.title-input {
+		font-size: 22px;
+		font-weight: 600;
+		color: var(--color-text);
+		padding: 4px 8px;
+		border: 2px solid var(--color-primary);
+		border-radius: var(--radius-sm);
+		background-color: var(--color-bg);
+		width: 100%;
+		box-sizing: border-box;
+		margin-bottom: 8px;
 	}
 	
 	.draft-tags {
@@ -428,6 +800,9 @@
 		padding: 12px 16px;
 		text-align: left;
 		transition: background-color var(--transition-fast);
+		border: none;
+		background: none;
+		cursor: pointer;
 	}
 	
 	.export-item:hover {
@@ -448,6 +823,16 @@
 		font-size: 12px;
 		color: var(--color-text-muted);
 		margin-top: 2px;
+	}
+	
+	.unsaved-banner {
+		background-color: var(--color-warning-bg);
+		color: var(--color-warning-text);
+		padding: 8px 24px;
+		font-size: 13px;
+		font-weight: 500;
+		text-align: center;
+		border-bottom: 1px solid var(--color-warning-border);
 	}
 	
 	.detail-content {
@@ -553,6 +938,20 @@
 		margin: 0;
 	}
 	
+	.description-edit {
+		width: 100%;
+		padding: 10px 12px;
+		border: 2px solid var(--color-primary);
+		border-radius: var(--radius-sm);
+		font-size: 14px;
+		color: var(--color-text);
+		background-color: var(--color-bg);
+		font-family: inherit;
+		line-height: 1.7;
+		resize: vertical;
+		box-sizing: border-box;
+	}
+	
 	.change-log {
 		margin-top: 16px;
 		padding-top: 14px;
@@ -602,6 +1001,9 @@
 		white-space: nowrap;
 		border-bottom: 2px solid transparent;
 		transition: all var(--transition-fast);
+		border: none;
+		background: none;
+		cursor: pointer;
 	}
 	
 	.tab-btn:hover {
@@ -671,5 +1073,77 @@
 		justify-content: center;
 		min-height: 400px;
 		color: var(--color-text-muted);
+	}
+	
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+	}
+	
+	.modal-content {
+		background-color: var(--color-bg-card);
+		border-radius: var(--radius-md);
+		padding: 24px;
+		width: 100%;
+		max-width: 480px;
+		box-shadow: var(--shadow-xl);
+	}
+	
+	.modal-title {
+		font-size: 18px;
+		font-weight: 600;
+		color: var(--color-text);
+		margin: 0 0 8px 0;
+	}
+	
+	.modal-desc {
+		font-size: 14px;
+		color: var(--color-text-secondary);
+		margin: 0 0 20px 0;
+	}
+	
+	.form-group {
+		margin-bottom: 20px;
+	}
+	
+	.form-label {
+		display: block;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--color-text);
+		margin-bottom: 6px;
+	}
+	
+	.form-textarea {
+		width: 100%;
+		padding: 10px 12px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		font-size: 14px;
+		color: var(--color-text);
+		background-color: var(--color-bg);
+		font-family: inherit;
+		line-height: 1.6;
+		resize: vertical;
+		box-sizing: border-box;
+	}
+	
+	.form-textarea:focus {
+		outline: none;
+		border-color: var(--color-primary);
+	}
+	
+	.modal-actions {
+		display: flex;
+		gap: 10px;
+		justify-content: flex-end;
 	}
 </style>

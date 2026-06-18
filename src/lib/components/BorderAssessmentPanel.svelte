@@ -1,8 +1,66 @@
 <script lang="ts">
-	import type { BorderAssessment } from '$lib/types';
+	import type { BorderAssessment, BorderType } from '$lib/types';
 	import { getBorderName } from '$lib/utils/sealGenerator';
 	
 	export let border: BorderAssessment;
+	export let editable = false;
+	export let onChange: ((border: BorderAssessment) => void) | null = null;
+	
+	const borderTypeOptions: { value: BorderType; label: string }[] = [
+		{ value: 'none', label: '无边' },
+		{ value: 'single', label: '单边' },
+		{ value: 'double', label: '双边' },
+		{ value: 'thick', label: '粗边' },
+		{ value: 'broken', label: '残边' }
+	];
+	
+	function updateField<K extends keyof BorderAssessment>(field: K, value: BorderAssessment[K]) {
+		if (!onChange) return;
+		const updated = { ...border, [field]: value };
+		onChange(updated);
+	}
+	
+	function handleTypeChange(e: Event) {
+		const target = e.target as HTMLSelectElement;
+		updateField('type', target.value as BorderType);
+	}
+	
+	function handleThicknessChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		updateField('thickness', parseFloat(target.value) || 0);
+	}
+	
+	function handleBalanceScoreChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		updateField('balanceScore', parseInt(target.value, 10) || 0);
+	}
+	
+	function handleCornerTreatmentChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		updateField('cornerTreatment', target.value);
+	}
+	
+	function handleNotesChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		updateField('notes', target.value);
+	}
+	
+	function handleBreakagesChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		const count = parseInt(target.value) || 0;
+		const newBreakages = Array(Math.max(0, count)).fill(0).map(() => Math.floor(Math.random() * 3) + 1);
+		updateField('breakages', newBreakages);
+	}
+	
+	function handleThicknessSliderChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		updateField('thickness', parseFloat(target.value) || 0);
+	}
+	
+	function handleNotesTextareaChange(e: Event) {
+		const target = e.target as HTMLTextAreaElement;
+		updateField('notes', target.value);
+	}
 </script>
 
 <div class="analysis-panel">
@@ -11,15 +69,50 @@
 	<div class="analysis-summary">
 		<div class="summary-item">
 			<span class="summary-label">类型</span>
-			<span class="summary-value">{getBorderName(border.type)}</span>
+			{#if editable}
+				<select
+					class="form-control"
+					value={border.type}
+					on:change={handleTypeChange}
+				>
+					{#each borderTypeOptions as opt}
+						<option value={opt.value}>{opt.label}</option>
+					{/each}
+				</select>
+			{:else}
+				<span class="summary-value">{getBorderName(border.type)}</span>
+			{/if}
 		</div>
 		<div class="summary-item">
 			<span class="summary-label">粗细</span>
-			<span class="summary-value">{border.thickness.toFixed(1)} mm</span>
+			{#if editable}
+				<input
+					type="number"
+					class="form-control"
+					step="0.1"
+					min="0.1"
+					max="10"
+					value={border.thickness}
+					on:input={handleThicknessChange}
+				/>
+			{:else}
+				<span class="summary-value">{border.thickness.toFixed(1)} mm</span>
+			{/if}
 		</div>
 		<div class="summary-item">
 			<span class="summary-label">平衡评分</span>
-			<span class="summary-value score">{border.balanceScore}分</span>
+			{#if editable}
+				<input
+					type="number"
+					class="form-control"
+					min="0"
+					max="100"
+					value={border.balanceScore}
+					on:input={handleBalanceScoreChange}
+				/>
+			{:else}
+				<span class="summary-value score">{border.balanceScore}分</span>
+			{/if}
 		</div>
 	</div>
 	
@@ -36,11 +129,30 @@
 	<div class="border-details">
 		<div class="detail-row">
 			<span class="detail-label">角部处理</span>
-			<span class="detail-value">{border.cornerTreatment}</span>
+			{#if editable}
+				<input
+					type="text"
+					class="form-control"
+					value={border.cornerTreatment}
+					on:input={handleCornerTreatmentChange}
+				/>
+			{:else}
+				<span class="detail-value">{border.cornerTreatment}</span>
+			{/if}
 		</div>
 		<div class="detail-row">
 			<span class="detail-label">残破数量</span>
-			<span class="detail-value">{border.breakages.length > 0 ? border.breakages.length + ' 处' : '无'}</span>
+			{#if editable}
+				<input
+					type="number"
+					class="form-control"
+					min="0"
+					value={border.breakages.length}
+					on:input={handleBreakagesChange}
+				/>
+			{:else}
+				<span class="detail-value">{border.breakages.length > 0 ? border.breakages.length + ' 处' : '无'}</span>
+			{/if}
 		</div>
 	</div>
 	
@@ -49,6 +161,18 @@
 		<div class="bar-track">
 			<div class="bar-fill" style="width: {Math.min(border.thickness / 5 * 100, 100)}%"></div>
 		</div>
+		{#if editable}
+			<div class="slider-control">
+				<input
+					type="range"
+					min="0.1"
+					max="10"
+					step="0.1"
+					value={border.thickness}
+					on:input={handleThicknessSliderChange}
+				/>
+			</div>
+		{/if}
 		<div class="bar-labels">
 			<span>细</span>
 			<span>粗</span>
@@ -57,7 +181,16 @@
 	
 	<div class="notes-section">
 		<h5 class="sub-title">评估说明</h5>
-		<p class="notes-text">{border.notes}</p>
+		{#if editable}
+			<textarea
+				class="form-control"
+				rows="4"
+				value={border.notes}
+				on:input={handleNotesTextareaChange}
+			/>
+		{:else}
+			<p class="notes-text">{border.notes}</p>
+		{/if}
 	</div>
 </div>
 
@@ -168,6 +301,8 @@
 		justify-content: space-between;
 		padding: 10px 0;
 		border-bottom: 1px solid var(--color-border-light);
+		align-items: center;
+		gap: 12px;
 	}
 	
 	.detail-row:last-child {
@@ -177,12 +312,17 @@
 	.detail-label {
 		font-size: 13px;
 		color: var(--color-text-muted);
+		white-space: nowrap;
 	}
 	
 	.detail-value {
 		font-size: 13px;
 		font-weight: 500;
 		color: var(--color-text);
+	}
+	
+	.detail-row .form-control {
+		max-width: 200px;
 	}
 	
 	.thickness-bar {
@@ -205,8 +345,16 @@
 	
 	.bar-fill {
 		height: 100%;
-		background-color: var(--color-primary);
+		background-color: var(--color-secondary);
 		border-radius: var(--radius-full);
+	}
+	
+	.slider-control {
+		margin: 8px 0;
+	}
+	
+	.slider-control input[type='range'] {
+		width: 100%;
 	}
 	
 	.bar-labels {
@@ -236,5 +384,11 @@
 		color: var(--color-text-secondary);
 		line-height: 1.6;
 		margin: 0;
+	}
+	
+	textarea.form-control {
+		width: 100%;
+		resize: vertical;
+		min-height: 80px;
 	}
 </style>

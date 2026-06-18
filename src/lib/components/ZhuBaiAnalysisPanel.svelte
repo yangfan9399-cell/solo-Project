@@ -1,8 +1,80 @@
 <script lang="ts">
-	import type { ZhuBaiAnalysis } from '$lib/types';
+	import type { ZhuBaiAnalysis, SealScriptType } from '$lib/types';
 	import { getScriptTypeName } from '$lib/utils/sealGenerator';
 	
 	export let analysis: ZhuBaiAnalysis;
+	export let editable = false;
+	export let onChange: ((analysis: ZhuBaiAnalysis) => void) | null = null;
+	
+	const scriptTypeOptions: { value: SealScriptType; label: string }[] = [
+		{ value: 'zhuwen', label: '朱文' },
+		{ value: 'baiwen', label: '白文' },
+		{ value: 'mixed', label: '朱白相间' }
+	];
+	
+	function updateField<K extends keyof ZhuBaiAnalysis>(field: K, value: ZhuBaiAnalysis[K]) {
+		if (!onChange) return;
+		const updated = { ...analysis, [field]: value };
+		onChange(updated);
+	}
+	
+	function updateStrokeDistribution(position: keyof ZhuBaiAnalysis['strokeDistribution'], value: number) {
+		if (!onChange) return;
+		const updated = {
+			...analysis,
+			strokeDistribution: {
+				...analysis.strokeDistribution,
+				[position]: value
+			}
+		};
+		onChange(updated);
+	}
+	
+	function handleZhuRatioChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		const zhuRatio = parseFloat(target.value) / 100;
+		const baiRatio = 1 - zhuRatio;
+		if (onChange) {
+			onChange({
+				...analysis,
+				zhuRatio,
+				baiRatio
+			});
+		}
+	}
+	
+	function handleTypeChange(e: Event) {
+		const target = e.target as HTMLSelectElement;
+		updateField('type', target.value as SealScriptType);
+	}
+	
+	function handleContrastScoreChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		updateField('contrastScore', parseInt(target.value, 10) || 0);
+	}
+	
+	function handleBalanceScoreChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		updateField('balanceScore', parseInt(target.value, 10) || 0);
+	}
+	
+	function handleStrokeDistributionChange(e: Event, position: keyof ZhuBaiAnalysis['strokeDistribution']) {
+		const target = e.target as HTMLInputElement;
+		updateStrokeDistribution(position, parseInt(target.value, 10) || 0);
+	}
+	
+	function handleNotesChange(e: Event) {
+		const target = e.target as HTMLTextAreaElement;
+		updateField('notes', target.value);
+	}
+	
+	const strokeDistributionItems = [
+		{ key: 'top' as const, label: '上' },
+		{ key: 'left' as const, label: '左' },
+		{ key: 'center' as const, label: '中' },
+		{ key: 'right' as const, label: '右' },
+		{ key: 'bottom' as const, label: '下' }
+	];
 </script>
 
 <div class="analysis-panel">
@@ -11,15 +83,49 @@
 	<div class="analysis-summary">
 		<div class="summary-item">
 			<span class="summary-label">类型</span>
-			<span class="summary-value">{getScriptTypeName(analysis.type)}</span>
+			{#if editable}
+				<select
+					class="form-control"
+					value={analysis.type}
+					on:change={handleTypeChange}
+				>
+					{#each scriptTypeOptions as opt}
+						<option value={opt.value}>{opt.label}</option>
+					{/each}
+				</select>
+			{:else}
+				<span class="summary-value">{getScriptTypeName(analysis.type)}</span>
+			{/if}
 		</div>
 		<div class="summary-item">
 			<span class="summary-label">对比评分</span>
-			<span class="summary-value score">{analysis.contrastScore}分</span>
+			{#if editable}
+				<input
+					type="number"
+					class="form-control"
+					min="0"
+					max="100"
+					value={analysis.contrastScore}
+					on:input={handleContrastScoreChange}
+				/>
+			{:else}
+				<span class="summary-value score">{analysis.contrastScore}分</span>
+			{/if}
 		</div>
 		<div class="summary-item">
 			<span class="summary-label">平衡评分</span>
-			<span class="summary-value score">{analysis.balanceScore}分</span>
+			{#if editable}
+				<input
+					type="number"
+					class="form-control"
+					min="0"
+					max="100"
+					value={analysis.balanceScore}
+					on:input={handleBalanceScoreChange}
+				/>
+			{:else}
+				<span class="summary-value score">{analysis.balanceScore}分</span>
+			{/if}
 		</div>
 	</div>
 	
@@ -33,53 +139,55 @@
 				<span>白文 {Math.round(analysis.baiRatio * 100)}%</span>
 			</div>
 		</div>
+		{#if editable}
+			<div class="slider-control">
+				<label>调整朱文比例</label>
+				<input
+					type="range"
+					min="0"
+					max="100"
+					value={Math.round(analysis.zhuRatio * 100)}
+					on:input={handleZhuRatioChange}
+				/>
+			</div>
+		{/if}
 	</div>
 	
 	<div class="distribution-section">
 		<h5 class="sub-title">笔画分布</h5>
-		<div class="distribution-grid">
-			<div class="dist-box top-left">
-				<span class="dist-label">左上</span>
-				<span class="dist-value">{analysis.strokeDistribution.left}%</span>
-			</div>
-			<div class="dist-box top-center">
-				<span class="dist-label">上</span>
-				<span class="dist-value">{analysis.strokeDistribution.top}%</span>
-			</div>
-			<div class="dist-box top-right">
-				<span class="dist-label">右上</span>
-				<span class="dist-value">{analysis.strokeDistribution.right}%</span>
-			</div>
-			<div class="dist-box middle-left">
-				<span class="dist-label">左</span>
-				<span class="dist-value">{analysis.strokeDistribution.left}%</span>
-			</div>
-			<div class="dist-box center">
-				<span class="dist-label">中</span>
-				<span class="dist-value">{analysis.strokeDistribution.center}%</span>
-			</div>
-			<div class="dist-box middle-right">
-				<span class="dist-label">右</span>
-				<span class="dist-value">{analysis.strokeDistribution.right}%</span>
-			</div>
-			<div class="dist-box bottom-left">
-				<span class="dist-label">左下</span>
-				<span class="dist-value">{analysis.strokeDistribution.left}%</span>
-			</div>
-			<div class="dist-box bottom-center">
-				<span class="dist-label">下</span>
-				<span class="dist-value">{analysis.strokeDistribution.bottom}%</span>
-			</div>
-			<div class="dist-box bottom-right">
-				<span class="dist-label">右下</span>
-				<span class="dist-value">{analysis.strokeDistribution.right}%</span>
-			</div>
+		<div class="distribution-grid simple">
+			{#each strokeDistributionItems as item}
+				<div class="dist-box">
+					<span class="dist-label">{item.label}</span>
+					{#if editable}
+						<input
+							type="number"
+							class="dist-input"
+							min="0"
+							max="100"
+							value={analysis.strokeDistribution[item.key]}
+							on:input={(e) => handleStrokeDistributionChange(e, item.key)}
+						/>
+					{:else}
+						<span class="dist-value">{analysis.strokeDistribution[item.key]}%</span>
+					{/if}
+				</div>
+			{/each}
 		</div>
 	</div>
 	
 	<div class="notes-section">
 		<h5 class="sub-title">分析说明</h5>
-		<p class="notes-text">{analysis.notes}</p>
+		{#if editable}
+			<textarea
+				class="form-control"
+				rows="4"
+				value={analysis.notes}
+				on:input={handleNotesChange}
+			/>
+		{:else}
+			<p class="notes-text">{analysis.notes}</p>
+		{/if}
 	</div>
 </div>
 
@@ -165,6 +273,23 @@
 		color: var(--color-text-secondary);
 	}
 	
+	.slider-control {
+		margin-top: 12px;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+	
+	.slider-control label {
+		font-size: 12px;
+		color: var(--color-text-muted);
+		white-space: nowrap;
+	}
+	
+	.slider-control input[type='range'] {
+		flex: 1;
+	}
+	
 	.distribution-section {
 		margin-bottom: 20px;
 	}
@@ -173,6 +298,10 @@
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: 6px;
+	}
+	
+	.distribution-grid.simple {
+		grid-template-columns: repeat(5, 1fr);
 	}
 	
 	.dist-box {
@@ -198,6 +327,17 @@
 		color: var(--color-primary);
 	}
 	
+	.dist-input {
+		width: 60px;
+		text-align: center;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--color-primary);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		padding: 4px;
+	}
+	
 	.notes-section {
 		padding: 14px;
 		background-color: var(--color-bg);
@@ -210,5 +350,11 @@
 		color: var(--color-text-secondary);
 		line-height: 1.6;
 		margin: 0;
+	}
+	
+	textarea.form-control {
+		width: 100%;
+		resize: vertical;
+		min-height: 80px;
 	}
 </style>

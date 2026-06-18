@@ -137,6 +137,25 @@ export function addReview(review: import('$lib/types').Review): void {
 	saveReviews(reviews);
 }
 
+export function updateReview(id: string, updates: Partial<import('$lib/types').Review>): void {
+	const reviews = getReviews();
+	const index = reviews.findIndex((r) => r.id === id);
+	if (index !== -1) {
+		reviews[index] = { ...reviews[index], ...updates, updatedAt: Date.now() };
+		saveReviews(reviews);
+	}
+}
+
+export function addReviewComment(reviewId: string, comment: import('$lib/types').ReviewComment): void {
+	const reviews = getReviews();
+	const index = reviews.findIndex((r) => r.id === reviewId);
+	if (index !== -1) {
+		reviews[index].comments.push(comment);
+		reviews[index].updatedAt = Date.now();
+		saveReviews(reviews);
+	}
+}
+
 export function getReviewsByDraftId(draftId: string) {
 	return getReviews().filter((r) => r.draftId === draftId).sort((a, b) => b.createdAt - a.createdAt);
 }
