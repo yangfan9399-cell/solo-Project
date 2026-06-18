@@ -25455,14 +25455,42 @@
   var SettleBook = () => {
     const { settleResult, showSettle, setShowSettle, triggerSettle, resetPhase, startPhase, phase, state, isLoading, phaseMetaList } = useGameStore();
     if (!settleResult) {
+      const currentPhaseMeta = phaseMetaList.find((p) => p.phase === phase);
       return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-box", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "box-title", children: "\u{1F9EE} \u7ED3\u7B97\u7C3F" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "box-title-row", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "box-title", children: "\u{1F9EE} \u7ED3\u7B97\u7C3F" }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "box-tag", children: phase === "wu" ? "\u5B66" : phase === "ding" ? "\u7F3A" : "\u9690" })
+        ] }),
+        currentPhaseMeta?.formulaMeta && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "formula-preview", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "formula-preview-title", children: [
+            "\u{1F4DC} \u672C\u5C40\u80DC\u8D1F\u516C\u5F0F\uFF1A",
+            currentPhaseMeta.formulaMeta.name
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "formula-preview-expr", children: currentPhaseMeta.formulaMeta.expression }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "formula-preview-desc", children: currentPhaseMeta.formulaMeta.description }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "formula-preview-threshold", children: [
+            "\u8FBE\u6807\u7EBF\uFF1A",
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("b", { children: currentPhaseMeta.formulaMeta.threshold }),
+            " \u5206"
+          ] }),
+          currentPhaseMeta.formulaMeta.hiddenCondition && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "formula-preview-hidden", children: [
+            "\u2728 \u9690\u85CF\u6761\u4EF6\u300C",
+            currentPhaseMeta.formulaMeta.hiddenCondition.name,
+            "\u300D\uFF1A",
+            currentPhaseMeta.formulaMeta.hiddenCondition.description,
+            "\uFF08+",
+            currentPhaseMeta.formulaMeta.hiddenCondition.bonus,
+            " \u5206\uFF09"
+          ] })
+        ] }),
         state && !state.gameOver ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-pre", children: [
           /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "pre-tip", children: "\u672C\u5C40\u5C1A\u672A\u7ED3\u675F\uFF0C\u53EF\u63D0\u524D\u6A21\u62DF\u7ED3\u7B97\u67E5\u770B\u5F53\u524D\u5C40\u52BF\u3002" }),
           /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { className: "sim-btn", onClick: triggerSettle, disabled: isLoading, children: "\u{1F50D} \u6A21\u62DF\u5F53\u524D\u7ED3\u7B97" })
         ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "box-empty", children: "\u5BF9\u5C40\u7ED3\u675F\u540E\u53EF\u5728\u6B64\u67E5\u770B\u540E\u7AEF\u91CD\u7B97\u7684\u6700\u7EC8\u7ED3\u7B97\u3002" })
       ] });
     }
+    const { formula, breakdown, hiddenCheck, hiddenConditionTriggered } = settleResult;
+    const currentMeta = phaseMetaList.find((p) => p.phase === settleResult.phase);
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-box", children: [
       /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "box-title-row", children: [
         /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "box-title", children: [
@@ -25475,28 +25503,68 @@
         /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "settle-verdict", children: settleResult.victory ? "\u{1F3C6} \u5C40\u6BB5\u8FBE\u6210" : "\u{1F494} \u5C40\u6BB5\u672A\u8FBE\u6210" }),
         /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-score", children: [
           "\u6700\u7EC8\u5F97\u5206 ",
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "score-val", children: settleResult.finalScore })
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "score-val", children: settleResult.finalScore }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "score-sep", children: "/" }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "score-thr", children: [
+            "\u8FBE\u6807\u7EBF ",
+            currentMeta?.victoryThreshold || formula.threshold
+          ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-threshold", children: [
-          "\u8FBE\u6807\u7EBF\uFF1A",
-          phaseMetaList.find((p) => p.phase === settleResult.phase)?.victoryThreshold || "\u2014"
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-formula-name", children: [
+          "\u4F7F\u7528\u516C\u5F0F\uFF1A",
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("b", { children: formula.name })
         ] }),
-        settleResult.hiddenConditionTriggered && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-hidden", children: [
-          "\u2728 \u9690\u85CF\u6761\u4EF6\u89E6\u53D1\uFF1A",
-          settleResult.hiddenConditionName
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "settle-formula-expr", children: formula.expression }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "settle-formula-desc", children: formula.description }),
+        hiddenConditionTriggered && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-hidden settle-hidden-triggered", children: [
+          "\u2728 \u9690\u85CF\u6761\u4EF6\u89E6\u53D1\uFF1A\u300C",
+          settleResult.hiddenConditionName,
+          "\u300D",
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "settle-hidden-bonus", children: [
+            "+",
+            formula.hiddenCondition?.bonus || 150,
+            " \u5206"
+          ] })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-details", children: [
-        settleResult.details.map((d, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-row", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "settle-label", children: d.label }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: `settle-val ${d.value >= 0 ? "pos" : "neg"}`, children: [
-            d.value >= 0 ? "+" : "",
-            d.value
-          ] })
-        ] }, i)),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-row total", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "settle-label", children: "\u5408\u8BA1" }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "settle-val", children: settleResult.finalScore })
+      hiddenCheck && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: `hidden-check-card ${hiddenCheck.triggered ? "triggered" : "not-triggered"}`, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "hidden-check-title", children: [
+          hiddenCheck.triggered ? "\u2705" : "\u{1F512}",
+          " \u9690\u85CF\u6761\u4EF6\u300C",
+          hiddenCheck.name,
+          "\u300D",
+          hiddenCheck.triggered ? "\u5DF2\u89E6\u53D1" : "\u672A\u89E6\u53D1"
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "hidden-check-desc", children: hiddenCheck.description }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "hidden-check-grid", children: hiddenCheck.checks.map((c, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: `hidden-check-item ${c.passed ? "passed" : "failed"}`, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "hidden-check-label", children: c.label }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "hidden-check-actual", children: c.actual }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "hidden-check-req", children: c.required }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "hidden-check-mark", children: c.passed ? "\u2713" : "\u2717" })
+        ] }, i)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "hidden-check-bonus-line", children: [
+          "\u5956\u52B1\u5206\uFF1A",
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("b", { className: hiddenCheck.triggered ? "pos" : "", children: hiddenCheck.triggered ? `+${hiddenCheck.bonus}` : "\u2014" })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "breakdown-section", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "breakdown-title", children: "\u{1F4CA} \u5206\u6B65\u8BA1\u7B97\u8FC7\u7A0B" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "breakdown-table", children: [
+          breakdown.map((b, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "breakdown-row", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "breakdown-head", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "breakdown-label", children: b.label }),
+              b.weight && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "breakdown-weight", children: b.weight }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: `breakdown-value ${b.value >= 0 ? "pos" : "neg"}`, children: [
+                b.value >= 0 ? "+" : "",
+                b.value
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "breakdown-expr", children: b.expression })
+          ] }, i)),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "breakdown-row total", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "breakdown-head", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "breakdown-label", children: "\u5408\u8BA1\u6700\u7EC8\u5F97\u5206" }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "breakdown-value total-val", children: settleResult.finalScore })
+          ] }) })
         ] })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "settle-summary", children: [
@@ -25585,13 +25653,27 @@
         error
       ] }),
       phaseConfig && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "phase-desc", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("b", { children: phaseConfig.phaseName }),
-        "\uFF1A",
-        phaseConfig.description,
-        phaseConfig.hiddenCondition && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "hidden-hint", children: [
-          "\u3000",
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "phase-desc-main", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("b", { children: phaseConfig.phaseName }),
+          "\uFF1A",
+          phaseConfig.description
+        ] }),
+        phaseConfig.formulaMeta && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "phase-formula-mini", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "formula-ic", children: "\u{1F4DC}" }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "formula-mini-name", children: phaseConfig.formulaMeta.name }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "formula-mini-diff", children: [
+            "\u8FBE\u6807\u7EBF ",
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("b", { children: phaseConfig.formulaMeta.threshold }),
+            phase === "wu" && " \xB7 \u98CE\u9669\u9608\u503C 60 \xB7 \u4E01\u53F7 \xD73",
+            phase === "ding" && " \xB7 \u91CF\u6D4B\xD70.9\u8870\u51CF \xB7 \u98CE\u9669\u9608\u503C 50 \xB7 \u4E01\u53F7 \xD75",
+            phase === "ji" && " \xB7 \u5DF1\u53F7\xD76\u91CD\u7F5A \xB7 \u98CE\u9669\u9608\u503C 70"
+          ] })
+        ] }),
+        phaseConfig.hiddenCondition && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "hidden-hint", children: [
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "hint-ic", children: "\u2728" }),
           " \u9690\u85CF\u6761\u4EF6\uFF1A",
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("b", { children: phaseConfig.hiddenCondition.name }),
+          " \u2014",
           phaseConfig.hiddenCondition.description,
           "\uFF08\u5956\u52B1 +",
           phaseConfig.hiddenCondition.bonus,

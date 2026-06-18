@@ -112,15 +112,45 @@ body {
 .phase-desc {
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  padding: 12px 16px;
-  border-radius: 10px;
+  padding: 14px 18px;
+  border-radius: 12px;
   margin-bottom: 18px;
   font-size: 13px;
   color: var(--text-2);
   line-height: 1.8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.phase-desc b { color: var(--gold); font-size: 14px; }
-.hidden-hint { color: var(--purple); }
+.phase-desc-main b { color: var(--gold); font-size: 14px; }
+.phase-desc-main { color: var(--text-2); }
+.phase-formula-mini {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(90,183,255,0.08);
+  border-left: 3px solid var(--blue);
+  border-radius: 6px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.formula-ic { font-size: 14px; }
+.formula-mini-name { color: var(--blue); font-weight: 700; }
+.formula-mini-diff b { color: var(--gold); }
+.hidden-hint {
+  color: var(--purple);
+  background: rgba(179,137,255,0.08);
+  border-left: 3px solid var(--purple);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.hidden-hint b { color: var(--purple); }
 .hint-ic { filter: drop-shadow(0 0 6px var(--purple)); }
 
 /* Layout */
@@ -683,40 +713,66 @@ body {
 
 .settle-head {
   border-radius: 10px;
-  padding: 18px;
+  padding: 20px;
   text-align: center;
   margin-bottom: 14px;
 }
 .settle-head.win {
-  background: linear-gradient(135deg, rgba(79,227,160,0.15), rgba(255,215,0,0.1));
+  background: linear-gradient(135deg, rgba(79,227,160,0.18), rgba(255,215,0,0.12));
   border: 1px solid rgba(79,227,160,0.4);
 }
 .settle-head.lose {
-  background: linear-gradient(135deg, rgba(255,107,107,0.15), rgba(179,137,255,0.1));
+  background: linear-gradient(135deg, rgba(255,107,107,0.18), rgba(179,137,255,0.12));
   border: 1px solid rgba(255,107,107,0.4);
 }
 .settle-verdict {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .settle-head.win .settle-verdict { color: var(--green); text-shadow: 0 0 20px rgba(79,227,160,0.5); }
 .settle-head.lose .settle-verdict { color: var(--red); }
 .settle-score {
   font-size: 13px;
   color: var(--text-2);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 .score-val {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 800;
   color: var(--gold);
-  margin-left: 8px;
+  margin-left: 6px;
   filter: drop-shadow(0 0 8px rgba(255,215,0,0.6));
 }
-.settle-threshold {
+.score-sep { color: var(--text-2); }
+.score-thr { color: var(--text-2); font-weight: 600; }
+.settle-formula-name {
+  font-size: 13px;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+.settle-formula-name b { color: var(--blue); }
+.settle-formula-expr {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  color: var(--text);
+  margin-bottom: 8px;
+  word-break: break-all;
+  line-height: 1.6;
+}
+.settle-formula-desc {
+  font-size: 12px;
   color: var(--text-2);
-  margin-top: 4px;
+  line-height: 1.6;
 }
 .settle-hidden {
   margin-top: 10px;
@@ -728,6 +784,215 @@ body {
   font-size: 12px;
   font-weight: 600;
   display: inline-block;
+}
+.settle-hidden-triggered {
+  font-size: 14px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(179,137,255,0.25), rgba(255,215,0,0.15));
+  border: 2px solid var(--purple);
+  box-shadow: 0 0 20px rgba(179,137,255,0.3);
+  animation: glowPulse 2s ease-in-out infinite alternate;
+}
+.settle-hidden-bonus {
+  color: var(--gold);
+  margin-left: 8px;
+  font-size: 15px;
+}
+@keyframes glowPulse {
+  from { box-shadow: 0 0 10px rgba(179,137,255,0.25); }
+  to { box-shadow: 0 0 25px rgba(179,137,255,0.6), 0 0 40px rgba(255,215,0,0.2); }
+}
+
+.hidden-check-card {
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1px solid;
+}
+.hidden-check-card.triggered {
+  background: linear-gradient(135deg, rgba(179,137,255,0.15), rgba(255,215,0,0.1));
+  border-color: rgba(179,137,255,0.5);
+}
+.hidden-check-card.not-triggered {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.08);
+}
+.hidden-check-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--purple);
+  margin-bottom: 6px;
+}
+.hidden-check-desc {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 12px;
+}
+.hidden-check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.hidden-check-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  align-items: center;
+}
+.hidden-check-item.passed {
+  background: rgba(79,227,160,0.12);
+  border: 1px solid rgba(79,227,160,0.3);
+}
+.hidden-check-item.failed {
+  background: rgba(255,107,107,0.1);
+  border: 1px solid rgba(255,107,107,0.25);
+}
+.hidden-check-label { color: var(--text); }
+.hidden-check-actual { font-weight: 700; }
+.hidden-check-item.passed .hidden-check-actual { color: var(--green); }
+.hidden-check-item.failed .hidden-check-actual { color: var(--red); }
+.hidden-check-req { color: var(--text-2); font-size: 11px; }
+.hidden-check-mark {
+  font-weight: 800;
+  width: 18px;
+  text-align: center;
+}
+.hidden-check-item.passed .hidden-check-mark { color: var(--green); }
+.hidden-check-item.failed .hidden-check-mark { color: var(--red); }
+.hidden-check-bonus-line {
+  font-size: 12px;
+  color: var(--text-2);
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.hidden-check-bonus-line .pos { color: var(--gold); font-size: 14px; }
+
+.breakdown-section {
+  background: rgba(255,255,255,0.02);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.breakdown-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.breakdown-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.breakdown-row {
+  background: rgba(0,0,0,0.25);
+  border-radius: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.breakdown-row.total {
+  background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(90,183,255,0.08));
+  border: 1px solid rgba(255,215,0,0.3);
+}
+.breakdown-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.breakdown-label {
+  flex: 1;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+.breakdown-weight {
+  font-size: 11px;
+  color: var(--blue);
+  background: rgba(90,183,255,0.12);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.breakdown-value {
+  font-weight: 700;
+  font-size: 13px;
+  min-width: 60px;
+  text-align: right;
+}
+.breakdown-value.pos { color: var(--green); }
+.breakdown-value.neg { color: var(--red); }
+.breakdown-value.total-val { color: var(--gold); font-size: 16px; }
+.breakdown-row.total .breakdown-label { color: var(--gold); }
+.breakdown-expr {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 4px 8px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.formula-preview {
+  background: rgba(90,183,255,0.06);
+  border: 1px solid rgba(90,183,255,0.25);
+  border-left: 3px solid var(--blue);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.formula-preview-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue);
+}
+.formula-preview-expr {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  color: var(--text);
+  word-break: break-all;
+  line-height: 1.6;
+}
+.formula-preview-desc {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.formula-preview-threshold {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.formula-preview-threshold b { color: var(--gold); }
+.formula-preview-hidden {
+  font-size: 12px;
+  color: var(--purple);
+  padding: 6px 10px;
+  background: rgba(179,137,255,0.1);
+  border: 1px dashed rgba(179,137,255,0.35);
+  border-radius: 5px;
+  line-height: 1.6;
+}
+
+.box-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255,169,77,0.2);
+  color: var(--orange);
+  border: 1px solid rgba(255,169,77,0.35);
 }
 
 .settle-details {

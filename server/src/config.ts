@@ -1,4 +1,4 @@
-import type { GameMap, GamePhase, PhaseConfig, SettleDetailItem, GameState, StepRecord } from './types';
+import type { GameMap, GamePhase, PhaseConfig, SettleDetailItem, GameState, StepRecord, FormulaBreakdownItem, HiddenCheckResult } from './types';
 
 const RESOURCE_LABELS: Record<string, string> = {
   candle: '烛芯',
@@ -93,13 +93,29 @@ export const PHASE_CONFIGS: Record<GamePhase, PhaseConfig> = {
     initialResources: { candle: 12, oil: 8, breeze: 6, talisman: 3 },
     victoryThreshold: 300,
     eventPool: ['wu-1', 'wu-2', 'wu-3', 'wu-4', 'wu-5'],
+    formulaMeta: {
+      name: '午局「潮光公式」',
+      expression: 'S = Σ量测值 − max(0, 午号风险−60)×2 + 丁号奖励×3 − 己号失败×5 − Σ熏染痕×2 + max(0, 80−步数×3)',
+      description: '线性加和公式，重点学习"投入资源→提升量测→累加得分"的基础链路。风险低、奖励权重小。',
+      threshold: 300,
+      weights: [
+        { label: '灯阵量测合计', detail: '所有节点量测值直接求和（每 +1 得 +1 分）' },
+        { label: '午号风险罚金', detail: '风险值不超过 60 不罚；超出部分 ×2 扣分' },
+        { label: '丁号奖励加成', detail: '每点丁号奖励 ×3' },
+        { label: '己号失败因子', detail: '每点失败因子 ×5 重罚' },
+        { label: '熏染痕罚分', detail: '所有节点熏染痕强度合计 ×2' },
+        { label: '步数效率奖励', detail: 'max(0, 80 − 总步数 × 3)，行动越利落奖励越高' }
+      ]
+    },
     winFormula: (s: GameState, steps: StepRecord[]) => {
       const map = MAPS.wu;
       const measScore = measurementScore(s, map.nodes);
-      const wuPenalty = Math.max(0, s.wuRisk - 60) * 2;
+      const wuOver = Math.max(0, s.wuRisk - 60);
+      const wuPenalty = wuOver * 2;
       const dingBonus = s.dingReward * 3;
       const jiPenalty = s.jiFailure * 5;
-      const stainPenalty = s.stains.reduce((sum, st) => sum + st.intensity, 0) * 2;
+      const stainTotal = s.stains.reduce((sum, st) => sum + st.intensity, 0);
+      const stainPenalty = stainTotal * 2;
       const effSteps = steps.length;
       const effBonus = Math.max(0, 80 - effSteps * 3);
 
@@ -112,8 +128,17 @@ export const PHASE_CONFIGS: Record<GamePhase, PhaseConfig> = {
         { label: '步数效率奖励', value: effBonus, weight: 1 }
       ];
 
+      const breakdown: FormulaBreakdownItem[] = [
+        { label: '灯阵量测合计', expression: `Σ(${map.nodes.map(n => s.measurements[n.id] || 0).join(' + ')})`, value: measScore, weight: '×1' },
+        { label: '午号风险罚金', expression: `max(0, ${s.wuRisk}−60)×2 = ${wuOver}×2`, value: -wuPenalty, weight: '×2' },
+        { label: '丁号奖励加成', expression: `${s.dingReward}×3`, value: dingBonus, weight: '×3' },
+        { label: '己号失败因子', expression: `${s.jiFailure}×5`, value: -jiPenalty, weight: '×5' },
+        { label: '熏染痕罚分', expression: `Σ熏染痕(${stainTotal})×2`, value: -stainPenalty, weight: '×2' },
+        { label: '步数效率奖励', expression: `max(0, 80−${effSteps}×3)`, value: effBonus }
+      ];
+
       const score = measScore - wuPenalty + dingBonus - jiPenalty - stainPenalty + effBonus;
-      return { score, victory: score >= 300, details, hiddenTriggered: false };
+      return { score, victory: score >= 300, details, hiddenTriggered: false, breakdown };
     }
   },
   ding: {
@@ -125,18 +150,36 @@ export const PHASE_CONFIGS: Record<GamePhase, PhaseConfig> = {
     initialResources: { candle: 6, oil: 7, breeze: 5, talisman: 2 },
     victoryThreshold: 320,
     eventPool: ['ding-1', 'ding-2', 'ding-3', 'ding-4', 'ding-5', 'ding-6'],
+    formulaMeta: {
+      name: '丁局「缺灯公式」',
+      expression: 'S = round(Σ量测值×0.9) − max(0, 午号风险−50)×3 + 丁号奖励×5 − 己号失败×4 − Σ熏染痕×3 + max(0, 60−步数×2)',
+      description: '资源短缺，量测整体衰减 10%，风险阈值下降且惩罚加倍；但丁号奖励权重最高（×5），是突破达标线的关键。',
+      threshold: 320,
+      weights: [
+        { label: '灯阵量测合计(衰减)', detail: '所有节点量测值求和后 ×0.9，向下取整' },
+        { label: '午号风险罚金(严)', detail: '风险超过 50 即开始罚分，超出部分 ×3（比午局更严格）' },
+        { label: '丁号奖励加成(厚)', detail: '每点丁号奖励 ×5——本关突破达标线的核心杠杆' },
+        { label: '己号失败因子', detail: '每点失败因子 ×4' },
+        { label: '熏染痕罚分(重)', detail: '所有节点熏染痕强度合计 ×3（暗夜雾浓，容错更低）' },
+        { label: '步数效率奖励', detail: 'max(0, 60 − 总步数 × 2)' }
+      ]
+    },
     winFormula: (s: GameState, steps: StepRecord[]) => {
       const map = MAPS.ding;
-      const measScore = measurementScore(s, map.nodes) * 0.9;
-      const wuPenalty = Math.max(0, s.wuRisk - 50) * 3;
+      const rawMeas = measurementScore(s, map.nodes);
+      const measScore = rawMeas * 0.9;
+      const measRounded = Math.round(measScore);
+      const wuOver = Math.max(0, s.wuRisk - 50);
+      const wuPenalty = wuOver * 3;
       const dingBonus = s.dingReward * 5;
       const jiPenalty = s.jiFailure * 4;
-      const stainPenalty = s.stains.reduce((sum, st) => sum + st.intensity, 0) * 3;
+      const stainTotal = s.stains.reduce((sum, st) => sum + st.intensity, 0);
+      const stainPenalty = stainTotal * 3;
       const effSteps = steps.length;
       const effBonus = Math.max(0, 60 - effSteps * 2);
 
       const details: SettleDetailItem[] = [
-        { label: '灯阵量测总分(衰减)', value: Math.round(measScore), weight: 1 },
+        { label: '灯阵量测总分(衰减)', value: measRounded, weight: 1 },
         { label: '午号风险罚金(严)', value: -wuPenalty, weight: 1 },
         { label: '丁号奖励加成(厚)', value: dingBonus, weight: 1 },
         { label: '己号失败因子', value: -jiPenalty, weight: 1 },
@@ -144,8 +187,17 @@ export const PHASE_CONFIGS: Record<GamePhase, PhaseConfig> = {
         { label: '步数效率奖励', value: effBonus, weight: 1 }
       ];
 
-      const score = Math.round(measScore) - wuPenalty + dingBonus - jiPenalty - stainPenalty + effBonus;
-      return { score, victory: score >= 320, details, hiddenTriggered: false };
+      const breakdown: FormulaBreakdownItem[] = [
+        { label: '灯阵量测合计(衰减)', expression: `round(${rawMeas}×0.9) = round(${measScore.toFixed(2)})`, value: measRounded, weight: '×0.9' },
+        { label: '午号风险罚金(严)', expression: `max(0, ${s.wuRisk}−50)×3 = ${wuOver}×3`, value: -wuPenalty, weight: '×3' },
+        { label: '丁号奖励加成(厚)', expression: `${s.dingReward}×5`, value: dingBonus, weight: '×5' },
+        { label: '己号失败因子', expression: `${s.jiFailure}×4`, value: -jiPenalty, weight: '×4' },
+        { label: '熏染痕罚分(重)', expression: `Σ熏染痕(${stainTotal})×3`, value: -stainPenalty, weight: '×3' },
+        { label: '步数效率奖励', expression: `max(0, 60−${effSteps}×2)`, value: effBonus }
+      ];
+
+      const score = measRounded - wuPenalty + dingBonus - jiPenalty - stainPenalty + effBonus;
+      return { score, victory: score >= 320, details, hiddenTriggered: false, breakdown };
     }
   },
   ji: {
@@ -158,7 +210,7 @@ export const PHASE_CONFIGS: Record<GamePhase, PhaseConfig> = {
     victoryThreshold: 450,
     hiddenCondition: {
       name: '七灯归元',
-      description: '所有灯阵节点量测≥85，且归墟槽完全填满',
+      description: '所有 7 个灯阵节点量测值 ≥ 85，且「归墟槽」(j-s7) 完全填满 (≥8/8)',
       check: (s: GameState) => {
         const map = MAPS.ji;
         const allHigh = map.nodes.every(n => (s.measurements[n.id] || 0) >= 85);
@@ -169,19 +221,64 @@ export const PHASE_CONFIGS: Record<GamePhase, PhaseConfig> = {
       bonus: 150
     },
     eventPool: ['ji-1', 'ji-2', 'ji-3', 'ji-4', 'ji-5', 'ji-6', 'ji-7'],
+    formulaMeta: {
+      name: '己局「归墟公式」',
+      expression: 'S = Σ量测值 − max(0, 午号风险−70)×2 + 丁号奖励×4 − 己号失败×6 − Σ熏染痕×2 + max(0, 70−步数×2) + H?+150:0',
+      description: '基础线性公式 + 隐藏条件「七灯归元」额外 +150 分。己号失败惩罚最重（×6），需谨慎抉择。满足隐藏条件几乎必达 450 分。',
+      threshold: 450,
+      weights: [
+        { label: '灯阵量测合计', detail: '所有 7 节点量测值求和（每 +1 得 +1 分）' },
+        { label: '午号风险罚金', detail: '风险超过 70 开始罚分，超出部分 ×2（阈值最高，容错较宽松）' },
+        { label: '丁号奖励加成', detail: '每点丁号奖励 ×4' },
+        { label: '己号失败因子', detail: '每点失败因子 ×6（三局中惩罚最重）' },
+        { label: '熏染痕罚分', detail: '所有节点熏染痕强度合计 ×2' },
+        { label: '步数效率奖励', detail: 'max(0, 70 − 总步数 × 2)' },
+        { label: '✨ 隐藏条件「七灯归元」', detail: '所有节点量测 ≥ 85 且归墟槽填满 → 额外 +150 分' }
+      ],
+      hiddenCondition: {
+        name: '七灯归元',
+        description: '所有 7 个灯阵节点量测 ≥ 85，并且归墟槽 (j-s7) 完全填满 (容量 8)',
+        bonus: 150
+      }
+    },
     winFormula: (s: GameState, steps: StepRecord[]) => {
       const map = MAPS.ji;
       const measScore = measurementScore(s, map.nodes);
-      const wuPenalty = Math.max(0, s.wuRisk - 70) * 2;
+      const wuOver = Math.max(0, s.wuRisk - 70);
+      const wuPenalty = wuOver * 2;
       const dingBonus = s.dingReward * 4;
       const jiPenalty = s.jiFailure * 6;
-      const stainPenalty = s.stains.reduce((sum, st) => sum + st.intensity, 0) * 2;
+      const stainTotal = s.stains.reduce((sum, st) => sum + st.intensity, 0);
+      const stainPenalty = stainTotal * 2;
       const effSteps = steps.length;
       const effBonus = Math.max(0, 70 - effSteps * 2);
 
       const hidden = PHASE_CONFIGS.ji.hiddenCondition!;
-      const hiddenTriggered = hidden.check(s, steps);
+      const nodeChecks = map.nodes.map(n => ({
+        label: `${n.name} 量测值`,
+        actual: String(s.measurements[n.id] || 0),
+        required: '≥ 85',
+        passed: (s.measurements[n.id] || 0) >= 85
+      }));
+      const guixuSlot = map.slots.find(sl => sl.id === 'j-s7')!;
+      const guixuFill = s.slotFill['j-s7'] || 0;
+      const guixuCheck = {
+        label: '归墟槽 填充',
+        actual: `${guixuFill} / ${guixuSlot.capacity}`,
+        required: `≥ ${guixuSlot.capacity}`,
+        passed: guixuFill >= guixuSlot.capacity
+      };
+      const allChecks = [...nodeChecks, guixuCheck];
+      const hiddenTriggered = allChecks.every(c => c.passed);
       const hiddenBonus = hiddenTriggered ? hidden.bonus : 0;
+
+      const hiddenCheck: HiddenCheckResult = {
+        name: hidden.name,
+        description: hidden.description,
+        triggered: hiddenTriggered,
+        bonus: hidden.bonus,
+        checks: allChecks
+      };
 
       const details: SettleDetailItem[] = [
         { label: '灯阵量测总分', value: measScore, weight: 1 },
@@ -193,13 +290,25 @@ export const PHASE_CONFIGS: Record<GamePhase, PhaseConfig> = {
         ...(hiddenTriggered ? [{ label: `隐藏条件「${hidden.name}」`, value: hiddenBonus, weight: 1 }] : [])
       ];
 
+      const breakdown: FormulaBreakdownItem[] = [
+        { label: '灯阵量测合计', expression: `Σ(${map.nodes.map(n => s.measurements[n.id] || 0).join(' + ')})`, value: measScore, weight: '×1' },
+        { label: '午号风险罚金', expression: `max(0, ${s.wuRisk}−70)×2 = ${wuOver}×2`, value: -wuPenalty, weight: '×2' },
+        { label: '丁号奖励加成', expression: `${s.dingReward}×4`, value: dingBonus, weight: '×4' },
+        { label: '己号失败因子', expression: `${s.jiFailure}×6`, value: -jiPenalty, weight: '×6' },
+        { label: '熏染痕罚分', expression: `Σ熏染痕(${stainTotal})×2`, value: -stainPenalty, weight: '×2' },
+        { label: '步数效率奖励', expression: `max(0, 70−${effSteps}×2)`, value: effBonus },
+        { label: `✨ 隐藏条件「${hidden.name}」`, expression: hiddenTriggered ? '满足全部条件' : '未满足全部条件', value: hiddenBonus, weight: hiddenTriggered ? '+150' : '—' }
+      ];
+
       const score = measScore - wuPenalty + dingBonus - jiPenalty - stainPenalty + effBonus + hiddenBonus;
       return {
         score,
         victory: score >= 450,
         details,
         hiddenTriggered,
-        hiddenName: hiddenTriggered ? hidden.name : undefined
+        hiddenName: hiddenTriggered ? hidden.name : undefined,
+        breakdown,
+        hiddenCheck
       };
     }
   }

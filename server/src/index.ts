@@ -16,6 +16,7 @@ app.get('/api/meta/phases', (_req, res) => {
     teaching: cfg.teaching,
     maxRounds: cfg.maxRounds,
     victoryThreshold: cfg.victoryThreshold,
+    formulaMeta: cfg.formulaMeta,
     hiddenCondition: cfg.hiddenCondition ? {
       name: cfg.hiddenCondition.name,
       description: cfg.hiddenCondition.description,

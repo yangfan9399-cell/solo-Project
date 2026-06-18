@@ -56,9 +56,27 @@ const App: React.FC = () => {
 
       {phaseConfig && (
         <div className="phase-desc">
-          <b>{phaseConfig.phaseName}</b>：{phaseConfig.description}
+          <div className="phase-desc-main">
+            <b>{phaseConfig.phaseName}</b>：{phaseConfig.description}
+          </div>
+          {phaseConfig.formulaMeta && (
+            <div className="phase-formula-mini">
+              <span className="formula-ic">📜</span>
+              <span className="formula-mini-name">{phaseConfig.formulaMeta.name}</span>
+              <span className="formula-mini-diff">
+                达标线 <b>{phaseConfig.formulaMeta.threshold}</b>
+                {phase === 'wu' && ' · 风险阈值 60 · 丁号 ×3'}
+                {phase === 'ding' && ' · 量测×0.9衰减 · 风险阈值 50 · 丁号 ×5'}
+                {phase === 'ji' && ' · 己号×6重罚 · 风险阈值 70'}
+              </span>
+            </div>
+          )}
           {phaseConfig.hiddenCondition && (
-            <span className="hidden-hint">　<span className="hint-ic">✨</span> 隐藏条件：{phaseConfig.hiddenCondition.description}（奖励 +{phaseConfig.hiddenCondition.bonus}）</span>
+            <div className="hidden-hint">
+              <span className="hint-ic">✨</span> 隐藏条件：
+              <b>{phaseConfig.hiddenCondition.name}</b> —
+              {phaseConfig.hiddenCondition.description}（奖励 +{phaseConfig.hiddenCondition.bonus}）
+            </div>
           )}
         </div>
       )}

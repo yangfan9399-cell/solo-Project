@@ -154,7 +154,6 @@ export function applyEffects(
 
 export function settleGame(phase: GamePhase, steps: StepRecord[]): SettleResult {
   const cfg = PHASE_CONFIGS[phase];
-  const map = MAPS[phase];
 
   const rebuilt = rebuildStateFromSteps(phase, steps);
   const winResult = cfg.winFormula(rebuilt, steps);
@@ -174,7 +173,10 @@ export function settleGame(phase: GamePhase, steps: StepRecord[]): SettleResult 
     hiddenConditionTriggered: winResult.hiddenTriggered,
     hiddenConditionName: winResult.hiddenName,
     stepsCount: steps.length,
-    details: winResult.details
+    details: winResult.details,
+    formula: cfg.formulaMeta,
+    breakdown: winResult.breakdown,
+    hiddenCheck: winResult.hiddenCheck
   };
 }
 

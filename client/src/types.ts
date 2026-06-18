@@ -92,6 +92,37 @@ export interface SettleResult {
   hiddenConditionName?: string;
   stepsCount: number;
   details: SettleDetailItem[];
+  formula: FormulaInfo;
+  breakdown: FormulaBreakdownItem[];
+  hiddenCheck?: HiddenCheckResult;
+}
+
+export interface FormulaInfo {
+  name: string;
+  expression: string;
+  threshold: number;
+  description: string;
+  weights: { label: string; detail: string }[];
+  hiddenCondition?: {
+    name: string;
+    description: string;
+    bonus: number;
+  };
+}
+
+export interface FormulaBreakdownItem {
+  label: string;
+  expression: string;
+  value: number;
+  weight?: string;
+}
+
+export interface HiddenCheckResult {
+  name: string;
+  description: string;
+  triggered: boolean;
+  bonus: number;
+  checks: { label: string; passed: boolean; actual: string; required: string }[];
 }
 
 export interface SettleDetailItem {
