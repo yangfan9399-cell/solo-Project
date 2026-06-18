@@ -1,0 +1,19 @@
+{
+  "name": "coral-bell-chamber-puzzle",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c magenta,cyan \"npm --workspace backend run dev\" \"npm --workspace frontend run dev\"",
+    "seed": "npm --workspace backend run seed",
+    "build": "npm --workspace shared run build && npm --workspace backend run build && npm --workspace frontend run build",
+    "start": "npm --workspace backend run start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

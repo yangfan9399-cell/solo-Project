@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>珊瑚钟室路径解谜游戏</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(135deg,#0f1b2d 0%,#1a2744 40%,#2d1b3a 100%);
+  color:#e8e4f0;min-height:100vh;min-width:1280px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;
+  background:rgba(20,28,48,0.8);border-bottom:1px solid #ff7a8a55;backdrop-filter:blur(10px)}
+.logo{font-size:22px;font-weight:700;background:linear-gradient(90deg,#ff9d7a,#ff6b9d,#d896ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:2px}
+.logo::before{content:"🪸 ";margin-right:4px}
+.levelbtns{display:flex;gap:10px}
+.lbtn{padding:8px 16px;border-radius:8px;border:1px solid #ff7a8a55;background:rgba(255,122,138,0.08);
+  color:#e8e4f0;cursor:pointer;font-size:14px;transition:all 0.2s}
+.lbtn:hover{background:rgba(255,122,138,0.18)}
+.lbtn.active{background:linear-gradient(135deg,#ff7a8a,#d896ff);color:#fff;border-color:transparent;
+  box-shadow:0 4px 20px #ff7a8a55}
+.statusbar{display:flex;gap:16px;align-items:center;font-size:13px;color:#b8b4d0}
+.dot{width:8px;height:8px;border-radius:50%;background:#ffd93d;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.4;box-shadow:0 0 0 0 #ffd93d66}50%{opacity:1;box-shadow:0 0 0 6px #ffd93d00}}
+.grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:16px;padding:16px;height:calc(100vh - 68px)}
+.panel{background:rgba(20,28,48,0.55);border:1px solid #ff7a8a33;border-radius:12px;padding:16px;
+  backdrop-filter:blur(8px);box-shadow:0 8px 32px #00000055;display:flex;flex-direction:column;overflow:hidden}
+.panel-title{font-size:16px;font-weight:700;margin-bottom:12px;color:#ffd93d;letter-spacing:1px;
+  padding-bottom:8px;border-bottom:1px solid #ffd93d33;position:relative;flex-shrink:0}
+.panel-title::after{content:"";position:absolute;bottom:-1px;left:0;width:60px;height:2px;
+  background:linear-gradient(90deg,#ffd93d,transparent)}
+.content{flex:1;overflow:auto}
+.content::-webkit-scrollbar{width:6px;height:6px}
+.content::-webkit-scrollbar-thumb{background:#ff7a8a44;border-radius:3px}
+
+/* BoardPanel */
+.map-info{font-size:12px;color:#b8b4d0;margin-bottom:10px;line-height:1.5}
+.tile-grid{display:grid;gap:4px;justify-content:center;margin:10px 0}
+.tile{width:48px;height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;position:relative;
+  user-select:none;border:1.5px solid transparent}
+.tile:hover{transform:scale(1.08);z-index:5}
+.tile-START{background:linear-gradient(135deg,#74b9ff,#0984e3);color:#fff;box-shadow:0 0 10px #0984e388}
+.tile-END{background:linear-gradient(135deg,#55efc4,#00b894);color:#fff;box-shadow:0 0 10px #00b89488}
+.tile-PATH{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.1)}
+.tile-OBSTACLE{background:rgba(0,0,0,0.4);color:#555;border-style:dashed;cursor:not-allowed}
+.tile-HAZARD{background:linear-gradient(135deg,#ff7675,#d63031);color:#fff;box-shadow:0 0 10px #d6303166}
+.tile-REWARD{background:linear-gradient(135deg,#ffeaa7,#fdcb6e);color:#6c5ce7;box-shadow:0 0 10px #fdcb6e66}
+.tile-CORAL_BELL{background:linear-gradient(135deg,#fd79a8,#e84393);color:#fff;box-shadow:0 0 14px #e84393aa;
+  animation:bell 2.5s ease-in-out infinite}
+@keyframes bell{0%,100%{box-shadow:0 0 8px #e8439366}50%{box-shadow:0 0 22px #e84393cc}}
+.tile-SWITCH{background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:#fff;box-shadow:0 0 10px #6c5ce766}
+.tile-TRANSLATE{background:linear-gradient(135deg,#74b9ff,#0984e3);color:#fff;box-shadow:0 0 10px #0984e366}
+.tile-OVERWRITE{background:linear-gradient(135deg,#81ecec,#00cec9);color:#2d3436;box-shadow:0 0 10px #00cec966}
+.tile-current{border-color:#ffd93d!important;border-width:3px;box-shadow:0 0 0 3px #ffd93d44,0 0 18px #ffd93daa;
+  animation:curr 1.4s ease-in-out infinite}
+@keyframes curr{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.tile-adjacent{border-color:#55efc4!important;box-shadow:0 0 12px #55efc488;cursor:pointer!important}
+.path-step{position:absolute;top:1px;right:2px;font-size:10px;background:#ffd93d;color:#2d3436;
+  border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.fields{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.fb{padding:5px 12px;border-radius:16px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
+.fb .v{font-size:14px;font-weight:800}
+.fb-tsv{background:#ffd93d22;color:#ffd93d;border:1px solid #ffd93d44}
+.fb-ts{background:#74b9ff22;color:#74b9ff;border:1px solid #74b9ff44}
+.fb-om{background:#a29bfe22;color:#a29bfe;border:1px solid #a29bfe44}
+.fb-sir{background:#ff767522;color:#ff7675;border:1px solid #ff767544}
+.fb-shr{background:#55efc422;color:#55efc4;border:1px solid #55efc444}
+.fb-wuf{background:#fab1a022;color:#fab1a0;border:1px solid #fab1a044}
+.tutorial{margin-top:10px;padding:10px;border-radius:8px;background:rgba(108,92,231,0.12);
+  border:1px solid #6c5ce733;font-size:12px;line-height:1.7;color:#d8d4f0}
+.tutorial summary{cursor:pointer;color:#a29bfe;font-weight:600;margin-bottom:4px}
+
+/* EventBox */
+.estats{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.estat{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.er{background:#ff767522;color:#ff7675}
+.ew{background:#55efc422;color:#55efc4}
+.eo{background:#a29bfe22;color:#a29bfe}
+.elist{display:flex;flex-direction:column;gap:6px}
+.eitem{padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.5;
+  border-left:3px solid #666;background:rgba(255,255,255,0.03)}
+.eitem .st{font-size:10px;opacity:0.6;margin-right:6px;font-weight:700}
+.eitem.risk{border-color:#ff7675;background:#ff767511}
+.eitem.reward{border-color:#55efc4;background:#55efc411}
+.eitem.translate{border-color:#74b9ff;background:#74b9ff11}
+.eitem.overwrite{border-color:#00cec9;background:#00cec911}
+.eitem.hidden{border-color:#ffd93d;background:#ffd93d15;color:#ffd93d}
+.empty{display:flex;align-items:center;justify-content:center;height:100%;color:#666;font-size:13px;
+  font-style:italic}
+
+/* ReplayTrack */
+.rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;color:#b8b4d0}
+.rtrack{display:flex;overflow-x:auto;padding:14px 6px;gap:2px;align-items:center;
+  background:rgba(0,0,0,0.2);border-radius:8px;margin-bottom:12px}
+.rnode{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;background:#333;color:#888;cursor:pointer;flex-shrink:0;
+  border:2px solid #444;transition:all 0.2s;position:relative;z-index:2}
+.rnode:hover{transform:scale(1.1)}
+.rnode.past{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border-color:#a29bfe}
+.rnode.current{background:linear-gradient(135deg,#ffd93d,#fdcb6e);color:#2d3436;border-color:#ffd93d;
+  box-shadow:0 0 12px #ffd93daa;transform:scale(1.15)}
+.rnode.start{background:linear-gradient(135deg,#0984e3,#74b9ff);color:#fff;border-color:#74b9ff}
+.rline{flex:1;height:3px;background:#444;min-width:8px;flex-shrink:1;z-index:1}
+.rline.past{background:linear-gradient(90deg,#6c5ce7,#a29bfe)}
+.rbtns{display:flex;gap:8px;margin-bottom:10px}
+.rbtn{padding:6px 12px;border-radius:6px;border:1px solid #ff7a8a44;background:rgba(255,122,138,0.08);
+  color:#e8e4f0;cursor:pointer;font-size:12px;transition:all 0.2s}
+.rbtn:hover{background:rgba(255,122,138,0.18)}
+.rbtn:disabled{opacity:0.4;cursor:not-allowed}
+.rsave{font-size:11px;color:#888;padding:8px;background:rgba(0,0,0,0.2);border-radius:6px;line-height:1.6}
+
+/* SettlementBook */
+.sbtn{width:100%;padding:12px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:700;
+  background:linear-gradient(135deg,#ff9d7a,#ff6b9d);color:#fff;transition:all 0.2s;letter-spacing:2px;
+  box-shadow:0 4px 20px #ff6b9d44;margin-bottom:14px}
+.sbtn:hover{transform:translateY(-1px);box-shadow:0 8px 26px #ff6b9d66}
+.sbtn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+.sresult{padding:16px;border-radius:10px;background:rgba(0,0,0,0.25)}
+.stitle{font-size:22px;font-weight:800;text-align:center;margin-bottom:10px;letter-spacing:3px}
+.stitle.ok{background:linear-gradient(90deg,#55efc4,#00b894);-webkit-background-clip:text;color:transparent}
+.stitle.no{background:linear-gradient(90deg,#ff7675,#d63031);-webkit-background-clip:text;color:transparent}
+.sreason{text-align:center;color:#b8b4d0;font-size:13px;margin-bottom:14px}
+.sbig{text-align:center;margin-bottom:12px}
+.sbig .tr{font-size:36px;font-weight:900;background:linear-gradient(135deg,#ffd93d,#ff9d7a);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.sbig .rl{font-size:11px;padding:3px 10px;border-radius:10px;margin-left:8px;vertical-align:middle}
+.rl-0{background:#55efc422;color:#55efc4}.rl-1{background:#ffeaa722;color:#ffeaa7}
+.rl-2{background:#fab1a022;color:#fab1a0}.rl-3{background:#ff767522;color:#ff7675}.rl-4{background:#d6303144;color:#ff7675}
+.sfields{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.sf{padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:6px;font-size:11px;
+  display:flex;justify-content:space-between}
+.sf .k{color:#b8b4d0}.sf .v{font-weight:700}
+.sfh{color:#ffd93d}.sfn{color:#888}
+.strace{padding:10px;background:#0a0e18;border-radius:6px;font-family:monospace;font-size:10px;
+  color:#888;max-height:180px;overflow:auto;white-space:pre-wrap;line-height:1.5}
+.strace summary{cursor:pointer;color:#6c5ce7;font-size:11px;margin-bottom:6px;font-family:sans-serif}
+.welcome{grid-column:1/-1;grid-row:1/-1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:40px}
+.welcome h2{font-size:28px;background:linear-gradient(90deg,#ff9d7a,#ff6b9d,#d896ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:16px}
+.welcome p{color:#b8b4d0;max-width:500px;line-height:1.8;margin-bottom:24px}
+.cards{display:flex;gap:16px}
+.card{padding:18px;border-radius:12px;width:220px;background:rgba(20,28,48,0.8);
+  border:1px solid #ff7a8a33;text-align:left}
+.card h4{color:#ffd93d;margin-bottom:8px}.card p{font-size:12px;color:#b8b4d0;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-type="module" data-presets="env,react">
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+const TILE_NAMES = {
+  START:"起点",END:"终点",PATH:"通路",OBSTACLE:"障碍",HAZARD:"巳号风险",REWARD:"申号奖励",
+  CORAL_BELL:"珊瑚钟",SWITCH:"换轨开关",TRANSLATE:"转译槽",OVERWRITE:"复写痕"
+};
+
+const FIELD_LABELS = {
+  trackSwitchValue:"珊瑚钟室换轨值",
+  translationSlot:"珊瑚钟室转译槽",
+  overwriteMark:"珊瑚钟室复写痕",
+  siRisk:"巳号风险",
+  shenReward:"申号奖励",
+  wuFailFactor:"午号失败因子"
+};
+
+const FIELD_CLS = {trackSwitchValue:"fb-tsv",translationSlot:"fb-ts",overwriteMark:"fb-om",
+  siRisk:"fb-sir",shenReward:"fb-shr",wuFailFactor:"fb-wuf"};
+
+const RISK_NAMES = ["安全","轻度","中度","重度","极危"];
+const REPLAY_KEY = "cbcp:replay";
+
+const posEq = (a,b) => a && b && a.x===b.x && a.y===b.y;
+const adj = (a,b) => a && b && Math.abs(a.x-b.x)+Math.abs(a.y-b.y) === 1;
+const cloneF = f => ({...f});
+const now = () => Date.now();
+
+function App(){
+  const [levels, setLevels] = useState([]);
+  const [curId, setCurId] = useState(null);
+  const [steps, setSteps] = useState([]);
+  const [curStepIdx, setCurStepIdx] = useState(-1);
+  const [curF, setCurF] = useState(null);
+  const [curPos, setCurPos] = useState(null);
+  const [eventLog, setEventLog] = useState([]);
+  const [result, setResult] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+
+  const curLv = useMemo(()=>levels.find(l=>l.id===curId)||null,[levels,curId]);
+
+  useEffect(()=>{
+    axios.get("/api/levels").then(r=>{setLevels(r.data);setLoaded(true)}).catch(()=>setLoaded(true))
+  },[]);
+
+  const rebuild = useCallback((lv, sts, upTo)=>{
+    let f = cloneF(lv.initialField);
+    let p = {...lv.map.start};
+    const evs = [];
+    for(let i=0;i<=upTo && i<sts.length;i++){
+      const s = sts[i];
+      p = {...s.positionTo};
+      f = cloneF(s.fieldAfter);
+      for(const eid of s.triggeredEventIds){
+        const ev = lv.events.find(e=>e.id===eid);
+        if(ev) evs.push({stepIndex:s.stepIndex,eventId:eid,message:ev.message,timestamp:s.timestamp,type:ev.type})
+      }
+    }
+    return {field:f,position:p,events:evs}
+  },[]);
+
+  const selectLevel = useCallback((id)=>{
+    const lv = levels.find(l=>l.id===id); if(!lv) return;
+    let replay = null;
+    try{const raw = localStorage.getItem(REPLAY_KEY);if(raw){const p=JSON.parse(raw);if(p.levelId===id)replay=p}}catch{}
+    if(replay && replay.steps.length>0){
+      const upTo = Math.min(replay.currentStepIndex, replay.steps.length-1);
+      const {field,position,events} = rebuild(lv, replay.steps, upTo);
+      setCurId(id);setSteps(replay.steps);setCurStepIdx(upTo);setCurF(field);setCurPos(position);
+      setEventLog(events);setResult(null)
+    }else{
+      setCurId(id);setSteps([]);setCurStepIdx(-1);setCurF(cloneF(lv.initialField));setCurPos({...lv.map.start});
+      setEventLog([]);setResult(null)
+    }
+  },[levels,rebuild]);
+
+  const saveReplay = (sts, csi, lid) => {
+    try{localStorage.setItem(REPLAY_KEY,JSON.stringify({levelId:lid,steps:sts,currentStepIndex:csi,createdAt:now(),savedAt:now()}))}catch{}
+  };
+
+  const moveTile = useCallback((to)=>{
+    if(!curLv||!curF||!curPos)return;
+    if(curStepIdx !== steps.length-1 && steps.length>0) return;
+    if(!adj(curPos,to))return;
+    if(to.y<0||to.y>=curLv.map.height||to.x<0||to.x>=curLv.map.width)return;
+    const t = curLv.map.tiles[to.y][to.x];
+    if(t.type==="OBSTACLE")return;
+    const fB = cloneF(curF);
+    const fA = cloneF(curF);
+    const teIds = [];
+    const nsIdx = steps.length;
+    const trig = new Set();
+    for(const s of steps){
+      for(const eid of s.triggeredEventIds){
+        const ev = curLv.events.find(e=>e.id===eid);
+        if(ev?.trigger.type==="position") trig.add(`${eid}-step${s.stepIndex+1}-pos(${s.positionTo.x},${s.positionTo.y})`);
+        else trig.add(`${eid}-once`);
+      }
+    }
+    fA.trackSwitchValue += 1;
+    for(const ev of curLv.events){
+      const tg = ev.trigger; let hit=false;
+      if(tg.type==="position"&&tg.position) hit = posEq(tg.position,to);
+      else if(tg.type==="step"&&tg.step!==undefined) hit = nsIdx+1===tg.step;
+      else if(tg.type==="value"&&tg.value){
+        const {field:ff,operator:op,threshold:th} = tg.value;
+        const v = fA[ff];
+        if(op===">")hit=v>th;else if(op==="<")hit=v<th;else if(op===">=")hit=v>=th;
+        else if(op==="<=")hit=v<=th;else if(op==="==")hit=v===th;else if(op==="!=")hit=v!==th
+      }
+      if(hit){
+        const dk = tg.type==="position"?`${ev.id}-step${nsIdx+1}-pos(${to.x},${to.y})`:`${ev.id}-once`;
+        if(trig.has(dk))continue; trig.add(dk); teIds.push(ev.id);
+        if(ev.effect.field!==undefined){
+          if(ev.effect.delta!==undefined) fA[ev.effect.field] += ev.effect.delta;
+          if(ev.effect.setValue!==undefined) fA[ev.effect.field] = ev.effect.setValue
+        }
+      }
+    }
+    const step = {stepIndex:nsIdx,positionFrom:{...curPos},positionTo:{...to},fieldBefore:fB,fieldAfter:fA,triggeredEventIds:teIds,timestamp:now()};
+    const nSts = [...steps, step];
+    const nes = [];
+    for(const eid of teIds){
+      const ev = curLv.events.find(e=>e.id===eid);
+      if(ev) nes.push({stepIndex:nsIdx,eventId:eid,message:ev.message,timestamp:step.timestamp,type:ev.type})
+    }
+    saveReplay(nSts, nsIdx, curLv.id);
+    setSteps(nSts);setCurStepIdx(nsIdx);setCurF(fA);setCurPos({...to});setEventLog(el=>[...el,...nes]);setResult(null)
+  },[curLv,curF,curPos,curStepIdx,steps]);
+
+  const undoStep = () => {
+    if(!curLv||steps.length===0||curStepIdx<0)return;
+    const ni = curStepIdx-1;
+    const {field,position,events} = rebuild(curLv, steps, ni);
+    const kept = ni>=0?steps.slice(0,ni+1):[];
+    saveReplay(kept,ni,curLv.id);
+    setSteps(kept);setCurStepIdx(ni);setCurF(field);setCurPos(position);setEventLog(events);setResult(null)
+  };
+
+  const resetLevel = () => {
+    if(!curLv)return;
+    try{localStorage.removeItem(REPLAY_KEY)}catch{}
+    setSteps([]);setCurStepIdx(-1);setCurF(cloneF(curLv.initialField));setCurPos({...curLv.map.start});
+    setEventLog([]);setResult(null)
+  };
+
+  const jumpToStep = (idx) => {
+    if(!curLv)return;
+    if(idx<-1||idx>=steps.length)return;
+    const {field,position,events} = rebuild(curLv, steps, idx);
+    saveReplay(steps, idx, curLv.id);
+    setCurStepIdx(idx);setCurF(field);setCurPos(position);setEventLog(events);setResult(null)
+  };
+
+  const settleGame = async () => {
+    if(!curLv)return;
+    try{
+      const r = await axios.post("/api/settle",{levelId:curLv.id,steps,initialField:curLv.initialField});
+      setResult(r.data)
+    }catch(e){setResult(null)}
+  };
+
+  const levelBtn = (id, name, color) => (
+    <button key={id} className={`lbtn ${curId===id?'active':''}`}
+      onClick={()=>selectLevel(id)} disabled={!loaded}>{name}</button>
+  );
+
+  const stepCount = steps.length;
+  const atLatest = curStepIdx === steps.length-1;
+
+  return (
+    <div>
+      <div className="topbar">
+        <div className="logo">珊瑚钟室路径解谜游戏</div>
+        <div className="levelbtns">
+          {levelBtn("si","巳局·教学")}
+          {levelBtn("shen","申局·资源短缺")}
+          {levelBtn("wu","午局·隐藏条件")}
+        </div>
+        <div className="statusbar">
+          {curLv ? <><span>当前：{curLv.name}</span><span>步数：{stepCount}</span>
+            <span className="dot"></span><span>自动保存中</span></>
+            : <span>请选择关卡开始</span>}
+        </div>
+      </div>
+      {!curLv ? (
+        <div className="grid" style={{gridTemplateColumns:"1fr",gridTemplateRows:"1fr"}}>
+          <div className="welcome">
+            <h2>请选择上方关卡，开始珊瑚钟室路径解谜之旅</h2>
+            <p>在「珊瑚钟室」场景内完成路径解谜挑战。每一步自动保存至回放轴，刷新后可继续当前局；结算由后端按珊瑚钟室换轨值和路径解谜步骤重算。</p>
+            <div className="cards">
+              <div className="card"><h4>巳局·教学</h4><p>启蒙回廊，熟悉基础操作。避开巳号风险格到达终点即通关。</p></div>
+              <div className="card"><h4>申局·资源短缺</h4><p>吝啬之厅，转译槽与复写痕初始为零。须先解锁译/覆资源，再凑够申号奖励。</p></div>
+              <div className="card"><h4>午局·隐藏条件</h4><p>密印之间。先踏双换轨开关激活珊瑚钟，触发隐藏密印后方可通关。</p></div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid">
+          <div className="panel">
+            <div className="panel-title">珊瑚钟室路径解谜游戏 局面盘</div>
+            <div className="content">
+              <div className="map-info">
+                <b>{curLv.map.name}</b><br/>
+                <span style={{opacity:0.8}}>{curLv.map.description}</span>
+              </div>
+              <BoardGrid lv={curLv} curPos={curPos} steps={steps} curStepIdx={curStepIdx} onMove={moveTile}/>
+              <div className="fields">
+                {Object.entries(FIELD_LABELS).map(([k,lbl])=>(
+                  <div key={k} className={`fb ${FIELD_CLS[k]}`}>
+                    {curF && <><span>{lbl}</span><span className="v">{curF[k]}</span></>}
+                  </div>
+                ))}
+              </div>
+              {curLv.tutorial && (
+                <details className="tutorial"><summary>教学指引 / 关卡说明</summary>
+                  {curLv.tutorial.split("\n").map((ln,i)=><div key={i}>{ln}</div>)}
+                </details>
+              )}
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel-title">珊瑚钟室路径解谜游戏 事件匣</div>
+            <div className="content">
+              <EventStats events={eventLog}/>
+              <EventList events={eventLog}/>
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel-title">珊瑚钟室路径解谜游戏 回放轴</div>
+            <div className="content">
+              <ReplayTrack
+                steps={steps} curStepIdx={curStepIdx} atLatest={atLatest}
+                onJump={jumpToStep} onUndo={undoStep} onReset={resetLevel}
+                onLatest={()=>jumpToStep(steps.length-1)}
+              />
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel-title">珊瑚钟室路径解谜游戏 结算簿</div>
+            <div className="content">
+              <SettlementBook
+                curLv={curLv} steps={steps} atLatest={atLatest} curStepIdx={curStepIdx}
+                onSettle={settleGame} result={result}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BoardGrid({lv,curPos,steps,curStepIdx,onMove}){
+  const {width, height, tiles, start, end} = lv.map;
+  const passed = useMemo(()=>{
+    const m = new Map();
+    for(let i=0;i<=curStepIdx;i++){if(steps[i]) m.set(`${steps[i].positionTo.x},${steps[i].positionTo.y}`,i+1)}
+    return m
+  },[steps,curStepIdx]);
+  const adjSet = useMemo(()=>{
+    const s = new Set();
+    if(!curPos) return s;
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+    for(const [dx,dy] of dirs){
+      const nx = curPos.x+dx, ny = curPos.y+dy;
+      if(ny<0||ny>=height||nx<0||nx>=width)continue;
+      if(tiles[ny][nx].type==="OBSTACLE")continue;
+      s.add(`${nx},${ny}`)
+    }
+    return s
+  },[curPos,width,height,tiles]);
+  const onTile = (tile,x,y) => {
+    if(adjSet.has(`${x},${y}`) && curStepIdx===steps.length-1) onMove({x,y})
+  };
+  return (
+    <div className="tile-grid" style={{gridTemplateColumns:`repeat(${width},48px)`}}>
+      {tiles.map((row,y)=>row.map((tile,x)=>{
+        const isCur = posEq(curPos,{x,y});
+        const isAdj = adjSet.has(`${x},${y}`) && curStepIdx===steps.length-1 && !isCur;
+        const pn = passed.get(`${x},${y}`);
+        const cls = ["tile",`tile-${tile.type}`,isCur?"tile-current":"",isAdj?"tile-adjacent":""].filter(Boolean).join(" ");
+        return (
+          <div key={tile.id} className={cls} onClick={()=>onTile(tile,x,y)} title={TILE_NAMES[tile.type]}>
+            {tile.label || ""}
+            {pn && !isCur && <span className="path-step">{["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮"][pn-1]||pn}</span>}
+          </div>
+        )
+      }))}
+    </div>
+  )
+}
+
+function EventStats({events}){
+  const r = events.filter(e=>e.type==="risk").length;
+  const w = events.filter(e=>e.type==="reward").length;
+  const o = events.length-r-w;
+  return (
+    <div className="estats">
+      <span className="estat er">巳号风险事件 {r}</span>
+      <span className="estat ew">申号奖励事件 {w}</span>
+      <span className="estat eo">其他事件 {o}</span>
+    </div>
+  )
+}
+
+function EventList({events}){
+  if(events.length===0) return <div className="empty">尚无事件，开始移动后将在此展示...</div>;
+  const sorted = [...events].sort((a,b)=>b.timestamp-a.timestamp);
+  return (
+    <div className="elist">
+      {sorted.map((e,i)=>(
+        <div key={`${e.eventId}-${e.timestamp}-${i}`} className={`eitem ${e.type||""}`}>
+          <span className="st">步骤{e.stepIndex+1}</span>
+          {e.message}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ReplayTrack({steps,curStepIdx,atLatest,onJump,onUndo,onReset,onLatest}){
+  const total = steps.length;
+  const nodes = [];
+  for(let i=-1;i<total;i++){
+    if(i>-1) nodes.push(<div key={`l-${i}`} className={`rline ${i<=curStepIdx?"past":""}`}></div>);
+    const isStart = i===-1;
+    let cls = "rnode";
+    if(isStart) cls += " start";
+    else if(i<curStepIdx) cls += " past";
+    else if(i===curStepIdx) cls += " current";
+    nodes.push(
+      <div key={`n-${i}`} className={cls} onClick={()=>onJump(i)} title={isStart?"起点":`步骤 ${i+1}`}>
+        {isStart?"起":i+1}
+      </div>
+    )
+  }
+  return (
+    <div>
+      <div className="rhead">
+        <span>步骤：<b style={{color:"#ffd93d"}}>{curStepIdx+1}</b> / {total}</span>
+        <span style={{color:atLatest?"#55efc4":"#ffeaa7"}}>{atLatest?"✓ 已在最新态":"⏸ 回放模式"}</span>
+      </div>
+      <div className="rtrack">{nodes.length===0?<div className="rnode start">起</div>:nodes}</div>
+      <div className="rbtns">
+        <button className="rbtn" onClick={onUndo} disabled={total===0||!atLatest}>↶ 撤销一步</button>
+        <button className="rbtn" onClick={onReset} disabled={total===0}>⟲ 重置本局</button>
+        <button className="rbtn" onClick={onLatest} disabled={atLatest||total===0}>⏵ 回到最新</button>
+      </div>
+      <div className="rsave">
+        💾 已自动保存到回放轴（localStorage: cbcp:replay）<br/>
+        🌐 刷新页面后可自动恢复当前局
+      </div>
+    </div>
+  )
+}
+
+function SettlementBook({curLv,steps,atLatest,curStepIdx,onSettle,result}){
+  const disabled = steps.length===0||!atLatest;
+  if(!result){
+    return (
+      <div>
+        <button className="sbtn" onClick={onSettle} disabled={disabled}>
+          ⚖ 后端结算 (按换轨值重算)
+        </button>
+        <div style={{padding:"14px",background:"rgba(0,0,0,0.2)",borderRadius:"8px",fontSize:"12px",color:"#b8b4d0",lineHeight:"1.7"}}>
+          未结算。<br/><br/>
+          <b style={{color:"#ffd93d"}}>结算规则：</b><br/>
+          后端将按珊瑚钟室换轨值 + 路径解谜步骤 <b style={{color:"#ff6b9d"}}>从头重算</b>，<br/>
+          包括：相邻/障碍合法性校验、事件触发器匹配、胜负公式验证。<br/><br/>
+          本关胜利公式：
+          <div style={{marginTop:"8px",padding:"8px",background:"#6c5ce722",borderRadius:"6px",color:"#a29bfe"}}>
+            {curLv.winFormula}
+            {curLv.winFormulaParams.minReward!==undefined && <div>minReward (申号奖励阈值) = {curLv.winFormulaParams.minReward}</div>}
+            {curLv.winFormulaParams.maxRisk!==undefined && <div>maxRisk (巳号风险上限) = {curLv.winFormulaParams.maxRisk}</div>}
+            {curLv.winFormulaParams.requiredHiddenEventIds && <div>required: {curLv.winFormulaParams.requiredHiddenEventIds.join(", ")}</div>}
+          </div>
+          {disabled && <div style={{marginTop:"8px",color:"#ff7675"}}>
+            {steps.length===0?"⚠ 需至少走一步才能结算":"⚠ 请先点击「回到最新」后再结算"}</div>}
+        </div>
+      </div>
+    )
+  }
+  const r = result;
+  const rl = Math.min(4, r.riskLevel);
+  return (
+    <div className="sresult">
+      <div className={`stitle ${r.success?"ok":"no"}`}>{r.success?"✅ 通关成功":"❌ 通关失败"}</div>
+      <div className="sreason">{r.reason}</div>
+      <div className="sbig">
+        <span className="tr">{r.totalReward.toFixed(2)}</span>
+        <span className={`rl rl-${rl}`}>{RISK_NAMES[rl]}</span>
+      </div>
+      <div className="sfields">
+        {Object.entries(FIELD_LABELS).map(([k,lbl])=>(
+          <div key={k} className="sf"><span className="k">{lbl}</span><span className="v">{r.finalField[k]}</span></div>
+        ))}
+        <div className="sf"><span className="k sfh">公式命中</span><span className={`v ${r.formulaHit?"sfh":"sfn"}`}>{r.formulaHit?"✓ 是":"✗ 否"}</span></div>
+        <div className="sf"><span className="k sfh">结算步数</span><span className="v">{steps.length}</span></div>
+      </div>
+      <details className="strace">
+        <summary>🔍 后端 debugTrace (换轨值 + 步骤重算日志)</summary>
+        {r.debugTrace.join("\n")}
+      </details>
+    </div>
+  )
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

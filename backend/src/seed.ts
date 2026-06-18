@@ -1,0 +1,16 @@
+console.log("========================================");
+console.log("  Coral Bell Chamber Puzzle - Seed 脚本");
+console.log("========================================");
+console.log("");
+console.log("提示: 当前关卡数据已内置在 src/data/levels.ts 中");
+console.log("无需额外 seed 步骤，启动后端 API 即可直接读取关卡配置。");
+console.log("");
+console.log("后续如需从数据库或外部文件加载关卡数据，");
+console.log("可在此脚本中实现数据导入逻辑。");
+console.log("");
+console.log("当前已内置 3 个关卡占位:");
+console.log("  1. si  - 巳局·教学    (NO_RISK_AND_REACH)");
+console.log("  2. shen - 申局·资源短缺 (REACH_END_WITH_REWARD)");
+console.log("  3. wu  - 午局·隐藏条件 (HIDDEN_TRIGGERED_AND_END)");
+console.log("");
+console.log("完成。");
