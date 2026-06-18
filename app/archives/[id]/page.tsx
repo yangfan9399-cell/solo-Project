@@ -79,6 +79,10 @@ export default function ArchiveDetail({ params }: Props) {
   const [newVersion, setNewVersion] = useState({ changeLog: "", createdBy: "" });
   const [snapshotSaving, setSnapshotSaving] = useState(false);
   const [archiveReview, setArchiveReview] = useState<{ open: boolean; target: string }>({ open: false, target: "" });
+  const [approvalModal, setApprovalModal] = useState<{ open: boolean; mode: "apply" | "approve" | "reject" }>({
+    open: false,
+    mode: "apply",
+  });
 
   const loadArchive = useCallback(() => {
     if (!id) return;
@@ -115,17 +119,15 @@ export default function ArchiveDetail({ params }: Props) {
     try {
       const fresh = await fetch(`/api/archives/${id}`).then((r) => r.json());
       if (fresh && fresh.updatedAt && fresh.updatedAt !== loadedAt) {
-        const ok = confirm(
-          `⚠️ 版本冲突：此档案在您编辑期间已被他人修改（更新于 ${new Date(fresh.updatedAt).toLocaleString("zh-CN")}）。\n\n点击「确定」覆盖保存，点击「取消」放弃编辑并刷新。`
+        alert(
+          `❌ 版本冲突，已阻断保存！\n\n此档案在您编辑期间已被他人修改：\n  ·您载入时：${new Date(loadedAt).toLocaleString("zh-CN")}\n  ·最新版本：${new Date(fresh.updatedAt).toLocaleString("zh-CN")}\n\n请刷新页面以最新数据为基础重新编辑，旧表单内容已不可覆盖。`
         );
-        if (!ok) {
-          setArchive(fresh);
-          setForm(fresh);
-          setLoadedAt(fresh.updatedAt);
-          setEditing(false);
-          setSaving(false);
-          return;
-        }
+        setArchive(fresh);
+        setForm(fresh);
+        setLoadedAt(fresh.updatedAt);
+        setEditing(false);
+        setSaving(false);
+        return;
       }
       const res = await fetch(`/api/archives/${id}`, {
         method: "PATCH",
@@ -190,6 +192,63 @@ export default function ArchiveDetail({ params }: Props) {
       });
       fetch(`/api/archives/${id}/versions`).then((r) => r.json()).then(setVersions);
       fetch(`/api/archives/${id}/anomalies`).then((r) => r.json()).then(setAnomalies);
+    }
+  };
+
+  const submitApproval = async (mode: "apply" | "approve" | "reject") => {
+    const reasonInput = document.getElementById(`approval-${mode}-reason`) as HTMLInputElement | null;
+    const approverInput = document.getElementById(`approval-${mode}-by`) as HTMLInputElement | null;
+    const reason = reasonInput?.value?.trim();
+    const by = approverInput?.value?.trim() || "系统记录";
+    if (!reason) {
+      alert("请填写说明");
+      return;
+    }
+    let status = archive.status;
+    let logPrefix = "";
+    if (mode === "apply") {
+      logPrefix = "参数变更申请";
+    } else if (mode === "approve") {
+      logPrefix = "审批通过";
+      if (archive.status === "testing") status = "active";
+    } else if (mode === "reject") {
+      logPrefix = "审批驳回";
+    }
+    const fullReason = `${logPrefix}：${reason}`;
+    setApprovalModal({ open: false, mode: "apply" });
+    // 写入审批版本快照
+    const patchBody: any = {};
+    if (mode === "approve" && status !== archive.status) patchBody.status = status;
+    if (Object.keys(patchBody).length > 0) {
+      const patchRes = await fetch(`/api/archives/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patchBody),
+      });
+      if (patchRes.ok) {
+        const u = await patchRes.json();
+        setArchive(u);
+        setForm(u);
+        setLoadedAt(u.updatedAt);
+      }
+    }
+    const vRes = await fetch(`/api/archives/${id}/versions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        versionNumber: (versions[0]?.versionNumber ?? 0) + 1,
+        batchCode: `BATCH-${Date.now().toString(36).toUpperCase()}`,
+        changeLog: fullReason,
+        createdBy: by,
+        label: mode === "apply" ? "申请" : mode === "approve" ? "通过" : "驳回",
+        snapshot: archive,
+      }),
+    });
+    if (vRes.ok) {
+      fetch(`/api/archives/${id}/versions`).then((r) => r.json()).then(setVersions);
+      alert(`${logPrefix}已提交，记录已写入版本历史。`);
+    } else {
+      alert("提交失败，请重试");
     }
   };
 
@@ -278,6 +337,73 @@ export default function ArchiveDetail({ params }: Props) {
         </div>
       )}
 
+      {approvalModal.open && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 className="font-bold text-lg text-bow-dark">
+              {approvalModal.mode === "apply" && "📝 提交参数变更申请"}
+              {approvalModal.mode === "approve" && "✅ 审批通过确认"}
+              {approvalModal.mode === "reject" && "❌ 审批驳回确认"}
+            </h3>
+            <p className="text-sm text-leather-700">
+              档案：<b>{archive.name}</b>（当前状态：{statusMap[archive.status]?.label}）
+            </p>
+            <div>
+              <label className="label">
+                {approvalModal.mode === "apply" ? "申请说明（必填）" : "审批意见（必填）"}
+              </label>
+              <input
+                id={`approval-${approvalModal.mode}-reason`}
+                className="input"
+                placeholder={
+                  approvalModal.mode === "apply"
+                    ? "描述调整内容与目的，如：调整弦距至8.5英寸消除箭杆打臂"
+                    : approvalModal.mode === "approve"
+                    ? "如：参数符合规范，同意生效"
+                    : "说明驳回原因，如：弦距超出安全范围，需重新复核"
+                }
+              />
+            </div>
+            <div>
+              <label className="label">
+                {approvalModal.mode === "apply" ? "申请人" : "审批人"}
+              </label>
+              <input
+                id={`approval-${approvalModal.mode}-by`}
+                className="input"
+                placeholder="您的姓名或工号"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button className="btn btn-secondary" onClick={() => setApprovalModal({ open: false, mode: "apply" })}>
+                取消
+              </button>
+              {approvalModal.mode === "apply" && (
+                <button className="btn btn-primary" onClick={() => submitApproval("apply")}>
+                  📤 提交申请
+                </button>
+              )}
+              {approvalModal.mode === "approve" && (
+                <button
+                  className="btn btn-primary !bg-green-600 hover:!bg-green-700"
+                  onClick={() => submitApproval("approve")}
+                >
+                  ✅ 确认通过
+                </button>
+              )}
+              {approvalModal.mode === "reject" && (
+                <button
+                  className="btn btn-primary !bg-orange-600 hover:!bg-orange-700"
+                  onClick={() => submitApproval("reject")}
+                >
+                  ❌ 确认驳回
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -305,6 +431,31 @@ export default function ArchiveDetail({ params }: Props) {
                 <button className="btn btn-secondary" onClick={() => { setEditing(false); setForm(archive); }}>取消</button>
                 <button className="btn btn-primary" onClick={saveForm} disabled={saving}>
                   {saving ? "保存中..." : "💾 保存"}
+                </button>
+              </>
+            )}
+            {!editing && (
+              <>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setApprovalModal({ open: true, mode: "apply" })}
+                  title="提交参数变更申请"
+                >
+                  📝 申请提交
+                </button>
+                <button
+                  className="btn btn-secondary !bg-green-100 !text-green-800 hover:!bg-green-200 border-green-200"
+                  onClick={() => setApprovalModal({ open: true, mode: "approve" })}
+                  title="审批通过变更"
+                >
+                  ✅ 审批通过
+                </button>
+                <button
+                  className="btn btn-secondary !bg-orange-100 !text-orange-800 hover:!bg-orange-200 border-orange-200"
+                  onClick={() => setApprovalModal({ open: true, mode: "reject" })}
+                  title="审批驳回变更"
+                >
+                  ❌ 审批驳回
                 </button>
               </>
             )}
@@ -371,6 +522,8 @@ export default function ArchiveDetail({ params }: Props) {
                 {[
                   ["上弓梢重量", display(archive.upperTipWeight, " oz")],
                   ["下弓梢重量", display(archive.lowerTipWeight, " oz")],
+                  ["上弓梢梢差 (Tiller Top)", display(archive.tillerTop, ' "')],
+                  ["下弓梢梢差 (Tiller Bottom)", display(archive.tillerBottom, ' "')],
                   ["弓片弹力比", display(archive.limbRatio)],
                   ["弓片对齐", limbAlignmentLabels[archive.limbAlignment ?? ""] ?? display(archive.limbAlignment)],
                   ["中心射偏移", display(archive.centerShot, " mm")],
@@ -455,6 +608,12 @@ export default function ArchiveDetail({ params }: Props) {
                   </Field>
                   <Field label="下弓梢重量 (oz)">
                     <input type="number" step="0.1" className="input" value={form.lowerTipWeight ?? ""} onChange={(e) => setForm({ ...form, lowerTipWeight: Number(e.target.value) || undefined })} />
+                  </Field>
+                  <Field label="上弓梢梢差 Tiller (英寸)">
+                    <input type="number" step="0.05" className="input" value={form.tillerTop ?? ""} onChange={(e) => setForm({ ...form, tillerTop: Number(e.target.value) || undefined })} />
+                  </Field>
+                  <Field label="下弓梢梢差 Tiller (英寸)">
+                    <input type="number" step="0.05" className="input" value={form.tillerBottom ?? ""} onChange={(e) => setForm({ ...form, tillerBottom: Number(e.target.value) || undefined })} />
                   </Field>
                   <Field label="弓片弹力比">
                     <input type="number" step="0.1" className="input" value={form.limbRatio ?? ""} onChange={(e) => setForm({ ...form, limbRatio: Number(e.target.value) || undefined })} />
