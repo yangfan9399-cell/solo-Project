@@ -86,19 +86,21 @@ class NightVoyageGame {
       this.updateGameTabs();
     }
     
-    if (savedSessionId) {
-      this.sessionId = savedSessionId;
-      this.loadSession();
-    } else {
-      this.startNewGame();
-    }
-    
     if (savedReplay) {
       try {
         this.replayData = JSON.parse(savedReplay);
       } catch (e) {
         this.replayData = [];
       }
+    }
+    
+    if (savedSessionId) {
+      this.sessionId = savedSessionId;
+      this.loadSession();
+    } else if (this.replayData.length > 0) {
+      this.restoreFromLocalReplay();
+    } else {
+      this.startNewGame();
     }
   }
 
@@ -183,9 +185,39 @@ class NightVoyageGame {
       
       this.renderAll();
     } catch (error) {
-      console.error('Failed to load session:', error);
-      this.startNewGame();
+      console.error('Failed to load session from server:', error);
+      this.restoreFromLocalReplay();
     }
+  }
+
+  async restoreFromLocalReplay() {
+    if (this.replayData.length === 0) {
+      this.startNewGame();
+      return;
+    }
+    
+    const lastStep = this.replayData[this.replayData.length - 1];
+    const lastState = lastStep.state;
+    
+    if (!lastState || !lastState.gameId) {
+      this.startNewGame();
+      return;
+    }
+    
+    this.gameId = lastState.gameId;
+    this.updateGameTabs();
+    this.gameState = JSON.parse(JSON.stringify(lastState));
+    this.replayIndex = this.replayData.length - 1;
+    
+    this.sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    this.gameState.sessionId = this.sessionId;
+    
+    await this.loadGameInfo();
+    
+    this.renderAll();
+    
+    this.saveToStorage();
+    await this.saveReplayToServer();
   }
 
   async loadGameInfo() {

@@ -79,6 +79,11 @@ function checkGameStatus(state, game) {
     if (newState.calibrationMarks >= game.winCondition.target) {
       newState.status = 'won';
     }
+  } else if (game.winCondition.type === 'calibration_and_end') {
+    const reachedEnd = newState.currentNode === game.winCondition.endNode;
+    if (newState.calibrationMarks >= game.winCondition.target && reachedEnd) {
+      newState.status = 'won';
+    }
   } else if (game.winCondition.type === 'calibration_and_hidden') {
     if (newState.calibrationMarks >= game.winCondition.target && newState.jiaFailureFactor < 0.6) {
       newState.status = 'won';
@@ -192,6 +197,91 @@ app.get('/api/sessions/:sessionId', (req, res) => {
   res.json({ state });
 });
 
+function deterministicReplayAction(gameId, currentState, action, payload, randomOutcomes) {
+  const game = games[gameId];
+  let newState = deepClone(currentState);
+
+  if (action === 'move') {
+    const targetNode = payload.nodeId;
+    const moveCost = { paper: 2, ink: 1, light: 1 };
+    newState.resources.paper -= moveCost.paper;
+    newState.resources.ink -= moveCost.ink;
+    newState.resources.light -= moveCost.light;
+    newState.currentNode = targetNode;
+    if (!newState.visitedNodes.includes(targetNode)) {
+      newState.visitedNodes.push(targetNode);
+      newState.calibrationMarks += 0.5;
+    }
+    if (randomOutcomes && randomOutcomes.riskTriggered) {
+      newState.strippingValue -= randomOutcomes.damage;
+      newState.eventLog.push({
+        turn: newState.turn,
+        type: 'risk_triggered',
+        name: '风险触发',
+        description: `丑号风险触发，剥离值-${randomOutcomes.damage}`
+      });
+    }
+    if (randomOutcomes && randomOutcomes.rewardTriggered) {
+      newState.calibrationMarks += randomOutcomes.bonus;
+      newState.eventLog.push({
+        turn: newState.turn,
+        type: 'reward_triggered',
+        name: '奖励触发',
+        description: `申号奖励触发，定标痕+${randomOutcomes.bonus}`
+      });
+    }
+    newState.actionHistory.push({ action, payload, timestamp: Date.now() });
+  } else if (action === 'use_slot') {
+    newState.usedSlots += 1;
+    const slotType = payload.type;
+    if (slotType === 'repair') {
+      const repairAmount = 15;
+      newState.strippingValue = Math.min(newState.maxStrippingValue, newState.strippingValue + repairAmount);
+      newState.eventLog.push({ turn: newState.turn, type: 'slot_repair', name: '排演槽·修补', description: `使用排演槽修补纸船，剥离值+${repairAmount}` });
+    } else if (slotType === 'calibrate') {
+      newState.calibrationMarks += 1;
+      newState.eventLog.push({ turn: newState.turn, type: 'slot_calibrate', name: '排演槽·校准', description: '使用排演槽校准航向，定标痕+1' });
+    } else if (slotType === 'resupply') {
+      newState.resources.paper += 10;
+      newState.resources.ink += 8;
+      newState.resources.light += 5;
+      newState.eventLog.push({ turn: newState.turn, type: 'slot_resupply', name: '排演槽·补给', description: '使用排演槽召唤补给，资源小幅恢复' });
+    }
+    newState.actionHistory.push({ action, payload, timestamp: Date.now() });
+  } else if (action === 'end_turn') {
+    newState.turn += 1;
+    const turnEvents = game.events.filter(e => e.turn === newState.turn);
+    for (const event of turnEvents) {
+      newState = applyEffect(newState, event.effect);
+      newState.eventLog.push({
+        turn: newState.turn,
+        type: event.type,
+        name: event.name,
+        description: event.description,
+        effect: event.effect,
+        hidden: event.hidden || false
+      });
+    }
+    newState = checkHiddenConditions(newState, game);
+    newState.actionHistory.push({ action, timestamp: Date.now() });
+  }
+
+  newState.strippingValue = Math.max(0, newState.strippingValue);
+  newState = checkGameStatus(newState, game);
+  return newState;
+}
+
+function replayActionsFromRecords(gameId, records) {
+  const game = games[gameId];
+  if (!game) return null;
+  let state = initGameState(gameId);
+  for (let i = 1; i < records.length; i++) {
+    const record = records[i];
+    state = deterministicReplayAction(gameId, state, record.action, record.payload || {}, record.randomOutcomes || null);
+  }
+  return state;
+}
+
 app.post('/api/sessions/:sessionId/action', (req, res) => {
   const sessionId = req.params.sessionId;
   const state = gameSessions[sessionId];
@@ -205,6 +295,7 @@ app.post('/api/sessions/:sessionId/action', (req, res) => {
   const { action, payload } = req.body;
   const game = games[state.gameId];
   let newState = deepClone(state);
+  let randomOutcomes = null;
   
   if (action === 'move') {
     const targetNode = payload.nodeId;
@@ -236,6 +327,7 @@ app.post('/api/sessions/:sessionId/action', (req, res) => {
       newState.calibrationMarks += 0.5;
     }
     
+    randomOutcomes = {};
     const riskRoll = Math.random();
     if (riskRoll < newState.chouRisk) {
       const damage = Math.floor(5 + Math.random() * 8);
@@ -246,17 +338,26 @@ app.post('/api/sessions/:sessionId/action', (req, res) => {
         name: '风险触发',
         description: `丑号风险触发，剥离值-${damage}`
       });
+      randomOutcomes.riskTriggered = true;
+      randomOutcomes.damage = damage;
+    } else {
+      randomOutcomes.riskTriggered = false;
     }
     
-    if (Math.random() < newState.shenReward) {
-      const bonus = Math.floor(2 + Math.random() * 5);
-      newState.calibrationMarks += bonus * 0.5;
+    const rewardRoll = Math.random();
+    if (rewardRoll < newState.shenReward) {
+      const bonus = Math.floor(2 + Math.random() * 5) * 0.5;
+      newState.calibrationMarks += bonus;
       newState.eventLog.push({
         turn: newState.turn,
         type: 'reward_triggered',
         name: '奖励触发',
-        description: `申号奖励触发，定标痕+${bonus * 0.5}`
+        description: `申号奖励触发，定标痕+${bonus}`
       });
+      randomOutcomes.rewardTriggered = true;
+      randomOutcomes.bonus = bonus;
+    } else {
+      randomOutcomes.rewardTriggered = false;
     }
     
     newState.actionHistory.push({ action, payload, timestamp: Date.now() });
@@ -331,7 +432,8 @@ app.post('/api/sessions/:sessionId/action', (req, res) => {
   replayRecords[sessionId].push({
     turn: newState.turn,
     action,
-    payload,
+    payload: payload || null,
+    randomOutcomes,
     state: deepClone(newState),
     timestamp: Date.now()
   });
@@ -363,22 +465,28 @@ app.get('/api/sessions/:sessionId/replay/:step', (req, res) => {
 
 app.post('/api/sessions/:sessionId/settlement', (req, res) => {
   const sessionId = req.params.sessionId;
-  const state = gameSessions[sessionId];
+  const records = replayRecords[sessionId];
   
-  if (!state) {
-    return res.status(404).json({ error: 'Session not found' });
+  if (!records || records.length === 0) {
+    return res.status(404).json({ error: 'Replay records not found' });
   }
   
-  const game = games[state.gameId];
-  const records = replayRecords[sessionId] || [];
+  const gameId = records[0].state.gameId;
+  const game = games[gameId];
+  if (!game) {
+    return res.status(404).json({ error: 'Game definition not found' });
+  }
   
-  let finalStrippingValue = state.strippingValue;
+  const state = replayActionsFromRecords(gameId, records);
+  if (!state) {
+    return res.status(500).json({ error: 'Failed to recalculate state' });
+  }
+  
+  gameSessions[sessionId] = state;
+  
   let totalRiskEvents = 0;
   let totalRewardEvents = 0;
   let totalResourcesUsed = { paper: 0, ink: 0, light: 0 };
-  let slotsUsed = state.usedSlots;
-  let nodesVisited = state.visitedNodes.length;
-  let turnsPlayed = state.turn;
   
   for (const record of records) {
     if (record.action === 'move') {
@@ -392,6 +500,11 @@ app.post('/api/sessions/:sessionId/settlement', (req, res) => {
   const rewardEvents = state.eventLog.filter(e => e.type === 'reward_triggered' || e.type === 'reward');
   totalRiskEvents = riskEvents.length;
   totalRewardEvents = rewardEvents.length;
+  
+  const slotsUsed = state.usedSlots;
+  const nodesVisited = state.visitedNodes.length;
+  const turnsPlayed = state.turn;
+  const finalStrippingValue = state.strippingValue;
   
   let score = 0;
   score += state.calibrationMarks * 100;
@@ -416,8 +529,9 @@ app.post('/api/sessions/:sessionId/settlement', (req, res) => {
   res.json({
     settlement: {
       sessionId,
-      gameId: state.gameId,
+      gameId,
       gameName: game.name,
+      recalculated: true,
       finalState: {
         strippingValue: finalStrippingValue,
         maxStrippingValue: state.maxStrippingValue,
@@ -429,6 +543,7 @@ app.post('/api/sessions/:sessionId/settlement', (req, res) => {
         resources: state.resources,
         turn: turnsPlayed,
         maxTurns: state.maxTurns,
+        currentNode: state.currentNode,
         status: state.status
       },
       statistics: {

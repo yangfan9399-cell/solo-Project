@@ -113,8 +113,9 @@ const games = {
       { id: 'e6', name: '最后冲刺', type: 'risk', effect: { chouRisk: 0.1, strippingValue: -5 }, turn: 11, description: '临近终点风险加剧。' }
     ],
     winCondition: {
-      type: 'calibration',
+      type: 'calibration_and_end',
       target: 7,
+      endNode: 'end',
       description: '累计7个定标痕且到达终点'
     },
     loseCondition: {
