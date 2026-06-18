@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "demo": "node demo.js",
+    "demo:live": "node demo.js --keep"
   },
   "dependencies": {
     "express": "^4.22.2"

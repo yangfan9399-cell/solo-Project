@@ -55,7 +55,7 @@ async function playSi() {
   for (const [t, useTrans] of moves) {
     const mv = await api('POST', `/sessions/${s.sessionId}/move`, { targetNode: t, useTranslation: useTrans });
     const cs = mv.currentState;
-    const ev = mv.eventTriggered ? ` ⚑${mv.eventTriggered.event.name}` : '';
+    const ev = mv.eventTriggered ? ` ⚑${mv.eventTriggered.name}` : '';
     const tr = useTrans ? ' [+转译]' : '';
     console.log(`  → ${pad(labels[t], 6)} 换轨=${pad(cs.railSwitchValue, 2)} 转译=${pad(cs.translationSlots, 2)} 复写=${pad(cs.rewriteTraces, 2)} 巳号风险=${pad(cs.siRisk, 2)}${ev}${tr}  [${mv.gameStatus}]`);
     if (mv.gameStatus !== 'playing') break;
@@ -86,7 +86,7 @@ async function playShen() {
     try {
       const mv = await api('POST', `/sessions/${s.sessionId}/move`, { targetNode: t, useTranslation: useTrans });
       const cs = mv.currentState;
-      const ev = mv.eventTriggered ? ` ⚑${mv.eventTriggered.event.name}` : '';
+      const ev = mv.eventTriggered ? ` ⚑${mv.eventTriggered.name}` : '';
       const tr = useTrans ? ' [+转译]' : '';
       console.log(`  → ${pad(labels[t], 6)} 换轨=${pad(cs.railSwitchValue, 2)} 转译=${pad(cs.translationSlots, 2)} 申号奖励=${pad(cs.shenReward, 2)}${ev}${tr}  [${mv.gameStatus}]`);
       if (mv.gameStatus !== 'playing') break;
@@ -116,7 +116,7 @@ async function playWu() {
     const cs = mv.currentState;
     const flames = cs.wuFlames || {};
     const fs = `紫:${flames.a ? '✔' : '✗'} 绯:${flames.b ? '✔' : '✗'} 金:${flames.c ? '✔' : '✗'}`;
-    const ev = mv.eventTriggered ? ` ⚑${mv.eventTriggered.event.name}` : '';
+    const ev = mv.eventTriggered ? ` ⚑${mv.eventTriggered.name}` : '';
     console.log(`  → ${pad(labels[t], 6)} 三焰={${fs}} 午号因子=${pad(Math.max(0, cs.wuFailureFactor), 2)} 隐藏=${cs.hiddenUnlocked ? '★已触发' : '未触发'}${ev}`);
   }
 
@@ -148,7 +148,7 @@ async function testHistoryStructure() {
   console.log(`  从 history 恢复会话: sessionId=${restored.sessionId.slice(0, 16)}...  节点=${restored.currentState.currentNode}  换轨=${restored.currentState.railSwitchValue}  可用移动=${JSON.stringify(restored.availableMoves.map(m => m.target))}`);
 
   const mvAfter = await api('POST', `/sessions/${restored.sessionId}/move`, { targetNode: 'D', useTranslation: false });
-  console.log(`  恢复后继续移动 → D: 节点=${mvAfter.currentState.currentNode}  事件=${mvAfter.eventTriggered?.event?.name || '无'}  [${mvAfter.gameStatus}]`);
+  console.log(`  恢复后继续移动 → D: 节点=${mvAfter.currentState.currentNode}  事件=${mvAfter.eventTriggered?.name || '无'}  [${mvAfter.gameStatus}]`);
   console.log(`  ✔ localStorage→/sessions/restore→继续推演 闭环验证通过`);
   return true;
 }

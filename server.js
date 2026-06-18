@@ -210,32 +210,43 @@ app.post('/api/sessions/:sessionId/move', (req, res) => {
   state.steps += 1;
 
   let eventTriggered = null;
+  let autoTriggeredEvent = null;
   const nodeEvents = Object.values(config.events).filter(e => e.node === targetNode && !e.auto);
   if (nodeEvents.length > 0) {
     const untriggered = nodeEvents.filter(e => !state.eventsTriggered.includes(e.id));
     if (untriggered.length > 0) {
       const ev = untriggered[0];
       state.eventsTriggered.push(ev.id);
-      const beforeAuto = state._autoTriggeredEvent;
       const newState = applyEffects(state, ev.effects, config);
       Object.assign(state, newState);
       if (state._autoTriggeredEvent) {
+        autoTriggeredEvent = state._autoTriggeredEvent;
         state.eventsTriggered = state.eventsTriggered.filter((e, i, arr) => arr.indexOf(e) === i);
       }
       delete state._autoTriggeredEvent;
       eventTriggered = {
-        event: ev,
-        autoTriggered: beforeAuto !== state._autoTriggeredEvent ? state._autoTriggeredEvent : null
+        id: ev.id,
+        name: ev.name,
+        type: ev.type,
+        description: ev.description,
+        effects: ev.effects || null
       };
     }
   }
 
-  const wuConfig = GAME_CONFIGS[session.gameId];
   if (session.gameId === 'wu' && state.wuFlames) {
     const allLit = state.wuFlames.a && state.wuFlames.b && state.wuFlames.c;
-    if (allLit && !session.history.some(h => h.eventTriggered && h.eventTriggered.event && h.eventTriggered.event.id === 'event_three_flames')) {
-      if (!state.eventsTriggered.includes('event_three_flames')) {
+    if (allLit && !session.history.some(h => h.eventTriggered && h.eventTriggered.id === 'event_three_flames') && !(eventTriggered && eventTriggered.id === 'event_three_flames')) {
+      const hiddenEvent = config.events['event_three_flames'];
+      if (hiddenEvent && !state.eventsTriggered.includes('event_three_flames')) {
         state.eventsTriggered.push('event_three_flames');
+        autoTriggeredEvent = {
+          id: hiddenEvent.id,
+          name: hiddenEvent.name,
+          type: hiddenEvent.type,
+          description: hiddenEvent.description,
+          effects: hiddenEvent.effects || null
+        };
       }
     }
   }
@@ -293,11 +304,11 @@ app.get('/api/sessions/:sessionId/history', (req, res) => {
     action: h.action,
     state: deepClone(h.state),
     eventTriggered: h.eventTriggered ? {
-      id: h.eventTriggered.event.id,
-      name: h.eventTriggered.event.name,
-      type: h.eventTriggered.event.type,
-      description: h.eventTriggered.event.description,
-      effects: h.eventTriggered.event.effects || null
+      id: h.eventTriggered.id,
+      name: h.eventTriggered.name,
+      type: h.eventTriggered.type,
+      description: h.eventTriggered.description,
+      effects: h.eventTriggered.effects || null
     } : null
   }));
 
@@ -392,10 +403,10 @@ app.post('/api/sessions/:sessionId/settle', (req, res) => {
 
   const eventsFired = session.history.filter(h => h.eventTriggered).map(h => ({
     step: h.step,
-    id: h.eventTriggered.event.id,
-    name: h.eventTriggered.event.name,
-    type: h.eventTriggered.event.type,
-    description: h.eventTriggered.event.description
+    id: h.eventTriggered.id,
+    name: h.eventTriggered.name,
+    type: h.eventTriggered.type,
+    description: h.eventTriggered.description
   }));
 
   const detailBreakdown = [];
@@ -470,6 +481,32 @@ app.post('/api/sessions/restore', (req, res) => {
 
   const sid = sessionData.sessionId;
   sessions[sid] = deepClone(sessionData);
+
+  sessions[sid].history = sessions[sid].history.map(h => {
+    const normalized = { ...h };
+    if (normalized.state && !Array.isArray(normalized.state.unlockedEdges)) {
+      normalized.state.unlockedEdges = [];
+    }
+    if (normalized.state && sessionData.gameId === 'wu' && !normalized.state.wuFlames) {
+      normalized.state.wuFlames = { a: false, b: false, c: false };
+    }
+    if (normalized.eventTriggered) {
+      const et = normalized.eventTriggered;
+      if (et.event) {
+        normalized.eventTriggered = {
+          id: et.event.id,
+          name: et.event.name,
+          type: et.event.type,
+          description: et.event.description,
+          effects: et.event.effects || null
+        };
+      } else if (!et.id) {
+        normalized.eventTriggered = null;
+      }
+    }
+    return normalized;
+  });
+
   const latestState = sessions[sid].history[sessions[sid].history.length - 1].state;
 
   res.json({
