@@ -9,6 +9,21 @@ const LABELS = {
   beatPhase: '相位', integrity: '完整度', tension: '张力'
 };
 
+const CONDITION_CHECKS = {
+  xin: {
+    win: (s) => s.beatPhase >= 0.48 && s.beatPhase <= 0.52 && s.integrity >= 70,
+    fail: (s) => s.xinRisk >= 80 || s.peelMarks >= 5 || s.integrity <= 0
+  },
+  shen: {
+    win: (s) => s.beatPhase >= 0.48 && s.beatPhase <= 0.52 && s.rewriteValue >= 60 && s.integrity >= 60,
+    fail: (s) => s.xinRisk >= 75 || s.peelMarks >= 4 || s.integrity <= 0
+  },
+  wu: {
+    win: (s) => s.beatPhase >= 0.48 && s.beatPhase <= 0.52 && s.rewriteValue >= 70 && s.integrity >= 50 && s.peelMarks <= 3,
+    fail: (s) => (s.xinRisk + s.peelMarks * 10 + s.tension) * s.wuFailFactor >= 900 || s.integrity <= 0
+  }
+};
+
 let state = {
   scenarioId: 'xin',
   scenario: null,
@@ -434,9 +449,13 @@ function autoCheckEnd() {
   const s = state.current;
   const steps = state.steps.length;
   const maxSteps = state.scenario.maxSteps;
+  const checks = CONDITION_CHECKS[state.scenarioId];
+  if (!checks) return;
 
-  if (state.scenario.failCondition.check(s, steps, maxSteps) || steps >= maxSteps) {
+  if (checks.fail(s) || steps >= maxSteps) {
     showToast('已触发终局条件，请点击结算', 'warn');
+  } else if (checks.win(s)) {
+    showToast('已达成胜利条件，可点击结算', 'ok');
   }
 }
 

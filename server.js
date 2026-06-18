@@ -266,7 +266,7 @@ app.get('/api/scenario/:id', (req, res) => {
   if (!sc) return res.status(404).json({ error: '局不存在' });
   const events = sc.eventPool.map(e => ({
     id: e.id, name: e.name, cost: e.cost, tags: e.tags, flavor: e.flavor,
-    require: e.require || null, hidden: e.hidden || false
+    effect: e.effect, require: e.require || null, hidden: e.hidden || false
   }));
   res.json({
     scenario: {
