@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 30, 20, 10;
+  --background-start-rgb: 250, 246, 241;
+  --background-end-rgb: 243, 235, 224;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb)))
+    rgb(var(--background-start-rgb));
+  font-family: Georgia, Cambria, "Times New Roman", serif;
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-colors duration-150 border;
+  }
+  .btn-primary {
+    @apply bg-bow text-white border-bow-dark hover:bg-bow-light;
+  }
+  .btn-secondary {
+    @apply bg-leather-100 text-bow-dark border-leather-300 hover:bg-leather-200;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white border-red-700 hover:bg-red-700;
+  }
+  .card {
+    @apply bg-white/80 backdrop-blur rounded-lg shadow-sm border border-leather-200 p-5;
+  }
+  .label {
+    @apply block text-sm font-medium text-bow-dark mb-1;
+  }
+  .input {
+    @apply w-full px-3 py-2 border border-leather-300 rounded-md bg-white text-bow-dark
+           focus:outline-none focus:ring-2 focus:ring-bow-light focus:border-bow;
+  }
+  .stat {
+    @apply flex flex-col items-center justify-center p-4 rounded-lg bg-leather-50 border border-leather-200;
+  }
+  .badge {
+    @apply inline-block px-2 py-0.5 rounded text-xs font-semibold;
+  }
+}
+
+.target-ring {
+  fill: none;
+  stroke-width: 0.08;
+}
