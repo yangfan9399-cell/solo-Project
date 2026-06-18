@@ -1,0 +1,13 @@
+{
+  "name": "yanhu-balloon-resource-dispatch",
+  "version": "1.0.0",
+  "description": "盐湖气球资源配给盘 - 资源调度挑战游戏",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["game", "resource-dispatch", "yanhu-balloon"],
+  "author": "",
+  "license": "MIT"
+}

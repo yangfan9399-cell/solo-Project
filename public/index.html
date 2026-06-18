@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>盐湖气球资源配给盘</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="header-left">
+        <h1 class="app-title">🎈 盐湖气球资源配给盘</h1>
+        <div class="app-subtitle">Yanhu Balloon Resource Dispatch Panel</div>
+      </div>
+      <div class="header-center" id="scenarioSelector">
+        <div class="scenario-tabs">
+          <button class="scenario-btn active" data-id="yi">
+            <span class="scenario-label">乙局</span>
+            <span class="scenario-diff">教学</span>
+          </button>
+          <button class="scenario-btn" data-id="ren">
+            <span class="scenario-label">壬局</span>
+            <span class="scenario-diff">困难</span>
+          </button>
+          <button class="scenario-btn" data-id="zi">
+            <span class="scenario-label">子局</span>
+            <span class="scenario-diff">谜团</span>
+          </button>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="round-info" id="roundInfo">第 1 / 8 回</div>
+        <button class="btn btn-primary" id="settleBtn">📊 结算</button>
+        <button class="btn btn-warn" id="restartBtn">🔄 重置</button>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <section class="panel panel-board" id="panelBoard">
+        <div class="panel-header">
+          <h2>📐 局面盘</h2>
+          <div class="panel-actions">
+            <button class="btn-icon" id="actionSeal" title="封存节点">🔒</button>
+            <button class="btn-icon" id="actionRewrite" title="使用复写槽">✏️</button>
+            <button class="btn-icon" id="actionDispatch" title="资源调度">⚙️</button>
+            <button class="btn-icon" id="actionSignal" title="信号释放">📡</button>
+            <button class="btn-icon" id="actionSkip" title="跳过回合">⏭️</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="stats-bar">
+            <div class="stat stat-sealed">
+              <div class="stat-label">盐湖气球封存值</div>
+              <div class="stat-value"><span id="statSealed">100</span></div>
+              <div class="stat-bar"><div class="stat-bar-fill" id="barSealed"></div></div>
+            </div>
+            <div class="stat stat-rewrite">
+              <div class="stat-label">盐湖气球复写槽</div>
+              <div class="stat-value"><span id="statRewrite">5</span></div>
+              <div class="stat-bar"><div class="stat-bar-fill" id="barRewrite"></div></div>
+            </div>
+            <div class="stat stat-trace">
+              <div class="stat-label">盐湖气球转译痕</div>
+              <div class="stat-value"><span id="statTrace">0</span></div>
+              <div class="stat-bar"><div class="stat-bar-fill" id="barTrace"></div></div>
+            </div>
+            <div class="stat stat-risk">
+              <div class="stat-label">乙号风险</div>
+              <div class="stat-value"><span id="statRisk">0</span></div>
+              <div class="stat-bar stat-bar-danger"><div class="stat-bar-fill" id="barRisk"></div></div>
+            </div>
+            <div class="stat stat-reward">
+              <div class="stat-label">壬号奖励</div>
+              <div class="stat-value"><span id="statReward">0</span></div>
+              <div class="stat-bar stat-bar-success"><div class="stat-bar-fill" id="barReward"></div></div>
+            </div>
+            <div class="stat stat-fail">
+              <div class="stat-label">子号失败因子</div>
+              <div class="stat-value"><span id="statFail">0</span></div>
+              <div class="stat-bar stat-bar-danger"><div class="stat-bar-fill" id="barFail"></div></div>
+            </div>
+          </div>
+
+          <div class="resource-bar">
+            <div class="resource">
+              <span class="resource-icon">⚡</span>
+              <span class="resource-label">能量</span>
+              <span class="resource-value" id="resEnergy">300</span>
+            </div>
+            <div class="resource">
+              <span class="resource-icon">💨</span>
+              <span class="resource-label">气 囊</span>
+              <span class="resource-value" id="resGas">250</span>
+            </div>
+            <div class="resource">
+              <span class="resource-icon">📶</span>
+              <span class="resource-label">信号</span>
+              <span class="resource-value" id="resSignal">150</span>
+            </div>
+          </div>
+
+          <div class="map-container" id="mapContainer">
+            <svg class="map-svg" id="mapSvg" viewBox="0 0 500 280" preserveAspectRatio="xMidYMid meet">
+            </svg>
+            <div class="action-panel" id="actionPanel" style="display:none;">
+              <div class="action-panel-header" id="actionPanelHeader">封存操作</div>
+              <div class="action-panel-body" id="actionPanelBody"></div>
+              <div class="action-panel-footer">
+                <button class="btn btn-cancel" id="actionCancel">取消</button>
+                <button class="btn btn-confirm" id="actionConfirm">确认</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="scenario-desc-box" id="scenarioDesc">
+            <div class="desc-title">🎯 任务简报</div>
+            <div class="desc-content" id="scenarioDescContent"></div>
+            <div class="desc-targets">
+              <div class="target-item" id="targetSealed">封存值 ≥ 280</div>
+              <div class="target-item" id="targetReward">壬号奖励 ≥ 60</div>
+              <div class="target-item" id="targetRisk">乙号风险 ≤ 40</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-events" id="panelEvents">
+        <div class="panel-header">
+          <h2>🎁 事件匣</h2>
+          <div class="event-count"><span id="eventFired">0</span> / <span id="eventTotal">6</span></div>
+        </div>
+        <div class="panel-body events-body" id="eventsList">
+        </div>
+      </section>
+
+      <section class="panel panel-timeline" id="panelTimeline">
+        <div class="panel-header">
+          <h2>⏳ 回放轴</h2>
+          <div class="panel-actions">
+            <button class="btn-icon" id="playbackBtn" title="回放">▶️</button>
+            <button class="btn-icon" id="clearTimelineBtn" title="清空">🗑️</button>
+          </div>
+        </div>
+        <div class="panel-body timeline-body" id="timelineBody">
+          <div class="timeline-track" id="timelineTrack"></div>
+          <div class="timeline-details" id="timelineDetails">
+            <div class="empty-tip">点击左侧节点查看回合详情</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-settle" id="panelSettle">
+        <div class="panel-header">
+          <h2>📒 结算簿</h2>
+          <div class="panel-actions">
+            <button class="btn-icon" id="refreshSettleBtn" title="刷新后端重算">🔁</button>
+          </div>
+        </div>
+        <div class="panel-body settle-body" id="settleBody">
+          <div class="settle-empty">
+            <div class="empty-icon">📋</div>
+            <div class="empty-text">完成操作后，点击右上角「结算」按钮<br>后端将按封存值和调度步骤重算结果</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="modal" id="modal" style="display:none;">
+      <div class="modal-mask"></div>
+      <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script src="/js/events.js"></script>
+  <script src="/js/timeline.js"></script>
+  <script src="/js/settlement.js"></script>
+  <script src="/js/board.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

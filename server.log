@@ -1,0 +1,9 @@
+
+========================================
+  盐湖气球资源配给盘 已启动
+  访问地址: http://localhost:3000
+  启动方式: npm start  或  node server.js
+========================================
+
+(node:40875) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
