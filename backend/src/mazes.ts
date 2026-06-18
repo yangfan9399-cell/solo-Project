@@ -231,14 +231,14 @@ const mazeB: MazeConfig = {
       id: 'e_1_2',
       name: '古老指引',
       type: 'info',
-      description: '收集3处倒排痕将触发隐藏觉醒，点亮值+5，丁号奖励+3！',
+      description: '收集3处倒排痕将触发隐藏觉醒，点亮值+8，丁号奖励+3！觉醒后终点门槛降低为点亮值≥4。',
       effect: { lightValue: 1 },
     },
     'e_3_6': {
       id: 'e_3_6',
       name: '倒排铭文',
       type: 'info',
-      description: '倒排痕散布于迷宫深处，循路而行方可觉醒。',
+      description: '倒排痕散布于迷宫三处，循路收集后觉醒之力将助你直达终点。',
       effect: { lightValue: 1 },
     },
     'h_3_2': {
