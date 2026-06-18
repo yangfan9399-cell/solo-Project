@@ -526,6 +526,58 @@ body {
 .settle-lose .settle-status { color: #e06c6c; }
 .settle-playing .settle-status { color: #8fc5e0; }
 
+.settle-source-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    font-size: 12px;
+}
+
+.source-backend {
+    background: rgba(124, 197, 124, 0.1);
+    border: 1px solid #4a7a5a;
+}
+
+.source-local {
+    background: rgba(217, 140, 92, 0.1);
+    border: 1px solid #7a5a3a;
+}
+
+.source-label {
+    letter-spacing: 1px;
+}
+
+.source-backend .source-label { color: #7cc57c; }
+.source-local .source-label { color: #d98c5c; }
+
+.source-ts {
+    color: #6a5a4a;
+    font-family: "Georgia", serif;
+    font-size: 11px;
+}
+
+.settle-fallback-warn {
+    padding: 8px 14px;
+    background: rgba(224, 108, 108, 0.1);
+    border-left: 2px solid #e06c6c;
+    border-radius: 0 3px 3px 0;
+    color: #e0a0a0;
+    font-size: 12px;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.settle-loading {
+    text-align: center;
+    padding: 30px;
+    color: #8fc5e0;
+    font-size: 14px;
+    letter-spacing: 2px;
+}
+
 .settle-section {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid #3a3028;

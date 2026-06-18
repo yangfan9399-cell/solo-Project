@@ -107,7 +107,7 @@ MeteorWorkshop.Events = {
             name: '幽邃采掘',
             description: '从秘境矿脉取材，品质不明。',
             cost: { unlockSlot: 1 },
-            effect: { unlockValue: 4, maoFailure: 2 },
+            effect: { unlockValue: 5, maoFailure: 2 },
             category: 'produce'
         },
         {
@@ -122,7 +122,7 @@ MeteorWorkshop.Events = {
             id: 'mao_e3',
             name: '壬号献祭',
             description: '主动提升风险以换取秘境之力。',
-            cost: { renRisk: 3 },
+            cost: { renRisk: 2 },
             effect: { maoFailure: 3, unlockValue: 3 },
             category: 'ritual'
         },
@@ -138,15 +138,15 @@ MeteorWorkshop.Events = {
             id: 'mao_e5',
             name: '卯号共鸣',
             description: '主动引导失败因子，寻找其中规律。',
-            cost: { unlockValue: 2, renRisk: 1 },
-            effect: { maoFailure: 3, traceMark: 2 },
+            cost: { unlockValue: 1, renRisk: 1 },
+            effect: { maoFailure: 2, traceMark: 2 },
             category: 'resonance'
         },
         {
             id: 'mao_e6',
             name: '陨核萃炼',
             description: '从陨核深处提取终极力量。',
-            cost: { traceMark: 3, maoFailure: 2, unlockSlot: 1 },
+            cost: { traceMark: 2, maoFailure: 2, unlockSlot: 1 },
             effect: { unlockValue: 12, dingReward: 2 },
             category: 'ultimate'
         },
@@ -154,9 +154,25 @@ MeteorWorkshop.Events = {
             id: 'mao_e7',
             name: '隐匿之触',
             description: '触发隐藏条件的关键一步。',
-            cost: { maoFailure: 1, renRisk: 2, dingReward: 1 },
+            cost: { maoFailure: 1, renRisk: 1, dingReward: 1 },
             effect: { traceMark: 4, unlockValue: 5 },
             category: 'hidden'
+        },
+        {
+            id: 'mao_e8',
+            name: '基础锻造',
+            description: '以失败因子的经验为燃料，稳健产出解锁值。',
+            cost: { maoFailure: 1 },
+            effect: { unlockValue: 4 },
+            category: 'forge'
+        },
+        {
+            id: 'mao_e9',
+            name: '陨铁回炉',
+            description: '消耗奖励额度重铸解锁槽，延续运营。',
+            cost: { dingReward: 1 },
+            effect: { unlockSlot: 1, maoFailure: 1 },
+            category: 'recycle'
         }
     ]
 };
@@ -174,5 +190,7 @@ MeteorWorkshop.EventCategoryLabels = {
     ritual: '祭仪',
     resonance: '共鸣',
     ultimate: '萃炼',
-    hidden: '隐匿'
+    hidden: '隐匿',
+    forge: '锻造',
+    recycle: '回炉'
 };

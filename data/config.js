@@ -100,14 +100,14 @@ MeteorWorkshop.Sessions = {
             maoFailure: 5
         },
         winCondition: function(state, steps) {
-            return state.unlockValue >= 50 && state.traceMark >= 8 && state.maoFailure >= 15 && state.maoFailure <= 20;
+            return state.unlockValue >= 45 && state.traceMark >= 8 && state.maoFailure >= 15 && state.maoFailure <= 20;
         },
         loseCondition: function(state, steps) {
             return state.maoFailure > 25 || state.renRisk >= 40 || steps > 30;
         },
-        winFormula: '（表面）解锁值≥50',
+        winFormula: '（表面）解锁值≥45',
         loseFormula: '（表面）壬号风险≥40',
-        hiddenHint: '【隐藏提示】卯号失败因子需落在特定区间内，溯源痕是关键。',
+        hiddenHint: '【隐藏提示】卯号失败因子需落在15~20区间，溯源痕≥8也是必要条件。失败因子可作燃料。',
         mapName: '陨铁熔炉·秘境',
         mapNodes: [
             { id: 'n1', name: '幽邃入口', pos: { x: 10, y: 30 } },
