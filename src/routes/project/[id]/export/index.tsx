@@ -132,6 +132,7 @@ export default component$(() => {
   const copied = useSignal(false);
   const exportGenerated = useSignal(false);
   const exportError = useSignal('');
+  const currentFormat = useSignal<'json' | 'csv'>('json');
 
   useVisibleTask$(({ track }) => {
     track(() => location.url.pathname);
@@ -226,6 +227,7 @@ export default component$(() => {
     exportContent.value = content;
     viewExportId.value = null;
     viewContent.value = '';
+    currentFormat.value = scope.value === 'summary' ? 'json' : format.value;
     exportGenerated.value = true;
     setTimeout(() => { exportGenerated.value = false; }, 3000);
     state.exports = getAllExports(projectId);
@@ -242,8 +244,7 @@ export default component$(() => {
   const handleDownload = $(() => {
     const text = exportContent.value || viewContent.value;
     if (text.length === 0) return;
-    const isSummary = scope.value === 'summary';
-    const ext = isSummary ? 'json' : (format.value === 'json' ? 'json' : 'csv');
+    const ext = currentFormat.value;
     const mimeType = ext === 'json' ? 'application/json' : 'text/csv';
     const blob = new Blob([text], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -265,7 +266,8 @@ export default component$(() => {
     } else {
       viewExportId.value = record.id;
       viewContent.value = record.content;
-      exportContent.value = '';
+      exportContent.value = record.content;
+      currentFormat.value = record.format as 'json' | 'csv';
     }
   });
 

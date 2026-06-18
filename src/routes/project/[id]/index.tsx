@@ -346,7 +346,7 @@ export default component$(() => {
             <Link href={`/project/${projectId}/history`} class="btn-secondary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
               版本历史
             </Link>
-          </div> as any
+          </div>
         }
       />
 
