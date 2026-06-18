@@ -18,7 +18,16 @@ export async function POST(
   await initSchema();
   const { id } = await params;
   const body = await req.json();
-  const created = pointsRepo.create({ archiveId: id, ...body });
+
+  pointsRepo.clearByArchive(id);
+
+  const items = Array.isArray(body) ? body : [body];
+  const created: any[] = [];
+  for (const p of items) {
+    const { id: _id, archiveId: _aid, ...rest } = p;
+    created.push(pointsRepo.create({ archiveId: id, ...rest }));
+  }
+
   return NextResponse.json(created, { status: 201 });
 }
 

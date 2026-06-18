@@ -17,12 +17,12 @@ export async function GET() {
       : 0;
 
   return NextResponse.json({
-    totalArchives: archives.length,
-    inUse,
+    archivesTotal: archives.length,
+    active: inUse,
     archived,
-    highAnomalies,
-    totalAnomalies: anomalies.length,
-    equipmentCount: equipment.length,
+    anomaliesHigh: highAnomalies,
+    anomaliesTotal: anomalies.length,
+    equipmentTotal: equipment.length,
     avgDrawWeight: Number(avgDrawWeight.toFixed(1)),
   });
 }
