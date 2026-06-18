@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>苔藓邮站路径解谜游戏</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1 class="title">🌿 苔藓邮站路径解谜游戏</h1>
+      <div class="level-selector">
+        <button class="level-btn active" data-level="ji">己局 · 教学</button>
+        <button class="level-btn" data-level="ren">壬局 · 资源短缺</button>
+        <button class="level-btn" data-level="geng">庚局 · 隐藏条件</button>
+      </div>
+    </header>
+
+    <main class="game-container">
+      <section class="panel panel-board" id="panel-board">
+        <div class="panel-header">
+          <h2>局面盘</h2>
+          <div class="status-chips">
+            <span class="chip chip-convert" title="苔藓邮站折算值">
+              <span class="chip-icon">🍀</span>
+              <span class="chip-label">折算值</span>
+              <span class="chip-value" id="chip-convert">0</span>
+            </span>
+            <span class="chip chip-slot" title="苔藓邮站定标槽">
+              <span class="chip-icon">🔋</span>
+              <span class="chip-label">定标槽</span>
+              <span class="chip-value" id="chip-slot">0</span>
+            </span>
+            <span class="chip chip-trace" title="苔藓邮站排演痕">
+              <span class="chip-icon">🪶</span>
+              <span class="chip-label">排演痕</span>
+              <span class="chip-value" id="chip-trace">0</span>
+            </span>
+            <span class="chip chip-risk" title="己号风险">
+              <span class="chip-icon">⚠️</span>
+              <span class="chip-label">己号风险</span>
+              <span class="chip-value" id="chip-risk">0</span>
+            </span>
+            <span class="chip chip-reward" title="壬号奖励">
+              <span class="chip-icon">💎</span>
+              <span class="chip-label">壬号奖励</span>
+              <span class="chip-value" id="chip-reward">0</span>
+            </span>
+            <span class="chip chip-fail" title="庚号失败因子">
+              <span class="chip-icon">💀</span>
+              <span class="chip-label">庚号失败</span>
+              <span class="chip-value" id="chip-fail">0</span>
+            </span>
+          </div>
+        </div>
+        <div class="board-wrapper">
+          <div class="board" id="board"></div>
+          <div class="board-legend">
+            <span><i class="tile-icon start">🚩</i>起点</span>
+            <span><i class="tile-icon end">🏁</i>终点</span>
+            <span><i class="tile-icon path">🟢</i>邮路</span>
+            <span><i class="tile-icon moss">🌿</i>苔藓</span>
+            <span><i class="tile-icon rock">🪨</i>岩障</span>
+            <span><i class="tile-icon reward">💎</i>壬号</span>
+            <span><i class="tile-icon risk">⚠️</i>己号</span>
+            <span><i class="tile-icon fail">💀</i>庚号</span>
+          </div>
+        </div>
+        <div class="board-actions">
+          <button class="btn btn-primary" id="btn-undo" disabled>↶ 撤销一步</button>
+          <button class="btn btn-secondary" id="btn-restart">🔄 重新开始</button>
+        </div>
+      </section>
+
+      <aside class="side-panels">
+        <section class="panel panel-events" id="panel-events">
+          <div class="panel-header">
+            <h2>事件匣</h2>
+            <span class="event-count" id="event-count">0</span>
+          </div>
+          <div class="event-list" id="event-list">
+            <div class="event-empty">暂无事件，开始探索邮路吧…</div>
+          </div>
+        </section>
+
+        <section class="panel panel-replay" id="panel-replay">
+          <div class="panel-header">
+            <h2>回放轴</h2>
+            <span class="step-count" id="step-count">0 步</span>
+          </div>
+          <div class="replay-track" id="replay-track">
+            <div class="replay-empty">尚未踏出第一步…</div>
+          </div>
+          <div class="replay-actions">
+            <button class="btn btn-small" id="btn-play" disabled>▶ 播放</button>
+            <button class="btn btn-small" id="btn-reset" disabled>⏮ 回到起点</button>
+          </div>
+        </section>
+
+        <section class="panel panel-settlement" id="panel-settlement">
+          <div class="panel-header">
+            <h2>结算簿</h2>
+            <span class="settle-status" id="settle-status">进行中</span>
+          </div>
+          <div class="settle-content" id="settle-content">
+            <div class="settle-item">
+              <span class="settle-label">总折算值</span>
+              <span class="settle-value" id="settle-convert">—</span>
+            </div>
+            <div class="settle-item">
+              <span class="settle-label">路径步数</span>
+              <span class="settle-value" id="settle-steps">—</span>
+            </div>
+            <div class="settle-item">
+              <span class="settle-label">壬号奖励</span>
+              <span class="settle-value" id="settle-reward">—</span>
+            </div>
+            <div class="settle-item">
+              <span class="settle-label">己号风险</span>
+              <span class="settle-value" id="settle-risk">—</span>
+            </div>
+            <div class="settle-item">
+              <span class="settle-label">庚号因子</span>
+              <span class="settle-value" id="settle-fail">—</span>
+            </div>
+            <div class="settle-divider"></div>
+            <div class="settle-verdict" id="settle-verdict">
+              抵达终点后由后端式结算器重算
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal" id="modal">
+        <h3 id="modal-title">提示</h3>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="modal-confirm">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
