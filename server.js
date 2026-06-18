@@ -145,10 +145,17 @@ function recalculateFromHistory(config, history) {
 
     for (let i = 0; i < history.length; i++) {
         const entry = history[i];
-        let effects = { ...(entry.effects || {}) };
+        let effects;
 
-        if (entry.special) {
-            effects = handleSpecialEffect(entry.special, stats, effects);
+        if (entry.baseEffect !== undefined) {
+            effects = { ...entry.baseEffect };
+            if (entry.special) {
+                effects = handleSpecialEffect(entry.special, stats, effects);
+            }
+        } else if (entry.special) {
+            effects = { ...(entry.effects || {}) };
+        } else {
+            effects = { ...(entry.effects || {}) };
         }
 
         for (const [key, value] of Object.entries(effects)) {

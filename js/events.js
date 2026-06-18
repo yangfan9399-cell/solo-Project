@@ -75,7 +75,8 @@ const Events = {
             return;
         }
 
-        let effects = { ...(choice.effect || {}) };
+        const baseEffect = { ...(choice.effect || {}) };
+        let effects = { ...baseEffect };
         
         if (choice.special) {
             effects = this.handleSpecialEffect(choice.special, effects);
@@ -88,6 +89,7 @@ const Events = {
             eventId: event.id,
             choice: choice.text,
             effects: effects,
+            baseEffect: baseEffect,
             hidden: choice.hidden || false,
             special: choice.special || undefined
         });
@@ -130,8 +132,8 @@ const Events = {
         this.currentEvent = null;
     },
 
-    handleSpecialEffect(specialType, baseEffects) {
-        const stats = GameState.stats;
+    handleSpecialEffect(specialType, baseEffects, statsParam) {
+        const stats = statsParam || GameState.stats;
         const effects = { ...baseEffects };
 
         switch (specialType) {

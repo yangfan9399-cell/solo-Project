@@ -15,15 +15,26 @@ const Settlement = {
 
         for (let i = 0; i < history.length; i++) {
             const entry = history[i];
-            if (entry.effects) {
-                for (const [key, value] of Object.entries(entry.effects)) {
-                    if (stats.hasOwnProperty(key)) {
-                        stats[key] += value;
-                        if (GameConfig.MAX_STATS[key]) {
-                            stats[key] = Math.max(0, Math.min(stats[key], GameConfig.MAX_STATS[key]));
-                        } else {
-                            stats[key] = Math.max(0, stats[key]);
-                        }
+            let effects;
+
+            if (entry.baseEffect !== undefined) {
+                effects = { ...entry.baseEffect };
+                if (entry.special) {
+                    effects = Events.handleSpecialEffect(entry.special, effects, stats);
+                }
+            } else if (entry.special) {
+                effects = { ...(entry.effects || {}) };
+            } else {
+                effects = { ...(entry.effects || {}) };
+            }
+
+            for (const [key, value] of Object.entries(effects)) {
+                if (stats.hasOwnProperty(key)) {
+                    stats[key] += value;
+                    if (GameConfig.MAX_STATS[key]) {
+                        stats[key] = Math.max(0, Math.min(stats[key], GameConfig.MAX_STATS[key]));
+                    } else {
+                        stats[key] = Math.max(0, stats[key]);
                     }
                 }
             }
