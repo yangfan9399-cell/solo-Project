@@ -53,6 +53,9 @@ function initDatabase() {
 }
 
 function saveData() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
   fs.writeFileSync(GAMES_FILE, JSON.stringify({ games, nextGameId }, null, 2));
   fs.writeFileSync(STEPS_FILE, JSON.stringify({ steps, nextStepId }, null, 2));
   fs.writeFileSync(SETTLEMENTS_FILE, JSON.stringify({ settlements, nextSettlementId }, null, 2));

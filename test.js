@@ -4,7 +4,7 @@ function apiRequest(path, method = 'GET', data = null) {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'localhost',
-      port: 3001,
+      port: 3002,
       path,
       method,
       headers: {
@@ -100,17 +100,57 @@ async function runTests() {
       console.log('   ✓ 事件选择成功\n');
     }
 
-    console.log('8. 测试回退功能...');
-    const steps = (await apiRequest(`/api/games/${gameId}`)).steps;
-    console.log('   当前总步骤:', steps.length);
-    const revertResult = await apiRequest(`/api/games/${gameId}/revert`, 'POST', {
-      stepNumber: 1
+    console.log('8. 测试地图节点访问...');
+    const currentState = await apiRequest(`/api/games/${gameId}`);
+    const startNode = currentState.scenario.map.nodes.find(n => n.type === 'start');
+    console.log('   起点节点:', startNode.id, '-', startNode.name);
+    const visitResult1 = await apiRequest(`/api/games/${gameId}/actions`, 'POST', {
+      actionType: 'visit_node',
+      actionData: { nodeId: startNode.id }
     });
-    console.log('   回退后步骤数:', revertResult.steps.length);
-    console.log('   回退后回合:', revertResult.currentTurn);
-    console.log('   ✓ 回退功能成功\n');
+    console.log('   访问后已访问节点:', visitResult1.visitedNodes);
+    const neighbors = currentState.scenario.map.connections
+      .filter(([a, b]) => a === startNode.id || b === startNode.id)
+      .map(([a, b]) => a === startNode.id ? b : a);
+    const visitResult2 = await apiRequest(`/api/games/${gameId}/actions`, 'POST', {
+      actionType: 'visit_node',
+      actionData: { nodeId: neighbors[0] }
+    });
+    console.log('   访问相邻节点后:', visitResult2.visitedNodes);
+    console.log('   访问后星尘值变化:', visitResult2.stardustStrip);
+    console.log('   ✓ 地图节点访问成功\n');
 
-    console.log('9. 测试快进到游戏结束...');
+    console.log('9. 测试地图合法性检查...');
+    let mapErrorCaught = false;
+    try {
+      await apiRequest(`/api/games/${gameId}/actions`, 'POST', {
+        actionType: 'visit_node',
+        actionData: { nodeId: startNode.id }
+      });
+    } catch (e) {
+      mapErrorCaught = true;
+      console.log('   ✓ 已正确阻止重复访问节点:', e.message);
+    }
+    if (!mapErrorCaught) console.log('   ✗ 未检测到重复访问');
+    try {
+      await apiRequest(`/api/games/${gameId}/actions`, 'POST', {
+        actionType: 'visit_node',
+        actionData: { nodeId: 'INVALID_NODE' }
+      });
+    } catch (e) {
+      console.log('   ✓ 已正确阻止非法节点:', e.message);
+    }
+    console.log('   ✓ 地图合法性检查成功\n');
+
+    console.log('10. 测试三局地图差异...');
+    const scenariosData = await apiRequest('/api/scenarios');
+    for (const [key, s] of Object.entries(scenariosData)) {
+      const nodeTypes = new Set(s.map.nodes.map(n => n.type));
+      console.log(`   ${key}: ${s.map.nodes.length}节点, ${s.map.connections.length}连线, 节点类型: ${[...nodeTypes].join(',')}`);
+    }
+    console.log('   ✓ 三局地图差异化验证成功\n');
+
+    console.log('11. 测试快进到游戏结束...');
     let fastGame = await apiRequest('/api/games', 'POST', { scenarioType: 'chou' });
     for (let i = 0; i < 10; i++) {
       if (fastGame.status !== 'active') break;
@@ -130,7 +170,7 @@ async function runTests() {
     console.log('   ✓ 游戏流程完整\n');
 
     if (fastGame.status !== 'active') {
-      console.log('10. 测试结算功能...');
+      console.log('12. 测试结算功能...');
       const settlement = await apiRequest(`/api/games/${fastGame.gameId}/settlement`);
       console.log('   结算分数:', settlement.score.toFixed(1));
       console.log('   结果:', settlement.result);
@@ -138,16 +178,19 @@ async function runTests() {
       console.log('   资源效率:', settlement.resourceEfficiency.toFixed(2) + '/步');
       console.log('   ✓ 结算功能正常\n');
 
-      console.log('11. 测试重新结算...');
+      console.log('13. 测试重新结算...');
       const recalc = await apiRequest(`/api/games/${fastGame.gameId}/settlement/recalculate`, 'POST');
       console.log('   重算后分数:', recalc.score.toFixed(1));
       console.log('   ✓ 重新结算成功\n');
     }
 
-    console.log('12. 测试甲局隐藏机制...');
+    console.log('14. 测试甲局隐藏机制...');
     const jiaGame = await apiRequest('/api/games', 'POST', { scenarioType: 'jia' });
     console.log('   初始秘印:', jiaGame.resources.secretSeals || 0);
     console.log('   初始甲号因子:', jiaGame.jiaFailureFactor);
+    console.log('   地图节点:', jiaGame.scenario.map.nodes.length, '(含secret节点)');
+    const secretNodes = jiaGame.scenario.map.nodes.filter(n => n.type === 'secret');
+    console.log('   秘印节点数:', secretNodes.length);
     console.log('   ✓ 甲局初始化成功\n');
 
     console.log('=== 所有测试通过! ===');

@@ -16,7 +16,8 @@ const actionNames = {
   use_rehearsal: '排演发动',
   calibrate: '定标增幅',
   event_choice: '事件抉择',
-  next_turn: '回合推进'
+  next_turn: '回合推进',
+  visit_node: '地图探索'
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -269,6 +270,7 @@ function renderGame() {
 
   renderResources();
   renderSecretSection();
+  renderMap();
   renderEvent();
   renderTimeline();
 
@@ -314,6 +316,238 @@ function renderSecretSection() {
   } else {
     secretSection.style.display = 'none';
   }
+}
+
+function computeNodePositions(nodes, svgWidth = 600, svgHeight = 400) {
+  const padding = 70;
+  const count = nodes.length;
+  const positions = {};
+
+  const layers = buildLayers(nodes);
+  const layerCount = layers.length;
+
+  layers.forEach((layer, layerIdx) => {
+    const layerX = padding + (layerCount === 1 ? (svgWidth - 2 * padding) / 2 :
+      (svgWidth - 2 * padding) * (layerIdx / (layerCount - 1)));
+    const nodeCount = layer.length;
+    layer.forEach((node, nodeIdx) => {
+      const y = padding + (nodeCount === 1 ? (svgHeight - 2 * padding) / 2 :
+        (svgHeight - 2 * padding) * (nodeIdx / (nodeCount - 1)));
+      positions[node.id] = { x: layerX, y };
+    });
+  });
+
+  return positions;
+}
+
+function buildLayers(nodes) {
+  const startNodes = nodes.filter(n => n.type === 'start');
+  const endNodes = nodes.filter(n => n.type === 'end' || n.type === 'secret_end');
+  const middle = nodes.filter(n => n.type !== 'start' && n.type !== 'end' && n.type !== 'secret_end');
+
+  if (startNodes.length === 0) {
+    startNodes.push(nodes[0]);
+  }
+  if (endNodes.length === 0) {
+    endNodes.push(nodes[nodes.length - 1]);
+  }
+  const middleFiltered = middle.filter(n =>
+    !startNodes.includes(n) && !endNodes.includes(n)
+  );
+
+  const layers = [startNodes];
+  if (middleFiltered.length <= 3) {
+    if (middleFiltered.length > 0) layers.push(middleFiltered);
+  } else {
+    const half = Math.ceil(middleFiltered.length / 2);
+    layers.push(middleFiltered.slice(0, half));
+    layers.push(middleFiltered.slice(half));
+  }
+  layers.push(endNodes);
+  return layers;
+}
+
+function getNodeShape(node) {
+  switch (node.type) {
+    case 'start':
+    case 'end':
+    case 'secret_end':
+      return 'circle';
+    case 'secret':
+      return 'diamond';
+    case 'danger':
+      return 'triangle';
+    default:
+      return 'square';
+  }
+}
+
+function renderMap() {
+  if (!gameState || !gameState.scenario || !gameState.scenario.map) return;
+
+  const map = gameState.scenario.map;
+  document.getElementById('map-name').textContent = map.name;
+
+  const connectionsGroup = document.getElementById('map-connections');
+  const nodesGroup = document.getElementById('map-nodes');
+  connectionsGroup.innerHTML = '';
+  nodesGroup.innerHTML = '';
+
+  const positions = computeNodePositions(map.nodes);
+  const visitedNodes = gameState.visitedNodes || gameState.resources?.visitedNodes || [];
+  const currentNodeId = visitedNodes.length > 0 ? visitedNodes[visitedNodes.length - 1] : null;
+
+  const reachableSet = new Set();
+  if (visitedNodes.length === 0) {
+    map.nodes.filter(n => n.type === 'start').forEach(n => reachableSet.add(n.id));
+  } else {
+    map.connections.forEach(([a, b]) => {
+      if (a === currentNodeId) reachableSet.add(b);
+      if (b === currentNodeId) reachableSet.add(a);
+    });
+    visitedNodes.forEach(n => reachableSet.delete(n));
+  }
+
+  const activeConnections = new Set();
+  for (let i = 1; i < visitedNodes.length; i++) {
+    const a = visitedNodes[i - 1];
+    const b = visitedNodes[i];
+    activeConnections.add(`${a}-${b}`);
+    activeConnections.add(`${b}-${a}`);
+  }
+
+  map.connections.forEach(([a, b]) => {
+    const p1 = positions[a];
+    const p2 = positions[b];
+    if (!p1 || !p2) return;
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', p1.x);
+    line.setAttribute('y1', p1.y);
+    line.setAttribute('x2', p2.x);
+    line.setAttribute('y2', p2.y);
+    line.setAttribute('class', 'map-connection' + (activeConnections.has(`${a}-${b}`) ? ' active' : ''));
+    connectionsGroup.appendChild(line);
+  });
+
+  map.nodes.forEach(node => {
+    const pos = positions[node.id];
+    if (!pos) return;
+
+    const isVisited = visitedNodes.includes(node.id);
+    const isCurrent = node.id === currentNodeId;
+    const isReachable = reachableSet.has(node.id);
+    const isLocked = !isVisited && !isCurrent && !isReachable;
+    const isActive = gameState.status === 'active';
+
+    let classes = 'map-node';
+    if (isCurrent) classes += ' current';
+    else if (isVisited) classes += ' visited';
+    else if (isReachable && isActive) classes += ' reachable';
+    else if (isLocked) classes += ' locked';
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', classes);
+    g.setAttribute('data-node-id', node.id);
+
+    const shape = getNodeShape(node);
+    const size = 18;
+    let shapeEl;
+
+    if (shape === 'circle') {
+      shapeEl = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      shapeEl.setAttribute('cx', pos.x);
+      shapeEl.setAttribute('cy', pos.y);
+      shapeEl.setAttribute('r', size);
+      shapeEl.setAttribute('fill', 'rgba(20, 30, 60, 0.8)');
+      shapeEl.setAttribute('stroke', 'var(--border-color)');
+      shapeEl.setAttribute('stroke-width', '2');
+    } else if (shape === 'diamond') {
+      shapeEl = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      const points = `${pos.x},${pos.y - size} ${pos.x + size},${pos.y} ${pos.x},${pos.y + size} ${pos.x - size},${pos.y}`;
+      shapeEl.setAttribute('points', points);
+      shapeEl.setAttribute('fill', 'rgba(168, 85, 247, 0.2)');
+      shapeEl.setAttribute('stroke', 'var(--border-color)');
+      shapeEl.setAttribute('stroke-width', '2');
+    } else if (shape === 'triangle') {
+      shapeEl = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      const points = `${pos.x},${pos.y - size} ${pos.x + size},${pos.y + size * 0.7} ${pos.x - size},${pos.y + size * 0.7}`;
+      shapeEl.setAttribute('points', points);
+      shapeEl.setAttribute('fill', 'rgba(239, 68, 68, 0.2)');
+      shapeEl.setAttribute('stroke', 'var(--border-color)');
+      shapeEl.setAttribute('stroke-width', '2');
+    } else {
+      shapeEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      shapeEl.setAttribute('x', pos.x - size);
+      shapeEl.setAttribute('y', pos.y - size);
+      shapeEl.setAttribute('width', size * 2);
+      shapeEl.setAttribute('height', size * 2);
+      shapeEl.setAttribute('rx', '4');
+      shapeEl.setAttribute('fill', 'rgba(20, 30, 60, 0.8)');
+      shapeEl.setAttribute('stroke', 'var(--border-color)');
+      shapeEl.setAttribute('stroke-width', '2');
+    }
+    g.appendChild(shapeEl);
+
+    const iconText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    iconText.setAttribute('x', pos.x);
+    iconText.setAttribute('y', pos.y + 1);
+    iconText.setAttribute('text-anchor', 'middle');
+    iconText.setAttribute('dominant-baseline', 'central');
+    iconText.setAttribute('font-size', '13');
+    iconText.setAttribute('pointer-events', 'none');
+
+    let icon = '';
+    switch (node.type) {
+      case 'start': icon = '🚀'; break;
+      case 'end':
+      case 'secret_end': icon = '🏁'; break;
+      case 'resource': icon = '📦'; break;
+      case 'stardust': icon = '✨'; break;
+      case 'calibration': icon = '🎯'; break;
+      case 'risk': icon = '⚖️'; break;
+      case 'reward': icon = '🎁'; break;
+      case 'secret': icon = '🔮'; break;
+      case 'danger': icon = '☠️'; break;
+      default: icon = '◇'; break;
+    }
+    iconText.textContent = icon;
+    g.appendChild(iconText);
+
+    const labelText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    labelText.setAttribute('x', pos.x);
+    labelText.setAttribute('y', pos.y + 36);
+    labelText.setAttribute('class', 'node-label');
+    labelText.textContent = node.name;
+    g.appendChild(labelText);
+
+    if (isActive && isReachable) {
+      g.addEventListener('click', () => handleVisitNode(node.id));
+      g.style.cursor = 'pointer';
+    }
+
+    nodesGroup.appendChild(g);
+  });
+
+  const hintEl = document.getElementById('map-hint');
+  if (visitedNodes.length === 0) {
+    hintEl.textContent = '🚀 从起点节点开始探索';
+  } else if (isActive) {
+    hintEl.textContent = `📍 当前: ${getCurrentNodeName(currentNodeId)} · 点击高亮的相邻节点前进`;
+  } else {
+    hintEl.textContent = gameState.status === 'won' ? '🎉 探索完成！' : '💔 探索已结束';
+  }
+}
+
+function getCurrentNodeName(nodeId) {
+  if (!gameState || !gameState.scenario || !gameState.scenario.map) return '';
+  const node = gameState.scenario.map.nodes.find(n => n.id === nodeId);
+  return node ? node.name : nodeId;
+}
+
+async function handleVisitNode(nodeId) {
+  if (!currentGameId) return;
+  performAction('visit_node', { nodeId });
 }
 
 function renderEvent() {
@@ -416,6 +650,8 @@ function getActionDescription(step) {
       return data.action;
     case 'event_choice':
       return data.choiceId;
+    case 'visit_node':
+      return `→ ${data.nodeId || ''}`;
     default:
       return '';
   }

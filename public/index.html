@@ -130,6 +130,26 @@
             </div>
           </div>
 
+          <div class="panel map-panel">
+            <h3>🗺️ <span id="map-name">星尘棋盘</span></h3>
+            <div class="map-container" id="map-container">
+              <svg class="map-svg" id="map-svg" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <g id="map-connections"></g>
+                <g id="map-nodes"></g>
+              </svg>
+            </div>
+            <p class="map-hint" id="map-hint">从起点节点开始，点击相邻节点移动并获取奖励</p>
+          </div>
+
           <div class="panel actions-panel">
             <h3>⚡ 资源调度</h3>
             

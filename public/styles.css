@@ -415,6 +415,132 @@ body::before {
   opacity: 0.5;
 }
 
+.map-panel {
+  position: relative;
+}
+
+.map-container {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  background: radial-gradient(circle at center, rgba(0, 212, 255, 0.05), transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.map-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.map-connection {
+  stroke: var(--border-color);
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 6 4;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.map-connection.active {
+  stroke: var(--accent-cyan);
+  stroke-dasharray: none;
+  opacity: 1;
+  stroke-width: 3;
+  filter: url(#glow);
+}
+
+.map-node {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-node circle {
+  transition: all 0.2s ease;
+}
+
+.map-node.visited circle {
+  fill: var(--accent-green);
+  stroke: var(--accent-green);
+  opacity: 0.9;
+}
+
+.map-node.visited polygon,
+.map-node.visited rect {
+  fill: var(--accent-green);
+  stroke: var(--accent-green);
+}
+
+.map-node.current circle {
+  fill: var(--accent-gold);
+  stroke: var(--accent-gold);
+  filter: url(#glow);
+}
+
+.map-node.current polygon,
+.map-node.current rect {
+  fill: var(--accent-gold);
+  stroke: var(--accent-gold);
+  filter: url(#glow);
+}
+
+.map-node.reachable circle {
+  stroke: var(--accent-cyan);
+  stroke-width: 3;
+  stroke-dasharray: 4 2;
+  animation: pulse-border 1.5s infinite;
+}
+
+.map-node.reachable:hover circle {
+  fill: rgba(0, 212, 255, 0.3);
+  transform-origin: center;
+}
+
+.map-node.locked circle {
+  opacity: 0.35;
+}
+
+.map-node.locked {
+  cursor: not-allowed;
+}
+
+.map-node text {
+  font-size: 11px;
+  fill: var(--text-primary);
+  text-anchor: middle;
+  pointer-events: none;
+  font-weight: 500;
+}
+
+.map-node text.node-label {
+  font-size: 9px;
+  fill: var(--text-secondary);
+  transform: translateY(22px);
+}
+
+@keyframes pulse-border {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.map-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.map-node .start-icon,
+.map-node .end-icon,
+.map-node .secret-icon,
+.map-node .danger-icon {
+  font-size: 12px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
 .action-section {
   margin-bottom: 16px;
   padding-bottom: 14px;

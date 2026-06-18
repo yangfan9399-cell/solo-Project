@@ -3,6 +3,7 @@ const scenarios = require('./scenarios');
 
 function getStateFromGame(game) {
   const resources = JSON.parse(game.resources || '{}');
+  const visitedNodes = resources.visitedNodes || [];
   return {
     stardustStrip: game.stardust_strip,
     rehearsalSlots: game.rehearsal_slots,
@@ -17,7 +18,8 @@ function getStateFromGame(game) {
     scenarioType: game.scenario_type,
     gameId: game.id,
     secretSeals: resources.secretSeals || 0,
-    hiddenUnlocked: resources.hiddenUnlocked || false
+    hiddenUnlocked: resources.hiddenUnlocked || false,
+    visitedNodes
   };
 }
 
@@ -282,6 +284,9 @@ function performAction(gameId, actionType, actionData) {
     case 'next_turn':
       newState = advanceTurn(newState);
       break;
+    case 'visit_node':
+      newState = handleVisitNode(newState, actionData, gameState.scenarioType);
+      break;
     default:
       throw new Error('未知的操作类型');
   }
@@ -406,6 +411,56 @@ function advanceTurn(state) {
   newState.stardustStrip += newState.shenReward * 5;
 
   return newState;
+}
+
+function handleVisitNode(state, data, scenarioType) {
+  const { nodeId } = data;
+  const newState = { ...state };
+  newState.resources = { ...newState.resources };
+
+  const visitedNodes = newState.resources.visitedNodes || [];
+  if (visitedNodes.includes(nodeId)) {
+    throw new Error('该节点已访问过');
+  }
+
+  const scenario = scenarios[scenarioType];
+  const node = scenario.map.nodes.find(n => n.id === nodeId);
+  if (!node) {
+    throw new Error('节点不存在');
+  }
+
+  if (visitedNodes.length > 0) {
+    const isConnected = scenario.map.connections.some(
+      ([a, b]) => (a === visitedNodes[visitedNodes.length - 1] && b === nodeId) ||
+                   (b === visitedNodes[visitedNodes.length - 1] && a === nodeId)
+    );
+    if (!isConnected) {
+      throw new Error('只能移动到相邻节点');
+    }
+  } else {
+    if (node.type !== 'start') {
+      throw new Error('必须从起点开始');
+    }
+  }
+
+  const bonus = node.bonus || {};
+  const effect = { ...bonus };
+
+  if (bonus.energy || bonus.data || bonus.time) {
+    effect.resources = {};
+    if (bonus.energy) effect.resources.energy = bonus.energy;
+    if (bonus.data) effect.resources.data = bonus.data;
+    if (bonus.time) effect.resources.time = bonus.time;
+    delete effect.energy;
+    delete effect.data;
+    delete effect.time;
+  }
+
+  const resultState = applyEffect(newState, effect);
+  resultState.resources.visitedNodes = [...visitedNodes, nodeId];
+  resultState.visitedNodes = resultState.resources.visitedNodes;
+
+  return resultState;
 }
 
 function calculateSettlement(gameId) {
