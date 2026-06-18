@@ -26,6 +26,7 @@ export default function RootLayout({
             </Link>
             <nav className="flex items-center gap-2 text-sm">
               <Link href="/" className="px-3 py-1.5 rounded hover:bg-bow/50 transition">工作台</Link>
+              <Link href="/review" className="px-3 py-1.5 rounded hover:bg-bow/50 transition">复盘聚合</Link>
               <Link href="/equipment" className="px-3 py-1.5 rounded hover:bg-bow/50 transition">器材库</Link>
               <Link href="/exports" className="px-3 py-1.5 rounded hover:bg-bow/50 transition">导出记录</Link>
               <Link href="/anomalies" className="px-3 py-1.5 rounded hover:bg-bow/50 transition">异常提示</Link>
