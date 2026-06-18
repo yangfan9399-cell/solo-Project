@@ -1,0 +1,60 @@
+{
+  "gameId": "yi",
+  "currentState": {
+    "sealedValue": 115,
+    "rewriteSlots": 5,
+    "translationTraces": 3,
+    "yiRisk": 0,
+    "renReward": 0,
+    "ziFailure": 0,
+    "turn": 2,
+    "maxTurns": 8
+  },
+  "history": [
+    {
+      "step": 0,
+      "type": "init",
+      "state": {
+        "sealedValue": 100,
+        "rewriteSlots": 5,
+        "translationTraces": 3,
+        "yiRisk": 0,
+        "renReward": 0,
+        "ziFailure": 0,
+        "turn": 1,
+        "maxTurns": 8
+      },
+      "eventId": null,
+      "timestamp": 1781804688587
+    },
+    {
+      "step": 1,
+      "type": "event",
+      "eventId": "yi_e1",
+      "eventName": "晨光折射",
+      "stateBefore": {
+        "sealedValue": 100,
+        "rewriteSlots": 5,
+        "translationTraces": 3,
+        "yiRisk": 0,
+        "renReward": 0,
+        "ziFailure": 0,
+        "turn": 1,
+        "maxTurns": 8
+      },
+      "state": {
+        "sealedValue": 115,
+        "rewriteSlots": 5,
+        "translationTraces": 3,
+        "yiRisk": 0,
+        "renReward": 0,
+        "ziFailure": 0,
+        "turn": 2,
+        "maxTurns": 8
+      },
+      "timestamp": 1781804695592
+    }
+  ],
+  "isEnded": false,
+  "result": null
+}
