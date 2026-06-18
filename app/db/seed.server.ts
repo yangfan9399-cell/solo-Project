@@ -1,4 +1,4 @@
-import db from "./index.server";
+import { loadDb } from "./index.server";
 import {
   createRecord,
   createSolution,
@@ -10,13 +10,12 @@ import {
 } from "./queries.server";
 
 function runSeed() {
-  const existing = (db.prepare("SELECT COUNT(*) as c FROM vinyl_records").get() as { c: number }).c;
-  if (existing > 0) {
-    console.log("Database already has data, skipping seed.");
+  const db = loadDb();
+  if (db.vinyl_records.length > 0) {
     return;
   }
 
-  console.log("Seeding database...");
+  console.log("Seeding vinyl database...");
 
   const records = [
     {

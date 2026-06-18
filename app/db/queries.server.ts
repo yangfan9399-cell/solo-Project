@@ -1,4 +1,4 @@
-import db from "./index.server";
+import { loadDb, saveDb, nextId, datetimeNow } from "./index.server";
 import type {
   VinylRecord,
   CleaningSolution,
@@ -11,65 +11,89 @@ import type {
 
 // === Vinyl Records ===
 export function getAllRecords(): VinylRecord[] {
-  return db.prepare("SELECT * FROM vinyl_records ORDER BY artist, album").all() as VinylRecord[];
+  const db = loadDb();
+  return [...db.vinyl_records].sort((a: any, b: any) => {
+    if (a.artist === b.artist) return (a.album || "").localeCompare(b.album || "");
+    return (a.artist || "").localeCompare(b.artist || "");
+  }) as VinylRecord[];
 }
 
 export function getRecord(id: number): VinylRecord | undefined {
-  return db.prepare("SELECT * FROM vinyl_records WHERE id = ?").get(id) as VinylRecord | undefined;
+  return loadDb().vinyl_records.find((r: any) => r.id === id) as VinylRecord | undefined;
 }
 
 export function createRecord(data: Omit<VinylRecord, "id" | "created_at" | "updated_at">): VinylRecord {
-  const stmt = db.prepare(`
-    INSERT INTO vinyl_records (catalog_no, artist, album, year, genre, condition, weight, pressing, notes)
-    VALUES (@catalog_no, @artist, @album, @year, @genre, @condition, @weight, @pressing, @notes)
-  `);
-  const result = stmt.run(data);
-  return getRecord(result.lastInsertRowid as number)!;
+  const db = loadDb();
+  const id = nextId(db.vinyl_records);
+  const now = datetimeNow();
+  const rec: VinylRecord = { id, created_at: now, updated_at: now, ...data } as VinylRecord;
+  db.vinyl_records.push(rec);
+  saveDb(db);
+  return rec;
 }
 
 export function updateRecord(id: number, data: Partial<VinylRecord>): void {
-  const fields = Object.keys(data).map((k) => `${k} = @${k}`).join(", ");
-  db.prepare(`UPDATE vinyl_records SET ${fields}, updated_at = datetime('now') WHERE id = @id`).run({ ...data, id });
+  const db = loadDb();
+  const row = db.vinyl_records.find((r: any) => r.id === id);
+  if (row) {
+    Object.assign(row, data, { updated_at: datetimeNow() });
+    saveDb(db);
+  }
 }
 
 export function deleteRecord(id: number): void {
-  db.prepare("DELETE FROM vinyl_records WHERE id = ?").run(id);
+  const db = loadDb();
+  db.vinyl_records = db.vinyl_records.filter((r: any) => r.id !== id);
+  db.cleaning_batches = db.cleaning_batches.filter((b: any) => b.record_id !== id);
+  db.batch_versions = db.batch_versions.filter((v: any) => {
+    const batch = db.cleaning_batches.find((b: any) => b.id === v.batch_id);
+    return !!batch;
+  });
+  db.audition_logs = db.audition_logs.filter((a: any) => a.record_id !== id);
+  saveDb(db);
 }
 
 export function searchRecords(keyword: string): VinylRecord[] {
-  const like = `%${keyword}%`;
-  return db.prepare(`
-    SELECT * FROM vinyl_records
-    WHERE artist LIKE ? OR album LIKE ? OR catalog_no LIKE ? OR genre LIKE ?
-    ORDER BY artist, album
-  `).all(like, like, like, like) as VinylRecord[];
+  const kw = keyword.toLowerCase();
+  return getAllRecords().filter((r: any) =>
+    (r.artist || "").toLowerCase().includes(kw) ||
+    (r.album || "").toLowerCase().includes(kw) ||
+    (r.catalog_no || "").toLowerCase().includes(kw) ||
+    (r.genre || "").toLowerCase().includes(kw)
+  ) as VinylRecord[];
 }
 
 // === Cleaning Solutions ===
 export function getAllSolutions(): CleaningSolution[] {
-  return db.prepare("SELECT * FROM cleaning_solutions ORDER BY created_at DESC").all() as CleaningSolution[];
+  return [...loadDb().cleaning_solutions].sort((a: any, b: any) =>
+    (b.created_at || "").localeCompare(a.created_at || "")
+  ) as CleaningSolution[];
 }
 
 export function getActiveSolutions(): CleaningSolution[] {
-  return db.prepare("SELECT * FROM cleaning_solutions WHERE is_active = 1 ORDER BY name").all() as CleaningSolution[];
+  return getAllSolutions().filter((s: any) => !!s.is_active) as CleaningSolution[];
 }
 
 export function getSolution(id: number): CleaningSolution | undefined {
-  return db.prepare("SELECT * FROM cleaning_solutions WHERE id = ?").get(id) as CleaningSolution | undefined;
+  return loadDb().cleaning_solutions.find((s: any) => s.id === id) as CleaningSolution | undefined;
 }
 
 export function createSolution(data: Omit<CleaningSolution, "id" | "created_at">): CleaningSolution {
-  const stmt = db.prepare(`
-    INSERT INTO cleaning_solutions (name, brand, type, ph, dilution_ratio, volume_ml, opened_date, expiry_date, is_active, notes)
-    VALUES (@name, @brand, @type, @ph, @dilution_ratio, @volume_ml, @opened_date, @expiry_date, @is_active, @notes)
-  `);
-  const result = stmt.run(data);
-  return getSolution(result.lastInsertRowid as number)!;
+  const db = loadDb();
+  const id = nextId(db.cleaning_solutions);
+  const sol: CleaningSolution = { id, created_at: datetimeNow(), ...data } as CleaningSolution;
+  db.cleaning_solutions.push(sol);
+  saveDb(db);
+  return sol;
 }
 
 export function updateSolution(id: number, data: Partial<CleaningSolution>): void {
-  const fields = Object.keys(data).map((k) => `${k} = @${k}`).join(", ");
-  db.prepare(`UPDATE cleaning_solutions SET ${fields} WHERE id = @id`).run({ ...data, id });
+  const db = loadDb();
+  const row = db.cleaning_solutions.find((s: any) => s.id === id);
+  if (row) {
+    Object.assign(row, data);
+    saveDb(db);
+  }
 }
 
 // === Cleaning Batches ===
@@ -82,183 +106,192 @@ export interface BatchFilters {
   keyword?: string;
 }
 
-export function getAllBatches(filters: BatchFilters = {}): (CleaningBatch & { artist: string; album: string; solution_name: string })[] {
-  const conditions: string[] = [];
-  const params: Record<string, unknown> = {};
+type BatchJoin = CleaningBatch & { artist: string; album: string; solution_name: string };
 
-  if (filters.recordId) {
-    conditions.push("b.record_id = @recordId");
-    params.recordId = filters.recordId;
+export function getAllBatches(filters: BatchFilters = {}): BatchJoin[] {
+  const db = loadDb();
+  const recordsById = Object.fromEntries(db.vinyl_records.map((r: any) => [r.id, r]));
+  const solutionsById = Object.fromEntries(db.cleaning_solutions.map((s: any) => [s.id, s]));
+
+  let result: any[] = db.cleaning_batches.map((b: any) => ({
+    ...b,
+    artist: recordsById[b.record_id]?.artist || "(已删除)",
+    album: recordsById[b.record_id]?.album || "(已删除)",
+    solution_name: solutionsById[b.solution_id]?.name || "(已删除)",
+  }));
+
+  if (filters.recordId) result = result.filter((b) => b.record_id === filters.recordId);
+  if (filters.solutionId) result = result.filter((b) => b.solution_id === filters.solutionId);
+  if (filters.resultRating !== undefined) {
+    const r = filters.resultRating;
+    if (r >= 4) result = result.filter((b) => b.result_rating >= r);
+    else if (r <= 2) result = result.filter((b) => b.result_rating <= r);
+    else result = result.filter((b) => b.result_rating === r);
   }
-  if (filters.solutionId) {
-    conditions.push("b.solution_id = @solutionId");
-    params.solutionId = filters.solutionId;
-  }
-  if (filters.resultRating) {
-    conditions.push("b.result_rating = @resultRating");
-    params.resultRating = filters.resultRating;
-  }
-  if (filters.dateFrom) {
-    conditions.push("b.cleaned_at >= @dateFrom");
-    params.dateFrom = filters.dateFrom;
-  }
-  if (filters.dateTo) {
-    conditions.push("b.cleaned_at <= @dateTo");
-    params.dateTo = filters.dateTo;
-  }
+  const df = filters.dateFrom;
+  const dt = filters.dateTo;
+  if (df) result = result.filter((b) => b.cleaned_at >= df);
+  if (dt) result = result.filter((b) => b.cleaned_at <= dt + " 23:59:59");
   if (filters.keyword) {
-    conditions.push("(b.batch_code LIKE @keyword OR b.anomalies LIKE @keyword OR b.notes LIKE @keyword OR b.operator LIKE @keyword)");
-    params.keyword = `%${filters.keyword}%`;
+    const kw = filters.keyword.toLowerCase();
+    result = result.filter((b) =>
+      (b.batch_code || "").toLowerCase().includes(kw) ||
+      (b.anomalies || "").toLowerCase().includes(kw) ||
+      (b.notes || "").toLowerCase().includes(kw) ||
+      (b.operator || "").toLowerCase().includes(kw)
+    );
   }
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-  return db.prepare(`
-    SELECT b.*, r.artist, r.album, s.name as solution_name
-    FROM cleaning_batches b
-    JOIN vinyl_records r ON b.record_id = r.id
-    JOIN cleaning_solutions s ON b.solution_id = s.id
-    ${where}
-    ORDER BY b.cleaned_at DESC
-  `).all(params) as any[];
+  result.sort((a: any, b: any) => (b.cleaned_at || "").localeCompare(a.cleaned_at || ""));
+  return result as BatchJoin[];
 }
 
-export function getBatch(id: number): (CleaningBatch & { artist: string; album: string; solution_name: string }) | undefined {
-  return db.prepare(`
-    SELECT b.*, r.artist, r.album, s.name as solution_name
-    FROM cleaning_batches b
-    JOIN vinyl_records r ON b.record_id = r.id
-    JOIN cleaning_solutions s ON b.solution_id = s.id
-    WHERE b.id = ?
-  `).get(id) as any;
+export function getBatch(id: number): BatchJoin | undefined {
+  return getAllBatches().find((b: any) => b.id === id);
 }
 
 export function getBatchesByRecord(recordId: number): (CleaningBatch & { solution_name: string })[] {
-  return db.prepare(`
-    SELECT b.*, s.name as solution_name
-    FROM cleaning_batches b
-    JOIN cleaning_solutions s ON b.solution_id = s.id
-    WHERE b.record_id = ?
-    ORDER BY b.cleaned_at DESC
-  `).all(recordId) as any[];
+  const db = loadDb();
+  const solutionsById = Object.fromEntries(db.cleaning_solutions.map((s: any) => [s.id, s]));
+  return db.cleaning_batches
+    .filter((b: any) => b.record_id === recordId)
+    .map((b: any) => ({ ...b, solution_name: solutionsById[b.solution_id]?.name || "(已删除)" }))
+    .sort((a: any, b: any) => (b.cleaned_at || "").localeCompare(a.cleaned_at || ""));
 }
 
 export function createBatch(data: Omit<CleaningBatch, "id" | "created_at" | "version">): CleaningBatch {
-  const stmt = db.prepare(`
-    INSERT INTO cleaning_batches (
-      batch_code, record_id, solution_id, brush_type, brush_count, ultrasonic_minutes,
-      ultrasonic_temp_c, rinse_count, drying_method, drying_minutes, operator,
-      pre_noise_level, post_noise_level, crackle_reduction, result_rating, anomalies, notes, cleaned_at
-    ) VALUES (
-      @batch_code, @record_id, @solution_id, @brush_type, @brush_count, @ultrasonic_minutes,
-      @ultrasonic_temp_c, @rinse_count, @drying_method, @drying_minutes, @operator,
-      @pre_noise_level, @post_noise_level, @crackle_reduction, @result_rating, @anomalies, @notes, @cleaned_at
-    )
-  `);
-  const result = stmt.run(data);
-  return db.prepare("SELECT * FROM cleaning_batches WHERE id = ?").get(result.lastInsertRowid) as CleaningBatch;
+  const db = loadDb();
+  const id = nextId(db.cleaning_batches);
+  const now = datetimeNow();
+  const batch: CleaningBatch = {
+    id,
+    created_at: now,
+    version: 1,
+    ...data,
+  } as CleaningBatch;
+  db.cleaning_batches.push(batch);
+  saveDb(db);
+  return batch;
 }
 
 export function updateBatch(id: number, data: Partial<CleaningBatch>, changedBy: string = "system"): void {
-  const existing = db.prepare("SELECT * FROM cleaning_batches WHERE id = ?").get(id) as CleaningBatch;
+  const db = loadDb();
+  const existing: any = db.cleaning_batches.find((b: any) => b.id === id);
   if (!existing) return;
 
-  const fields: string[] = [];
-  const params: Record<string, unknown> = { id };
-
+  let versionIncr = 0;
   for (const [key, value] of Object.entries(data)) {
-    if (value !== undefined && (existing as any)[key] !== value) {
-      fields.push(`${key} = @${key}`);
-      params[key] = value;
-      db.prepare(`
-        INSERT INTO batch_versions (batch_id, version, field_changed, old_value, new_value, changed_by)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(
-        id,
-        existing.version + 1,
-        key,
-        String((existing as any)[key] ?? ""),
-        String(value ?? ""),
-        changedBy
-      );
+    if (value !== undefined && existing[key] !== value) {
+      const vid = nextId(db.batch_versions);
+      db.batch_versions.push({
+        id: vid,
+        batch_id: id,
+        version: existing.version + 1,
+        field_changed: key,
+        old_value: String(existing[key] ?? ""),
+        new_value: String(value ?? ""),
+        changed_at: datetimeNow(),
+        changed_by: changedBy,
+      } as any);
+      existing[key] = value;
+      versionIncr++;
     }
   }
-
-  if (fields.length > 0) {
-    db.prepare(`UPDATE cleaning_batches SET ${fields.join(", ")}, version = version + 1 WHERE id = @id`).run(params);
+  if (versionIncr > 0) {
+    existing.version = (existing.version || 1) + 1;
+    saveDb(db);
   }
 }
 
 export function deleteBatch(id: number): void {
-  db.prepare("DELETE FROM cleaning_batches WHERE id = ?").run(id);
+  const db = loadDb();
+  db.cleaning_batches = db.cleaning_batches.filter((b: any) => b.id !== id);
+  db.batch_versions = db.batch_versions.filter((v: any) => v.batch_id !== id);
+  db.audition_logs = db.audition_logs.map((a: any) =>
+    a.batch_id === id ? { ...a, batch_id: null } : a
+  );
+  saveDb(db);
 }
 
 export function generateBatchCode(): string {
   const now = new Date();
   const prefix = `VC${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-  const last = db.prepare("SELECT batch_code FROM cleaning_batches WHERE batch_code LIKE ? ORDER BY batch_code DESC LIMIT 1").get(`${prefix}%`) as { batch_code: string } | undefined;
-  const seq = last ? parseInt(last.batch_code.slice(-3)) + 1 : 1;
+  const existing = loadDb().cleaning_batches
+    .filter((b: any) => (b.batch_code || "").startsWith(prefix))
+    .map((b: any) => parseInt(b.batch_code.slice(-3)) || 0);
+  const seq = existing.length > 0 ? Math.max(...existing) + 1 : 1;
   return `${prefix}${String(seq).padStart(3, "0")}`;
 }
 
-// === Batch Versions / History ===
+// === Batch Versions ===
 export function getBatchVersions(batchId: number): BatchVersion[] {
-  return db.prepare(`
-    SELECT * FROM batch_versions WHERE batch_id = ? ORDER BY changed_at DESC, id DESC
-  `).all(batchId) as BatchVersion[];
+  return loadDb().batch_versions
+    .filter((v: any) => v.batch_id === batchId)
+    .sort((a: any, b: any) => {
+      if (b.changed_at === a.changed_at) return (b.id || 0) - (a.id || 0);
+      return (b.changed_at || "").localeCompare(a.changed_at || "");
+    }) as BatchVersion[];
 }
 
 // === Audition Logs ===
 export function getAuditionsByRecord(recordId: number): AuditionLog[] {
-  return db.prepare(`
-    SELECT * FROM audition_logs WHERE record_id = ? ORDER BY auditioned_at DESC
-  `).all(recordId) as AuditionLog[];
+  return loadDb().audition_logs
+    .filter((a: any) => a.record_id === recordId)
+    .sort((a: any, b: any) => (b.auditioned_at || "").localeCompare(a.auditioned_at || "")) as AuditionLog[];
 }
 
 export function createAudition(data: Omit<AuditionLog, "id">): AuditionLog {
-  const stmt = db.prepare(`
-    INSERT INTO audition_logs (
-      record_id, batch_id, side, track_no, noise_level, crackles, pops, surface_noise,
-      distortion, warble, inner_groove_distortion, listener, equipment, notes, auditioned_at
-    ) VALUES (
-      @record_id, @batch_id, @side, @track_no, @noise_level, @crackles, @pops, @surface_noise,
-      @distortion, @warble, @inner_groove_distortion, @listener, @equipment, @notes, @auditioned_at
-    )
-  `);
-  const result = stmt.run(data);
-  return db.prepare("SELECT * FROM audition_logs WHERE id = ?").get(result.lastInsertRowid) as AuditionLog;
+  const db = loadDb();
+  const id = nextId(db.audition_logs);
+  const audition: AuditionLog = { id, ...data } as AuditionLog;
+  db.audition_logs.push(audition);
+  saveDb(db);
+  return audition;
 }
 
 // === Maintenance Reminders ===
 export function getAllReminders(): MaintenanceReminder[] {
-  return db.prepare("SELECT * FROM maintenance_reminders ORDER BY is_triggered DESC, created_at DESC").all() as MaintenanceReminder[];
+  return [...loadDb().maintenance_reminders].sort((a: any, b: any) => {
+    if (a.is_triggered !== b.is_triggered) return b.is_triggered - a.is_triggered;
+    return (b.created_at || "").localeCompare(a.created_at || "");
+  }) as MaintenanceReminder[];
 }
 
 export function getTriggeredReminders(): MaintenanceReminder[] {
-  return db.prepare("SELECT * FROM maintenance_reminders WHERE is_triggered = 1 ORDER BY created_at DESC").all() as MaintenanceReminder[];
+  return getAllReminders().filter((r: any) => !!r.is_triggered);
 }
 
 export function createReminder(data: Omit<MaintenanceReminder, "id" | "created_at">): MaintenanceReminder {
-  const stmt = db.prepare(`
-    INSERT INTO maintenance_reminders (type, target, threshold_count, threshold_date, current_count, is_triggered, last_maintenance, notes)
-    VALUES (@type, @target, @threshold_count, @threshold_date, @current_count, @is_triggered, @last_maintenance, @notes)
-  `);
-  const result = stmt.run(data);
-  return db.prepare("SELECT * FROM maintenance_reminders WHERE id = ?").get(result.lastInsertRowid) as MaintenanceReminder;
+  const db = loadDb();
+  const id = nextId(db.maintenance_reminders);
+  const reminder: MaintenanceReminder = { id, created_at: datetimeNow(), ...data } as MaintenanceReminder;
+  db.maintenance_reminders.push(reminder);
+  saveDb(db);
+  return reminder;
 }
 
 export function updateReminder(id: number, data: Partial<MaintenanceReminder>): void {
-  const fields = Object.keys(data).map((k) => `${k} = @${k}`).join(", ");
-  db.prepare(`UPDATE maintenance_reminders SET ${fields} WHERE id = @id`).run({ ...data, id });
+  const db = loadDb();
+  const row = db.maintenance_reminders.find((r: any) => r.id === id);
+  if (row) {
+    Object.assign(row, data);
+    saveDb(db);
+  }
 }
 
 export function incrementReminderCount(type: string): void {
-  const reminders = db.prepare("SELECT * FROM maintenance_reminders WHERE type = ?").all(type) as MaintenanceReminder[];
-  for (const r of reminders) {
-    const newCount = r.current_count + 1;
-    const isTriggered = r.threshold_count ? newCount >= r.threshold_count : r.is_triggered;
-    db.prepare("UPDATE maintenance_reminders SET current_count = ?, is_triggered = ? WHERE id = ?").run(newCount, isTriggered ? 1 : 0, r.id);
+  const db = loadDb();
+  let changed = false;
+  for (const r of db.maintenance_reminders) {
+    if ((r as any).type === type) {
+      (r as any).current_count = ((r as any).current_count || 0) + 1;
+      if ((r as any).threshold_count) {
+        (r as any).is_triggered = (r as any).current_count >= (r as any).threshold_count ? 1 : 0;
+      }
+      changed = true;
+    }
   }
+  if (changed) saveDb(db);
 }
 
 // === Data Alerts ===
@@ -267,7 +300,7 @@ export function getDataAlerts(): DataAlert[] {
   const now = new Date();
 
   const solutions = getAllSolutions();
-  for (const s of solutions) {
+  for (const s of solutions as any[]) {
     if (s.expiry_date) {
       const expiry = new Date(s.expiry_date);
       const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -283,7 +316,7 @@ export function getDataAlerts(): DataAlert[] {
   }
 
   const reminders = getTriggeredReminders();
-  for (const r of reminders) {
+  for (const r of reminders as any[]) {
     alerts.push({
       id: `maint-${r.id}`,
       type: "warning",
@@ -293,13 +326,13 @@ export function getDataAlerts(): DataAlert[] {
   }
 
   const batches = getAllBatches();
-  for (const b of batches) {
+  for (const b of batches as any[]) {
     if (b.post_noise_level > b.pre_noise_level) {
       alerts.push({
         id: `noise-reg-${b.id}`,
         type: "warning",
         message: `批次 ${b.batch_code} 清洗后噪声不降反升`,
-        detail: `${b.artist} - ${b.album} (${b.pre_noise_level.toFixed(1)} → ${b.post_noise_level.toFixed(1)})`,
+        detail: `${b.artist} - ${b.album} (${Number(b.pre_noise_level).toFixed(1)} → ${Number(b.post_noise_level).toFixed(1)})`,
         related_batch_id: b.id,
       });
     }
@@ -333,12 +366,12 @@ export function getDataAlerts(): DataAlert[] {
   }
 
   return alerts.sort((a, b) => {
-    const order = { error: 0, warning: 1, info: 2 };
+    const order: Record<string, number> = { error: 0, warning: 1, info: 2 };
     return order[a.type] - order[b.type];
   });
 }
 
-function getMaintenanceMessage(r: MaintenanceReminder): string {
+function getMaintenanceMessage(r: any): string {
   const map: Record<string, string> = {
     brush_replace: "刷子需要更换",
     solution_refill: "清洗液需要补充/更换",
@@ -351,11 +384,17 @@ function getMaintenanceMessage(r: MaintenanceReminder): string {
 
 // === Stats ===
 export function getDashboardStats() {
-  const totalRecords = (db.prepare("SELECT COUNT(*) as c FROM vinyl_records").get() as { c: number }).c;
-  const totalBatches = (db.prepare("SELECT COUNT(*) as c FROM cleaning_batches").get() as { c: number }).c;
-  const avgReduction = (db.prepare("SELECT AVG(crackle_reduction) as c FROM cleaning_batches").get() as { c: number }).c || 0;
-  const avgRating = (db.prepare("SELECT AVG(result_rating) as c FROM cleaning_batches").get() as { c: number }).c || 0;
-  const activeSolutions = (db.prepare("SELECT COUNT(*) as c FROM cleaning_solutions WHERE is_active = 1").get() as { c: number }).c;
+  const db = loadDb();
+  const totalRecords = db.vinyl_records.length;
+  const totalBatches = db.cleaning_batches.length;
+  const batchesArr = db.cleaning_batches as any[];
+  const avgReduction = batchesArr.length
+    ? batchesArr.reduce((a, b) => a + (Number(b.crackle_reduction) || 0), 0) / batchesArr.length
+    : 0;
+  const avgRating = batchesArr.length
+    ? batchesArr.reduce((a, b) => a + (Number(b.result_rating) || 0), 0) / batchesArr.length
+    : 0;
+  const activeSolutions = db.cleaning_solutions.filter((s: any) => !!s.is_active).length;
   const alertsCount = getDataAlerts().length;
 
   return {
