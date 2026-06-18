@@ -4,6 +4,7 @@ const {
   getGameConfig,
   listGames,
   loadSaveGame,
+  getCurrentGameId,
   saveGameState,
   clearSaveGame,
   calculateSettlement,
@@ -14,7 +15,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 let gameSessions = {};
 
@@ -50,7 +55,7 @@ function getOrLoadSession(gameId) {
   if (gameSessions[gameId]) {
     return gameSessions[gameId];
   }
-  const saved = loadSaveGame();
+  const saved = loadSaveGame(gameId);
   if (saved && saved.gameId === gameId) {
     gameSessions[gameId] = saved;
     return saved;
@@ -226,7 +231,7 @@ app.post('/api/game/:gameId/reset', (req, res) => {
   if (gameSessions[gameId]) {
     delete gameSessions[gameId];
   }
-  clearSaveGame();
+  clearSaveGame(gameId);
   const session = initGameSession(gameId);
   res.json({
     gameId: session.gameId,
@@ -237,12 +242,15 @@ app.post('/api/game/:gameId/reset', (req, res) => {
 });
 
 app.get('/api/save/current', (req, res) => {
-  const saved = loadSaveGame();
-  if (saved) {
-    res.json({ hasSave: true, gameId: saved.gameId, turn: saved.currentState.turn });
-  } else {
-    res.json({ hasSave: false });
+  const curGameId = getCurrentGameId();
+  if (curGameId) {
+    const saved = loadSaveGame(curGameId);
+    if (saved) {
+      res.json({ hasSave: true, gameId: saved.gameId, turn: saved.currentState.turn });
+      return;
+    }
   }
+  res.json({ hasSave: false });
 });
 
 app.listen(PORT, () => {

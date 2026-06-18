@@ -2,7 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
-const SAVE_FILE = path.join(DATA_DIR, 'savegame.json');
+const CURRENT_FILE = path.join(DATA_DIR, 'current.json');
+function getSaveFile(gameId) {
+  return path.join(DATA_DIR, `save_${gameId}.json`);
+}
 
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -143,11 +146,12 @@ function listGames() {
   }));
 }
 
-function loadSaveGame() {
+function loadSaveGame(gameId) {
   ensureDataDir();
-  if (fs.existsSync(SAVE_FILE)) {
+  const saveFile = getSaveFile(gameId);
+  if (fs.existsSync(saveFile)) {
     try {
-      const data = fs.readFileSync(SAVE_FILE, 'utf8');
+      const data = fs.readFileSync(saveFile, 'utf8');
       return JSON.parse(data);
     } catch (e) {
       return null;
@@ -156,14 +160,41 @@ function loadSaveGame() {
   return null;
 }
 
-function saveGameState(state) {
+function getCurrentGameId() {
   ensureDataDir();
-  fs.writeFileSync(SAVE_FILE, JSON.stringify(state, null, 2), 'utf8');
+  if (fs.existsSync(CURRENT_FILE)) {
+    try {
+      const data = fs.readFileSync(CURRENT_FILE, 'utf8');
+      const j = JSON.parse(data);
+      return j.gameId || null;
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
 }
 
-function clearSaveGame() {
-  if (fs.existsSync(SAVE_FILE)) {
-    fs.unlinkSync(SAVE_FILE);
+function setCurrentGameId(gameId) {
+  ensureDataDir();
+  fs.writeFileSync(CURRENT_FILE, JSON.stringify({ gameId }, null, 2), 'utf8');
+}
+
+function saveGameState(state) {
+  ensureDataDir();
+  const saveFile = getSaveFile(state.gameId);
+  fs.writeFileSync(saveFile, JSON.stringify(state, null, 2), 'utf8');
+  setCurrentGameId(state.gameId);
+}
+
+function clearSaveGame(gameId) {
+  ensureDataDir();
+  const saveFile = getSaveFile(gameId);
+  if (fs.existsSync(saveFile)) {
+    fs.unlinkSync(saveFile);
+  }
+  const cur = getCurrentGameId();
+  if (cur === gameId && fs.existsSync(CURRENT_FILE)) {
+    fs.unlinkSync(CURRENT_FILE);
   }
 }
 
@@ -263,6 +294,8 @@ module.exports = {
   getGameConfig,
   listGames,
   loadSaveGame,
+  getCurrentGameId,
+  setCurrentGameId,
   saveGameState,
   clearSaveGame,
   calculateSettlement,

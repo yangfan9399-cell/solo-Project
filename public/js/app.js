@@ -14,6 +14,7 @@ class LiuliGame {
   async init() {
     this.bindEvents();
     await this.checkSavedGame();
+    this.updateActiveTab();
     await this.loadGame(this.currentGameId);
   }
 
@@ -33,6 +34,12 @@ class LiuliGame {
     document.getElementById('modalCloseBtn').addEventListener('click', () => this.closeModal());
   }
 
+  updateActiveTab() {
+    document.querySelectorAll('.game-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.game === this.currentGameId);
+    });
+  }
+
   async checkSavedGame() {
     try {
       const res = await fetch('/api/save/current');
@@ -47,9 +54,7 @@ class LiuliGame {
 
   async switchGame(gameId) {
     this.currentGameId = gameId;
-    document.querySelectorAll('.game-tab').forEach(tab => {
-      tab.classList.toggle('active', tab.dataset.game === gameId);
-    });
+    this.updateActiveTab();
     await this.loadGame(gameId);
   }
 
