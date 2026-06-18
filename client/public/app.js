@@ -315,14 +315,67 @@ function renderResult(result) {
   if (result.hiddenTriggered) {
     const hiddenBonus = document.createElement('div');
     hiddenBonus.className = 'hidden-bonus';
-    hiddenBonus.textContent = '✨ 隐藏条件已触发！';
+    hiddenBonus.textContent = '✨ 隐藏条件已触发！+50 分';
     content.appendChild(hiddenBonus);
+  }
+
+  if (result.formula) {
+    const formula = document.createElement('div');
+    formula.className = 'formula-box';
+    formula.innerHTML = `
+      <div class="formula-title">📐 结算公式（后端重算）</div>
+      ${result.formula}
+    `;
+    content.appendChild(formula);
+  }
+
+  if (result.breakdown) {
+    const bd = result.breakdown;
+    const bdRows = [
+      { ...bd.lineValue },
+      { ...bd.balanceMark },
+      { ...bd.dingReward },
+      { ...bd.wuRisk },
+      { ...bd.weiFailFactor },
+      { ...bd.steps },
+      { ...bd.hiddenBonus }
+    ];
+
+    let bdHtml = '<div class="breakdown-list">';
+    let totalContrib = 0;
+
+    bdRows.forEach(row => {
+      totalContrib += row.contribution;
+      const cls = row.contribution >= 0 ? 'positive' : 'negative';
+      const sign = row.contribution >= 0 ? '+' : '';
+      const weightStr = row.weight >= 0 ? `×${row.weight}` : `×(${row.weight})`;
+      bdHtml += `
+        <div class="breakdown-row">
+          <span class="bd-label">${row.label}</span>
+          <span class="bd-value">${row.value}</span>
+          <span class="bd-weight">${weightStr}</span>
+          <span class="bd-contrib ${cls}">${sign}${row.contribution}</span>
+        </div>
+      `;
+    });
+
+    bdHtml += `
+      <div class="breakdown-total">
+        <span class="label">协作评分合计</span>
+        <span class="value">${Math.max(0, result.cooperationScore)}</span>
+      </div>
+    `;
+    bdHtml += '</div>';
+
+    const bdDiv = document.createElement('div');
+    bdDiv.innerHTML = bdHtml;
+    content.appendChild(bdDiv);
   }
 
   const score = document.createElement('div');
   score.className = 'score-display';
   score.innerHTML = `
-    <div class="score-label">协作评分</div>
+    <div class="score-label">最终协作评分</div>
     <div class="score-value">${result.cooperationScore}</div>
   `;
   content.appendChild(score);
@@ -343,11 +396,63 @@ function renderResult(result) {
   container.appendChild(content);
 }
 
+function renderMechanismStatus(state) {
+  const container = $('mechanism-status');
+  const cells = state.board.cells;
+
+  const switches = cells.filter(c => c.type === 'switch');
+  const doors = cells.filter(c => c.type === 'door');
+  const mechanisms = cells.filter(c => c.type === 'mechanism');
+  const crystals = cells.filter(c => c.type === 'crystal');
+
+  const levelTagMap = {
+    wu: '戊局 · 教学入门',
+    ding: '丁局 · 资源短缺',
+    wei: '未局 · 隐藏条件'
+  };
+
+  let html = `<div class="mechanism-status-title">地图机关状态 (${levelTagMap[state.levelId] || ''})</div>`;
+  html += '<div class="mechanism-list">';
+
+  if (crystals.length > 0) {
+    html += `<span class="mech-tag">💎 剩余琉璃晶: ${crystals.length}</span>`;
+  }
+
+  switches.forEach(sw => {
+    const cls = sw.activated ? 'mech-on' : 'mech-off';
+    const status = sw.activated ? '已激活' : '未激活';
+    html += `<span class="mech-tag ${cls}">${sw.label || '开关'} · ${status}</span>`;
+  });
+
+  doors.forEach(dr => {
+    const cls = dr.activated ? 'mech-on' : 'mech-off';
+    const status = dr.activated ? '已开启' : '已关闭';
+    html += `<span class="mech-tag ${cls}">${dr.label || '门'} · ${status}</span>`;
+  });
+
+  mechanisms.forEach(m => {
+    const cls = m.activated ? 'mech-hidden' : 'mech-off';
+    const status = m.activated ? '已触发' : '未触发';
+    html += `<span class="mech-tag ${cls}">${m.label || '隐秘机关'} · ${status}</span>`;
+  });
+
+  if (state.hiddenTriggered) {
+    html += `<span class="mech-tag mech-hidden">✨ 隐藏条件已触发</span>`;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
 function updateAllUI(state) {
   renderBoard(state);
   renderStats(state);
   renderEvents(state);
   renderReplayTimeline();
+  renderMechanismStatus(state);
+  if (state.levelId && levelInfo[state.levelId]) {
+    $('level-label').textContent = levelInfo[state.levelId].difficulty + ' · ' + (state.board.width + '×' + state.board.height);
+  }
 }
 
 function setCurrentPlayer(p) {
@@ -471,6 +576,7 @@ async function handleStartLevel(levelId) {
     const diffEl = $('level-difficulty');
     diffEl.textContent = levelInfo[levelId].difficulty;
     diffEl.className = `difficulty level-${levelId}`;
+    $('level-label').textContent = levelInfo[levelId].difficulty + ' · 加载中...';
 
     setCurrentPlayer(1);
     updateAllUI(currentState);
@@ -596,12 +702,13 @@ async function tryRestoreGame() {
     const diffEl = $('level-difficulty');
     diffEl.textContent = levelInfo[levelId].difficulty;
     diffEl.className = `difficulty level-${levelId}`;
+    $('level-label').textContent = levelInfo[levelId].difficulty + ' · 恢复中...';
 
     setCurrentPlayer(1);
     updateAllUI(currentState);
     renderResult(null);
 
-    showToast('已恢复上次游戏进度');
+    showToast('已恢复上次游戏进度 · 继续操作即可');
     return true;
   } catch {
     clearLocalSave();

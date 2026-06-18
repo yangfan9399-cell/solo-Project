@@ -856,6 +856,214 @@ body {
   }
 }
 
+.board-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: center;
+  padding: 8px;
+  margin-top: 8px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+}
+
+.legend-cell {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.legend-player1 {
+  background: var(--player1);
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 0 4px var(--player1);
+}
+
+.legend-player2 {
+  background: var(--player2);
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 0 4px var(--player2);
+}
+
+.legend-crystal {
+  background: rgba(255, 215, 0, 0.25);
+  border-color: var(--crystal);
+}
+
+.legend-switch {
+  background: rgba(154, 168, 199, 0.15);
+  border-style: dashed;
+  border-color: var(--switch-off);
+}
+
+.legend-door {
+  background: rgba(255, 107, 138, 0.2);
+  border-color: var(--door-closed);
+}
+
+.legend-door-open {
+  background: rgba(102, 224, 160, 0.15);
+  border-style: dashed;
+  border-color: var(--door-open);
+}
+
+.legend-goal {
+  background: rgba(102, 224, 160, 0.2);
+  border-color: var(--goal);
+}
+
+.legend-wall {
+  background: var(--wall);
+  border-color: #5a6f90;
+}
+
+.mechanism-status {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.mechanism-status-title {
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.mechanism-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.mech-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.mech-tag.mech-on {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  background: rgba(102, 224, 160, 0.1);
+}
+
+.mech-tag.mech-off {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+  background: rgba(255, 107, 138, 0.08);
+}
+
+.mech-tag.mech-hidden {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+  background: rgba(168, 139, 255, 0.1);
+  animation: pulse-mech 1.5s infinite;
+}
+
+.formula-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.formula-box .formula-title {
+  color: var(--accent-cyan);
+  font-weight: 500;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 6px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.breakdown-row .bd-label {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.breakdown-row .bd-value {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown-row .bd-weight {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.breakdown-row .bd-contrib {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: right;
+}
+
+.breakdown-row .bd-contrib.positive {
+  color: var(--accent-green);
+}
+
+.breakdown-row .bd-contrib.negative {
+  color: var(--accent-red);
+}
+
+.breakdown-total {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  padding: 6px 8px;
+  background: linear-gradient(90deg, rgba(92, 224, 232, 0.1), rgba(168, 139, 255, 0.1));
+  border-radius: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.breakdown-total .label {
+  color: var(--text-primary);
+}
+
+.breakdown-total .value {
+  color: var(--accent-cyan);
+}
+
 @media (max-width: 1200px) {
   .game-main {
     grid-template-columns: 1fr 1fr;

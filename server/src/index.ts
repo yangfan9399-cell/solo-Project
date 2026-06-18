@@ -11,9 +11,6 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-const publicDir = path.join(__dirname, '../../client/public');
-app.use(express.static(publicDir));
-
 const gameSessions = new Map<string, { state: GameState; replay: ReplayStep[] }>();
 
 function generateSessionId(): string {
@@ -172,6 +169,12 @@ app.get('/api/game/:sessionId/replay', (req, res) => {
     return res.status(404).json({ error: 'Session not found' });
   }
   res.json({ replay: session.replay });
+});
+
+const publicDir = path.join(__dirname, '../../client/public');
+app.use(express.static(publicDir));
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 app.listen(PORT, () => {
