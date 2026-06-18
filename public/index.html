@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>星尘棋盘资源配给盘</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1 class="title">✨ 星尘棋盘资源配给盘 ✨</h1>
+      <p class="subtitle">在星海间调度资源，挑战命运的棋局</p>
+    </header>
+
+    <div id="scenario-select" class="scenario-select">
+      <h2>选择棋局</h2>
+      <div class="scenario-cards">
+        <div class="scenario-card" data-scenario="chou">
+          <div class="card-icon">🌙</div>
+          <h3>丑局 · 教学篇</h3>
+          <p>入门教学局，熟悉资源调度基本操作。资源充足，风险较低。</p>
+          <div class="card-footer">
+            <span class="turn-badge">5 回合</span>
+            <span class="difficulty easy">难度：简单</span>
+          </div>
+        </div>
+        <div class="scenario-card" data-scenario="shen">
+          <div class="card-icon">⚡</div>
+          <h3>申局 · 资源短缺篇</h3>
+          <p>资源极度短缺，每一步都要精打细算。申号奖励丰厚，但风险并存。</p>
+          <div class="card-footer">
+            <span class="turn-badge">7 回合</span>
+            <span class="difficulty medium">难度：中等</span>
+          </div>
+        </div>
+        <div class="scenario-card" data-scenario="jia">
+          <div class="card-icon">🔮</div>
+          <h3>甲局 · 隐藏条件篇</h3>
+          <p>存在隐藏胜利条件。甲号失败因子极高，触发隐藏机制方可逆转。</p>
+          <div class="card-footer">
+            <span class="turn-badge">8 回合</span>
+            <span class="difficulty hard">难度：困难</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-container" class="game-container hidden">
+      <div class="game-header">
+        <div class="game-info">
+          <h2 id="scenario-name">丑局 · 教学篇</h2>
+          <div class="turn-indicator">
+            <span>回合</span>
+            <span class="turn-number"><span id="current-turn">0</span> / <span id="max-turns">5</span></span>
+          </div>
+        </div>
+        <button id="back-btn" class="btn btn-secondary">返回选局</button>
+      </div>
+
+      <div class="main-game-area">
+        <div class="left-panel">
+          <div class="panel board-panel">
+            <h3>🎯 局面盘</h3>
+            
+            <div class="stat-grid">
+              <div class="stat-card primary">
+                <div class="stat-label">星尘剥离值</div>
+                <div class="stat-value" id="stardust-strip">100</div>
+                <div class="stat-bar">
+                  <div class="stat-bar-fill" id="stardust-bar"></div>
+                </div>
+              </div>
+              
+              <div class="stat-card">
+                <div class="stat-label">排演槽</div>
+                <div class="stat-value" id="rehearsal-slots">6</div>
+              </div>
+              
+              <div class="stat-card">
+                <div class="stat-label">定标痕</div>
+                <div class="stat-value" id="calibration-marks">3</div>
+              </div>
+            </div>
+
+            <div class="factor-grid">
+              <div class="factor-card risk">
+                <div class="factor-icon">⚠️</div>
+                <div class="factor-info">
+                  <div class="factor-name">丑号风险</div>
+                  <div class="factor-value" id="chou-risk">10%</div>
+                </div>
+                <div class="factor-bar risk-bar">
+                  <div class="factor-bar-fill" id="chou-risk-bar"></div>
+                </div>
+              </div>
+              
+              <div class="factor-card reward">
+                <div class="factor-icon">🎁</div>
+                <div class="factor-info">
+                  <div class="factor-name">申号奖励</div>
+                  <div class="factor-value" id="shen-reward">0.5x</div>
+                </div>
+                <div class="factor-bar reward-bar">
+                  <div class="factor-bar-fill" id="shen-reward-bar"></div>
+                </div>
+              </div>
+              
+              <div class="factor-card failure">
+                <div class="factor-icon">💀</div>
+                <div class="factor-info">
+                  <div class="factor-name">甲号失败因子</div>
+                  <div class="factor-value" id="jia-failure">30%</div>
+                </div>
+                <div class="factor-bar failure-bar">
+                  <div class="factor-bar-fill" id="jia-failure-bar"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="resources-section">
+              <h4>资源储备</h4>
+              <div class="resource-list" id="resource-list">
+              </div>
+            </div>
+
+            <div class="secret-section" id="secret-section" style="display:none;">
+              <h4>🔐 秘印收集</h4>
+              <div class="seals-display" id="seals-display"></div>
+            </div>
+          </div>
+
+          <div class="panel actions-panel">
+            <h3>⚡ 资源调度</h3>
+            
+            <div class="action-section">
+              <h4>资源调配</h4>
+              <div class="action-controls">
+                <select id="alloc-resource" class="select-input">
+                  <option value="energy">能量</option>
+                  <option value="data">数据</option>
+                  <option value="time">时间</option>
+                </select>
+                <select id="alloc-target" class="select-input">
+                  <option value="stardust">转化为星尘 (x2)</option>
+                  <option value="risk_reduction">降低风险</option>
+                  <option value="reward_boost">提升奖励</option>
+                </select>
+                <input type="number" id="alloc-amount" class="num-input" value="5" min="1">
+                <button id="alloc-btn" class="btn btn-primary">执行调配</button>
+              </div>
+            </div>
+
+            <div class="action-section">
+              <h4>排演发动</h4>
+              <div class="action-controls">
+                <select id="rehearsal-action" class="select-input">
+                  <option value="boost_stardust">星尘爆发 (+25)</option>
+                  <option value="reduce_risk">风险压制 (-10%)</option>
+                  <option value="gain_calibration">获得定标痕 (+1)</option>
+                </select>
+                <button id="rehearsal-btn" class="btn btn-secondary">消耗排演槽</button>
+              </div>
+            </div>
+
+            <div class="action-section">
+              <h4>定标增幅</h4>
+              <div class="action-controls">
+                <p class="action-desc">消耗1定标痕，星尘剥离值 +10%</p>
+                <button id="calibrate-btn" class="btn btn-accent">启动定标</button>
+              </div>
+            </div>
+
+            <button id="next-turn-btn" class="btn btn-next">⏭️ 下一回合</button>
+          </div>
+        </div>
+
+        <div class="right-panel">
+          <div class="panel event-panel" id="event-panel">
+            <h3>📜 事件匣</h3>
+            <div id="event-content" class="event-content">
+              <p class="no-event">当前回合无事件</p>
+            </div>
+          </div>
+
+          <div class="panel replay-panel">
+            <h3>⏪ 回放轴</h3>
+            <div class="replay-timeline" id="replay-timeline">
+            </div>
+            <div class="replay-controls">
+              <button id="revert-btn" class="btn btn-small">回退到选中步骤</button>
+            </div>
+          </div>
+
+          <div class="panel settlement-panel">
+            <h3>📊 结算簿</h3>
+            <div id="settlement-content" class="settlement-content">
+              <p class="no-settlement">游戏进行中...</p>
+            </div>
+            <button id="recalc-btn" class="btn btn-small hidden">重新结算</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-over-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="game-over-title">游戏结束</h2>
+        </div>
+        <div class="modal-body" id="game-over-body">
+        </div>
+        <div class="modal-footer">
+          <button id="modal-replay-btn" class="btn btn-primary">再来一局</button>
+          <button id="modal-back-btn" class="btn btn-secondary">返回选局</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
