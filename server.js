@@ -51,6 +51,30 @@ const SEED_DATA = {
         '【辛局·教学3】注意剥离痕——超过5道将触发工坊安全锁定。',
         '【辛局·教学4】最终目标：将相位稳定在0.50附近。'
       ],
+      map: {
+        type: 'beat-calibrator',
+        name: '节拍校准台',
+        background: '#0a1628',
+        accentColor: '#6ea8ff',
+        center: { x: 300, y: 200, label: '中央节拍器' },
+        nodes: [
+          { id: 'n1', x: 300, y: 60, label: '北·校准点', role: 'calibrator' },
+          { id: 'n2', x: 428, y: 100, label: '东北·焊接点', role: 'welder' },
+          { id: 'n3', x: 440, y: 230, label: '东·吹扫点', role: 'purge' },
+          { id: 'n4', x: 370, y: 330, label: '东南·槽位', role: 'slot' },
+          { id: 'n5', x: 230, y: 330, label: '西南·槽位', role: 'slot' },
+          { id: 'n6', x: 160, y: 230, label: '西·复写点', role: 'rewrite' },
+          { id: 'n7', x: 172, y: 100, label: '西北·脉冲点', role: 'pulse' },
+          { id: 'n8', x: 300, y: 155, label: '中心指针', role: 'phase' }
+        ],
+        edges: [
+          { from: 'n1', to: 'n8' }, { from: 'n2', to: 'n8' },
+          { from: 'n3', to: 'n8' }, { from: 'n4', to: 'n8' },
+          { from: 'n5', to: 'n8' }, { from: 'n6', to: 'n8' },
+          { from: 'n7', to: 'n8' }
+        ],
+        legend: { title: '辛局·节拍校准台', hint: '将中央节拍器指针校准至中心绿区（相位0.50）' }
+      },
       hiddenCondition: null
     },
     shen: {
@@ -92,6 +116,29 @@ const SEED_DATA = {
         { id: 'shen_e7', name: '相位反向推进', cost: 1, effect: { beatPhase: 0.08, rewriteValue: 3 }, tags: ['反向校准'], flavor: '通过反冲力将相位推向目标值。' }
       ],
       tutorial: null,
+      map: {
+        type: 'resource-mine',
+        name: '贫瘠矿道',
+        background: '#14110a',
+        accentColor: '#4ed6a3',
+        center: { x: 300, y: 200, label: '矿道中枢' },
+        nodes: [
+          { id: 'm1', x: 80, y: 120, label: '入口·能量注入', role: 'inject' },
+          { id: 'm2', x: 195, y: 80, label: 'A区·奖励矿脉', role: 'reward' },
+          { id: 'm3', x: 320, y: 130, label: 'B区·兑换站', role: 'exchange' },
+          { id: 'm4', x: 460, y: 200, label: 'C区·深刻站', role: 'deep' },
+          { id: 'm5', x: 370, y: 300, label: 'D区·纳米修复雾', role: 'repair' },
+          { id: 'm6', x: 200, y: 320, label: 'E区·张力释放', role: 'release' },
+          { id: 'm7', x: 80, y: 290, label: '出口·反向推进', role: 'reverse' }
+        ],
+        edges: [
+          { from: 'm1', to: 'm2' }, { from: 'm2', to: 'm3' },
+          { from: 'm3', to: 'm4' }, { from: 'm4', to: 'm5' },
+          { from: 'm5', to: 'm6' }, { from: 'm6', to: 'm7' },
+          { from: 'm1', to: 'm7' }
+        ],
+        legend: { title: '申局·贫瘠矿道', hint: '奖励矿脉稀少，必须在A区注入→B区兑换的循环中求生' }
+      },
       hiddenCondition: null
     },
     wu: {
@@ -135,6 +182,30 @@ const SEED_DATA = {
         { id: 'wu_e9', name: '奖励聚转化', cost: 0, effect: { convertSlots: 3, shenReward: -7 }, tags: ['兑换'], flavor: '将申号奖励凝聚为折算槽。', require: { shenReward: 7 } }
       ],
       tutorial: null,
+      map: {
+        type: 'abyss-forge',
+        name: '深渊熔炉',
+        background: '#140a1a',
+        accentColor: '#c85cff',
+        center: { x: 300, y: 200, label: '深渊核心' },
+        nodes: [
+          { id: 'f1', x: 300, y: 70, label: '上·深渊相位锤', role: 'abyss' },
+          { id: 'f2', x: 440, y: 130, label: '右上·申号爆发', role: 'burst' },
+          { id: 'f3', x: 440, y: 270, label: '右下·晶格复写', role: 'lattice' },
+          { id: 'f4', x: 300, y: 330, label: '下·双槽深度修复', role: 'dual-repair' },
+          { id: 'f5', x: 160, y: 270, label: '左下·因子抑制', role: 'suppress' },
+          { id: 'f6', x: 160, y: 130, label: '左上·风险对冲', role: 'hedge' },
+          { id: 'f7', x: 300, y: 200, label: '★时序回溯·改', role: 'hidden-core' }
+        ],
+        edges: [
+          { from: 'f1', to: 'f2' }, { from: 'f2', to: 'f3' },
+          { from: 'f3', to: 'f4' }, { from: 'f4', to: 'f5' },
+          { from: 'f5', to: 'f6' }, { from: 'f6', to: 'f1' },
+          { from: 'f1', to: 'f4' }, { from: 'f2', to: 'f5' },
+          { from: 'f3', to: 'f6' }
+        ],
+        legend: { title: '戊局·深渊熔炉', hint: '点亮外围六符文后，中心【时序回溯·改】将可激活（需折算槽≥5 + 申号奖励≥6）' }
+      },
       hiddenCondition: {
         description: '【里·隐藏】使用"时序回溯·改"，并最终达成表胜利条件 → 解锁【金色陨铁结局】',
         unlockKey: 'used_wu_e6',
@@ -275,7 +346,8 @@ app.get('/api/scenario/:id', (req, res) => {
       winCondition: { type: sc.winCondition.type, description: sc.winCondition.description },
       failCondition: { type: sc.failCondition.type, description: sc.failCondition.description },
       tutorial: sc.tutorial,
-      hiddenCondition: sc.hiddenCondition ? { description: sc.hiddenCondition.description } : null
+      hiddenCondition: sc.hiddenCondition ? { description: sc.hiddenCondition.description } : null,
+      map: sc.map
     },
     initialState: sc.initialState,
     eventPool: events

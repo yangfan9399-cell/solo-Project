@@ -177,6 +177,129 @@ function renderScenarios(list) {
   });
 }
 
+function renderMap() {
+  const svg = $('mapSvg');
+  const mapData = state.scenario && state.scenario.map;
+  const s = state.current;
+
+  if (!mapData || !svg) return;
+
+  $('mapTitle').textContent = `${mapData.legend ? mapData.legend.title : mapData.name || '地图'}`;
+  $('mapHint').textContent = mapData.legend ? mapData.legend.hint : '';
+
+  const stage = $('mapStage');
+  if (stage) stage.style.background = `radial-gradient(ellipse at center, ${mapData.background} 0%, #050810 100%)`;
+
+  const accent = mapData.accentColor || '#6ea8ff';
+  const nodesById = {};
+  (mapData.nodes || []).forEach(n => nodesById[n.id] = n);
+
+  const edgesSvg = (mapData.edges || []).map((e, i) => {
+    const from = nodesById[e.from];
+    const to = nodesById[e.to];
+    if (!from || !to) return '';
+    const active = state.steps.some(st => {
+      const role = from.role + '-' + to.role;
+      return st.eventName.includes(from.label.split('·')[1] || from.label) ||
+             st.eventName.includes(to.label.split('·')[1] || to.label);
+    });
+    return `<line class="map-edge ${active ? 'active' : ''}" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" style="${active ? `stroke:${accent}` : ''}" />`;
+  }).join('');
+
+  let centerDecor = '';
+  if (mapData.type === 'beat-calibrator' && s) {
+    const cx = mapData.center.x;
+    const cy = mapData.center.y;
+    const angle = (s.beatPhase * 360) - 90;
+    const handLen = 70;
+    const tx = cx + handLen * Math.cos(angle * Math.PI / 180);
+    const ty = cy + handLen * Math.sin(angle * Math.PI / 180);
+    centerDecor = `
+      <circle class="map-center-glow" cx="${cx}" cy="${cy}" r="40" style="stroke:${accent}" />
+      <circle cx="${cx}" cy="${cy}" r="28" fill="none" stroke="${accent}" stroke-width="1" opacity="0.5" />
+      <path class="map-zone-target" d="M${cx},${cy} m-34,0 a34,34 0 0,1 68,0 a34,34 0 0,1 -68,0" transform="rotate(-14 ${cx} ${cy})" stroke-dasharray="12 80" fill="none" />
+      <line class="map-phase-hand" x1="${cx}" y1="${cy}" x2="${tx}" y2="${ty}" />
+      <circle cx="${cx}" cy="${cy}" r="6" fill="#fff" filter="drop-shadow(0 0 8px #fff)" />
+    `;
+  } else if (mapData.type === 'abyss-forge' && mapData.center) {
+    const cx = mapData.center.x;
+    const cy = mapData.center.y;
+    const coreReady = s && s.convertSlots >= 5 && s.shenReward >= 6;
+    const usedHidden = state.steps.some(st => st.eventId === 'wu_e6');
+    centerDecor = `
+      <circle cx="${cx}" cy="${cy}" r="50" fill="none" stroke="${accent}" stroke-width="1" opacity="0.3" />
+      <circle cx="${cx}" cy="${cy}" r="38" fill="none" stroke="${accent}" stroke-width="1" opacity="0.5" stroke-dasharray="3 6" />
+      <circle cx="${cx}" cy="${cy}" r="26" fill="${usedHidden ? 'rgba(255,210,122,0.25)' : (coreReady ? 'rgba(200,92,255,0.15)' : 'rgba(10,14,23,0.8)')}" stroke="${usedHidden ? '#ffd27a' : (coreReady ? accent : '#2a3a5c')}" stroke-width="2" filter="${coreReady || usedHidden ? 'drop-shadow(0 0 15px ' + (usedHidden ? '#ffd27a' : accent) + ')' : ''}" />
+      <text x="${cx}" y="${cy + 4}" text-anchor="middle" fill="${usedHidden ? '#ffd27a' : (coreReady ? '#fff' : '#5a6680')}" font-size="14" font-weight="700">${usedHidden ? '★' : (coreReady ? '◈' : '◇')}</text>
+    `;
+  } else if (mapData.type === 'resource-mine' && mapData.center) {
+    const cx = mapData.center.x;
+    const cy = mapData.center.y;
+    centerDecor = `
+      <circle cx="${cx}" cy="${cy}" r="35" fill="rgba(78,214,163,0.05)" stroke="${accent}" stroke-width="1" stroke-dasharray="5 5" opacity="0.5" />
+      <text x="${cx}" y="${cy + 5}" text-anchor="middle" fill="${accent}" font-size="11" font-weight="600">矿道中枢</text>
+    `;
+  }
+
+  function nodeState(n) {
+    if (!s) return '';
+    const role = n.role;
+    if (mapData.type === 'beat-calibrator') {
+      if (role === 'phase') return s.beatPhase >= 0.48 && s.beatPhase <= 0.52 ? 'lit-gold' : (Math.abs(s.beatPhase - 0.5) < 0.15 ? 'lit' : '');
+      if (role === 'calibrator') return s.beatPhase !== state.initial.beatPhase ? 'lit' : '';
+      if (role === 'rewrite') return s.rewriteValue >= 55 ? 'lit-green' : (s.rewriteValue > 48 ? 'lit' : '');
+      if (role === 'welder') return s.integrity < 100 && s.integrity >= 70 ? 'lit-green' : (s.integrity < 70 ? 'danger' : '');
+      if (role === 'purge') return s.xinRisk < 15 ? 'lit-green' : (s.xinRisk < 40 ? 'lit' : (s.xinRisk > 60 ? 'danger' : ''));
+      if (role === 'pulse') return s.tension < 30 ? 'lit-green' : (s.tension < 60 ? 'lit' : 'danger');
+      if (role === 'slot') return s.convertSlots >= 2 ? 'lit-gold' : (s.convertSlots >= 1 ? 'lit' : '');
+    }
+    if (mapData.type === 'resource-mine') {
+      if (role === 'reward') return s.shenReward >= 5 ? 'lit-gold' : (s.shenReward > 0 ? 'lit' : '');
+      if (role === 'exchange') return s.convertSlots >= 3 ? 'lit-gold' : (s.convertSlots >= 1 ? 'lit' : '');
+      if (role === 'inject') return s.shenReward >= 0 ? (s.xinRisk > 50 ? 'danger' : 'lit') : '';
+      if (role === 'deep') return s.rewriteValue >= 60 ? 'lit-green' : (s.rewriteValue >= 40 ? 'lit' : '');
+      if (role === 'repair') return s.integrity >= 80 ? 'lit-green' : (s.integrity >= 60 ? 'lit' : 'danger');
+      if (role === 'release') return s.tension < 50 ? 'lit-green' : (s.tension < 70 ? 'lit' : 'danger');
+      if (role === 'reverse') return s.beatPhase < 0.5 ? 'lit' : '';
+    }
+    if (mapData.type === 'abyss-forge') {
+      if (role === 'abyss') return Math.abs(s.beatPhase - 0.5) < 0.2 ? 'lit' : (Math.abs(s.beatPhase - 0.5) < 0.1 ? 'lit-gold' : '');
+      if (role === 'burst') return s.shenReward >= 6 ? 'lit-gold' : (s.shenReward >= 3 ? 'lit' : '');
+      if (role === 'lattice') return s.rewriteValue >= 70 ? 'lit-green' : (s.rewriteValue >= 40 ? 'lit' : '');
+      if (role === 'dual-repair') return s.integrity >= 70 ? 'lit-green' : (s.integrity >= 50 ? 'lit' : 'danger');
+      if (role === 'suppress') return s.wuFailFactor <= 4 ? 'lit-green' : (s.wuFailFactor <= 6 ? 'lit' : 'danger');
+      if (role === 'hedge') return s.xinRisk < 30 ? 'lit-green' : (s.xinRisk < 60 ? 'lit' : 'danger');
+      if (role === 'hidden-core') return s.convertSlots >= 5 && s.shenReward >= 6 ? 'lit-purple' : '';
+    }
+    return '';
+  }
+
+  const nodesSvg = (mapData.nodes || []).map(n => {
+    const st = nodeState(n);
+    const r = (n.role === 'phase' || n.role === 'hidden-core') ? 20 : 16;
+    return `
+      <g class="map-node ${st}" data-id="${n.id}" data-role="${n.role}">
+        <circle class="node-circle" cx="${n.x}" cy="${n.y}" r="${r}" />
+        <text class="node-label" x="${n.x}" y="${n.y - r - 6}">${n.label}</text>
+        <text class="node-role" x="${n.x}" y="${n.y + 3}">${n.role}</text>
+      </g>
+    `;
+  }).join('');
+
+  svg.innerHTML = `
+    <defs>
+      <radialGradient id="mapBg" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="${mapData.background}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="#050810" stop-opacity="1"/>
+      </radialGradient>
+    </defs>
+    <rect width="600" height="400" fill="url(#mapBg)" />
+    ${edgesSvg}
+    ${centerDecor}
+    ${nodesSvg}
+  `;
+}
+
 function renderBoard() {
   const s = state.current;
   if (!s) return;
@@ -389,6 +512,7 @@ function renderSettlement(settlement) {
 }
 
 function renderAll() {
+  renderMap();
   renderBoard();
   renderEvents();
   renderReplay();
