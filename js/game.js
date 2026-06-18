@@ -87,9 +87,18 @@ var Game = {
             Board.setLevelConfig(this.levelConfig);
             Settlement.setLevelConfig(this.levelConfig);
 
+            ReplayTimeline.setHistory(this.history, this.turn);
+
+            if (this.isGameOver && this.turn > 0) {
+                Settlement.showSettlement(this.state, this.turn, this.hiddenTriggered);
+                EventBox.showEmpty();
+            } else if (this.turn > 0) {
+                EventBox.showEmpty();
+            }
+
             this.updateUI();
             this.updateLevelButtons();
-            this.showModal('继续游戏', '检测到之前的游戏进度，已自动恢复。当前局：' + this.levelConfig.name);
+            this.showModal('继续游戏', '检测到之前的游戏进度，已自动恢复。当前局：' + this.levelConfig.name + '，已完成 ' + this.turn + ' 个回合。');
         }
     },
 
@@ -346,8 +355,24 @@ var Game = {
     recalculateSettlement: function() {
         if (!this.levelConfig || !this.isGameOver) return;
 
-        var simulatedState = this.simulateGameFromHistory();
-        Settlement.recalculate(simulatedState, this.turn, this.hiddenTriggered);
+        var self = this;
+        Settlement.recalculateFromBackend(
+            this.currentLevel,
+            this.history,
+            this.hiddenTriggered,
+            function(backendData) {
+                Settlement.showSettlement(
+                    backendData.finalState,
+                    backendData.steps,
+                    self.hiddenTriggered,
+                    backendData.settlement
+                );
+                self.showModal(
+                    '后端重算完成',
+                    '苔藓邮站后端服务已按解锁值和竞速经营步骤重算完成。最终得分：' + backendData.settlement.total
+                );
+            }
+        );
     },
 
     simulateGameFromHistory: function() {

@@ -88,7 +88,7 @@ var ReplayTimeline = {
     },
 
     summarizeStep: function(step) {
-        if (!step || !step.choice) return '开始游戏';
+        if (!step || !step.choiceText || !step.eventTitle) return '开始游戏';
         
         var text = step.eventTitle + ' → ' + step.choiceText;
         if (text.length > 30) {

@@ -16,15 +16,20 @@ var Settlement = {
         this.container.innerHTML = '<div class="settlement-empty">游戏结束后显示结算</div>';
     },
 
-    showSettlement: function(state, steps, hiddenTriggered) {
+    showSettlement: function(state, steps, hiddenTriggered, backendResult) {
         if (!this.levelConfig || !this.levelConfig.settlementFormula) {
             return;
         }
 
-        var result = this.levelConfig.settlementFormula(state, hiddenTriggered);
-        
+        var result = backendResult || this.levelConfig.settlementFormula(state, hiddenTriggered);
+        var isBackend = !!backendResult;
+
         var html = '<div class="settlement-content-inner">';
-        html += '<div class="settlement-title">📊 本局结算</div>';
+        html += '<div class="settlement-title">📊 本局结算' + (isBackend ? '（后端重算结果）' : '') + '</div>';
+
+        if (isBackend && result.formula) {
+            html += '<div style="font-size: 0.8rem; color: #666; text-align: center; margin-bottom: 12px;">结算公式：' + result.formula + '</div>';
+        }
         
         html += '<div class="settlement-row"><span class="settlement-label">基础解锁值分</span><span class="settlement-value">' + result.base + '</span></div>';
         
@@ -49,7 +54,7 @@ var Settlement = {
         }
         
         if (result.rewardMultiplier !== undefined) {
-            html += '<div class="settlement-row"><span class="settlement-label">丁号奖励倍率</span><span class="settlement-value">×' + result.rewardMultiplier.toFixed(1) + '</span></div>';
+            html += '<div class="settlement-row"><span class="settlement-label">丁号奖励倍率</span><span class="settlement-value">×' + (typeof result.rewardMultiplier === 'number' ? result.rewardMultiplier.toFixed(1) : result.rewardMultiplier) + '</span></div>';
         }
         
         if (result.hiddenBonus) {
@@ -71,14 +76,25 @@ var Settlement = {
         html += '共完成 ' + steps + ' 个回合';
         html += '</div>';
 
-        html += '<div style="margin-top: 16px; text-align: center;">';
-        html += '<button id="btn-recalculate" class="btn btn-secondary" style="font-size: 0.85rem;">🔄 后端重算结算</button>';
-        html += '</div>';
+        if (!isBackend) {
+            html += '<div style="margin-top: 16px; text-align: center;">';
+            html += '<button id="btn-recalculate" class="btn btn-secondary" style="font-size: 0.85rem;">🔄 请求后端重算结算</button>';
+            html += '</div>';
+        } else {
+            html += '<div style="margin-top: 16px; padding: 10px; background: #e8f5e9; border-radius: 6px; font-size: 0.85rem; color: #2e7d32; text-align: center;">';
+            html += '✓ 已通过后端 /api/recalculate 接口重算完成';
+            if (result.steps !== undefined) {
+                html += '，共推演 ' + result.steps + ' 个步骤';
+            }
+            html += '</div>';
+        }
         
         html += '</div>';
         
         this.container.innerHTML = html;
-        this.bindRecalculateButton();
+        if (!isBackend) {
+            this.bindRecalculateButton();
+        }
     },
 
     bindRecalculateButton: function() {
@@ -93,31 +109,62 @@ var Settlement = {
         }
     },
 
-    recalculate: function(state, steps, hiddenTriggered) {
+    recalculateFromBackend: function(levelId, history, hiddenTriggered, callback) {
         var btn = document.getElementById('btn-recalculate');
         if (btn) {
-            btn.textContent = '⏳ 正在重算...';
+            btn.textContent = '⏳ 请求后端重算中...';
             btn.disabled = true;
         }
 
         var self = this;
-        setTimeout(function() {
-            self.showSettlement(state, steps, hiddenTriggered);
-            var result = self.levelConfig.settlementFormula(state, hiddenTriggered);
-            self.showRecalcNotice(result.total);
-        }, 800);
+        var payload = {
+            levelId: levelId,
+            history: history,
+            hiddenTriggered: hiddenTriggered
+        };
+
+        fetch('/api/recalculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.status === 'success' && data.settlement) {
+                if (callback) {
+                    callback(data);
+                }
+            } else {
+                throw new Error(data.error || '后端重算失败');
+            }
+        })
+        .catch(function(error) {
+            console.error('后端重算错误:', error);
+            if (btn) {
+                btn.textContent = '❌ 后端请求失败，点击重试';
+                btn.disabled = false;
+            }
+            self.showErrorNotice('后端重算请求失败：' + error.message);
+        });
     },
 
-    showRecalcNotice: function(total) {
+    showErrorNotice: function(message) {
         var notice = document.createElement('div');
-        notice.style.cssText = 'margin-top: 8px; padding: 6px 12px; background: #d4edda; color: #155724; border-radius: 4px; font-size: 0.8rem; text-align: center;';
-        notice.textContent = '✓ 后端重算完成，最终得分：' + total;
-        
+        notice.style.cssText = 'margin-top: 8px; padding: 6px 12px; background: #ffebee; color: #c62828; border-radius: 4px; font-size: 0.8rem; text-align: center;';
+        notice.textContent = message;
+
         var settlementInner = this.container.querySelector('.settlement-content-inner');
         if (settlementInner) {
-            var verdict = settlementInner.querySelector('.settlement-verdict');
-            if (verdict && verdict.parentNode) {
-                verdict.parentNode.insertBefore(notice, verdict.nextSibling);
+            var btn = settlementInner.querySelector('#btn-recalculate');
+            if (btn && btn.parentNode) {
+                btn.parentNode.appendChild(notice);
             }
         }
     }
