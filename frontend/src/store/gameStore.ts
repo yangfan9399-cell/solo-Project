@@ -29,6 +29,8 @@ interface GameStore {
   selectedTile: Position | null;
   eventLog: EventLogEntry[];
   settlementResult: SettlementResult | null;
+  settleError: string | null;
+  levelsError: string | null;
   isPlaying: boolean;
 
   fetchLevels: () => Promise<void>;
@@ -116,14 +118,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   selectedTile: null,
   eventLog: [],
   settlementResult: null,
+  settleError: null,
+  levelsError: null,
   isPlaying: false,
 
   fetchLevels: async () => {
     try {
       const res = await axios.get<GameLevel[]>("/api/levels");
-      set({ levels: res.data });
-    } catch {
-      set({ levels: [] });
+      set({ levels: res.data, levelsError: null });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "未知错误";
+      set({ levels: [], levelsError: `关卡加载失败：${msg}` });
     }
   },
 
@@ -145,6 +151,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         currentPosition: position,
         eventLog: events,
         settlementResult: null,
+        settleError: null,
         isPlaying: true,
         selectedTile: null,
       });
@@ -157,6 +164,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         currentPosition: { ...level.map.start },
         eventLog: [],
         settlementResult: null,
+        settleError: null,
         isPlaying: true,
         selectedTile: null,
       });
@@ -297,6 +305,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       currentPosition: { ...to },
       eventLog: [...get().eventLog, ...newEvents],
       settlementResult: null,
+      settleError: null,
     });
   },
 
@@ -326,6 +335,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       currentPosition: position,
       eventLog: events,
       settlementResult: null,
+      settleError: null,
     });
   },
 
@@ -345,6 +355,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       currentPosition: { ...level.map.start },
       eventLog: [],
       settlementResult: null,
+      settleError: null,
       isPlaying: true,
       selectedTile: null,
     });
@@ -366,6 +377,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       currentPosition: position,
       eventLog: events,
       settlementResult: null,
+      settleError: null,
     });
   },
 
@@ -381,9 +393,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
         steps,
         initialField: level.initialField,
       });
-      set({ settlementResult: res.data });
-    } catch {
-      set({ settlementResult: null });
+      set({ settlementResult: res.data, settleError: null });
+    } catch (err: any) {
+      const backendMsg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        null;
+      const msg = backendMsg
+        ? `结算失败：${backendMsg}`
+        : `结算请求失败：${err instanceof Error ? err.message : "未知错误"}`;
+      set({ settlementResult: null, settleError: msg });
     }
   },
 

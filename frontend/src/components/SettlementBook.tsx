@@ -1,4 +1,5 @@
 import { useGameStore } from "../store/gameStore";
+import { WinFormula } from "@cbcp/shared";
 import type { GameField } from "@cbcp/shared";
 
 const riskLevelLabels: Record<number, string> = {
@@ -7,6 +8,12 @@ const riskLevelLabels: Record<number, string> = {
   2: "中度",
   3: "重度",
   4: "极危",
+};
+
+const winFormulaLabels: Record<WinFormula, string> = {
+  [WinFormula.NO_RISK_AND_REACH]: "到达终点且巳号风险不超过阈值",
+  [WinFormula.REACH_END_WITH_REWARD]: "到达终点且申号奖励达到阈值",
+  [WinFormula.HIDDEN_TRIGGERED_AND_END]: "触发所有隐藏事件并到达终点",
 };
 
 interface FinalFieldDef {
@@ -27,6 +34,7 @@ function SettlementBook() {
   const {
     settleGame,
     settlementResult,
+    settleError,
     currentLevelId,
     steps,
     levels,
@@ -39,6 +47,10 @@ function SettlementBook() {
     settlementResult !== null
       ? riskLevelLabels[settlementResult.riskLevel] ?? `等级${settlementResult.riskLevel}`
       : "";
+
+  const winFormulaText = level
+    ? winFormulaLabels[level.winFormula] ?? String(level.winFormula)
+    : "";
 
   return (
     <div className="panel">
@@ -61,6 +73,35 @@ function SettlementBook() {
         >
           ⚖️ 后端结算
         </button>
+
+        {!canSettle && currentLevelId && (
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--coral-text-muted)",
+              textAlign: "center",
+              opacity: 0.8,
+            }}
+          >
+            请先在局面盘移动至少一步，再提交结算
+          </div>
+        )}
+
+        {settleError && !settlementResult && (
+          <div
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              background: "rgba(230, 57, 70, 0.12)",
+              border: "1px solid rgba(230, 57, 70, 0.4)",
+              fontSize: 13,
+              color: "#ffb0b0",
+              lineHeight: 1.5,
+            }}
+          >
+            ⚠️ {settleError}
+          </div>
+        )}
 
         {!settlementResult ? (
           <div className="settle-suggestion">
@@ -85,7 +126,7 @@ function SettlementBook() {
                   color: "var(--coral-gold)",
                 }}
               >
-                关卡规则：{level.winFormula}
+                关卡规则：{winFormulaText}
               </div>
             )}
           </div>
@@ -97,7 +138,7 @@ function SettlementBook() {
               }`}
             >
               <div className="result-icon">
-                {settlementResult.success ? "�" : "�"}
+                {settlementResult.success ? "🏆" : "💥"}
               </div>
               <div className="result-title">
                 {settlementResult.success ? "通关成功" : "挑战失败"}

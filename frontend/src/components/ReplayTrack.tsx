@@ -159,12 +159,14 @@ function ReplayTrack() {
           </button>
         </div>
 
-        <div className="replay-save-tip">
-          <span>💾</span>
-          <span>
-            已自动保存到回放轴，刷新页面后可继续当前局进度（本地存储）
-          </span>
-        </div>
+        {steps.length > 0 && (
+          <div className="replay-save-tip">
+            <span>💾</span>
+            <span>
+              已自动保存到回放轴，刷新页面后可继续当前局进度（本地存储）
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -24,6 +24,7 @@ function App() {
     currentStepIdx,
     steps,
     isPlaying,
+    levelsError,
     fetchLevels,
     selectLevel,
   } = useGameStore();
@@ -33,6 +34,9 @@ function App() {
   }, [fetchLevels]);
 
   const currentLevel = levels.find((l) => l.id === currentLevelId);
+  const stepDisplay = currentLevel
+    ? `${Math.max(currentStepIdx + 1, 0)} / ${steps.length}`
+    : "—";
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -68,7 +72,7 @@ function App() {
             {isPlaying && currentLevel ? "🟢 当前局进行中" : "⚪ 待开始"}
           </span>
           <span className="status-chip">
-            步数：<b style={{ color: "var(--coral-gold)" }}>{Math.max(currentStepIdx + 1, 0)}</b> / {steps.length}
+            步数：<b style={{ color: "var(--coral-gold)" }}>{stepDisplay}</b>
           </span>
           <span className="status-save-indicator">
             <span className="status-save-dot" />
@@ -89,7 +93,28 @@ function App() {
                 巳局·教学 / 申局·资源短缺 / 午局·隐藏条件
               </span>
             </div>
-            <div className="welcome-hints">
+            {levelsError ? (
+              <div
+                style={{
+                  padding: "14px 18px",
+                  borderRadius: 10,
+                  background: "rgba(230, 57, 70, 0.1)",
+                  border: "1px solid rgba(230, 57, 70, 0.35)",
+                  fontSize: 14,
+                  color: "#ffb0b0",
+                  maxWidth: 420,
+                  textAlign: "center",
+                  lineHeight: 1.6,
+                }}
+              >
+                ⚠️ {levelsError}
+                <br />
+                <span style={{ fontSize: 12, opacity: 0.8 }}>
+                  请确认后端服务已启动（端口 41621）后刷新页面
+                </span>
+              </div>
+            ) : (
+              <div className="welcome-hints">
               <div className="welcome-hint-card">
                 <div className="welcome-hint-card-title">🎯 目标</div>
                 从起点走到终点，同时在六维数值场上满足关卡胜利公式
@@ -103,6 +128,7 @@ function App() {
                 走到满意位置后点"后端结算"，由独立后端重算并给出最终胜负
               </div>
             </div>
+            )}
           </div>
         ) : (
           <>
