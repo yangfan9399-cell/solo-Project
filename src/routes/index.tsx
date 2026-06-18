@@ -356,7 +356,7 @@ export default function ProjectLedger() {
             <button class="btn btn-xs btn-success" onClick={() => batchStatusChange("reviewed")}>批量标记已审毕</button>
             <button class="btn btn-xs btn-warning" onClick={() => batchStatusChange("in_review")}>批量设为审读中</button>
             <button class="btn btn-xs btn-default" onClick={() => alert("批量导出（演示）")}>批量导出摘要</button>
-            <button class="btn btn-xs btn-danger" onClick={() => setSelected(new Set())}>取消选择</button>
+            <button class="btn btn-xs btn-danger" onClick={() => setSelected(new Set<string>())}>取消选择</button>
           </div>
         </Show>
 
@@ -496,7 +496,7 @@ export default function ProjectLedger() {
                   value={newForm().name}
                   onInput={e => setNewForm({ ...newForm(), name: e.currentTarget.value })} />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                 <div class="form-row">
                   <label>典籍名</label>
                   <input class="form-input" placeholder="如：五帝本纪"
@@ -537,7 +537,7 @@ export default function ProjectLedger() {
                   value={newForm().originalText}
                   onInput={e => setNewForm({ ...newForm(), originalText: e.currentTarget.value })} />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                 <div class="form-row">
                   <label>指派给</label>
                   <select class="form-select"

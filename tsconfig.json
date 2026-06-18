@@ -11,7 +11,14 @@
     "noEmit": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["@solidjs/start/env"]
+    "types": []
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/entry-server.tsx",
+    "src/root.tsx",
+    "src/routes/api",
+    "src/server/api.ts",
+    "app.config.ts"
+  ]
 }

@@ -1,9 +1,8 @@
-import { defineConfig } from "@solidjs/start/config";
+import { defineConfig } from "vite";
+import solidPlugin from "vite-plugin-solid";
+import { apiMiddleware } from "./src/server/api";
 
 export default defineConfig({
-  vite: {
-    server: {
-      port: 5173
-    }
-  }
+  plugins: [solidPlugin(), apiMiddleware()],
+  server: { port: 5173 }
 });

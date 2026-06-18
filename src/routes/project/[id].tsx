@@ -199,7 +199,7 @@ export default function ProjectDetail() {
     <div class="detail-page-wrap">
       <div class="page-header">
         <div class="page-title-block">
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: 4 }}>
           <button class="btn btn-sm btn-default" onClick={() => nav("/")}>← 返回台账</button>
           <h2 style={{ margin: 0 }}>{p()?.name ?? "加载中…"}</h2>
           <Show when={p()?.status}>
@@ -364,7 +364,7 @@ export default function ProjectDetail() {
               justifyContent: "space-between",
               alignItems: "center",
               marginBottom: 14,
-              gap: 10,
+              gap: "10px",
               flexWrap: "wrap"
             }}>
               <div class="gap-medium">
@@ -384,7 +384,7 @@ export default function ProjectDetail() {
                   <For each={projRules()}>
                     {rule => (
                       <option value={rule.id}>
-                        [{rule.dynasty}] {rule.tabooChar}→{rule.replacementChar}
+                        [{rule.dynasty}] {rule.tabooCharacter}→{rule.replacementCharacter}
                       </option>
                     )}
                   </For>
