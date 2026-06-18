@@ -1,0 +1,55 @@
+import { component$, Slot, useVisibleTask$, useSignal } from '@builder.io/qwik';
+import { useLocation, Link } from '@builder.io/qwik-city';
+import { getAllAnomalies } from '~/utils/storage';
+import { initializeSeedData } from '~/utils/seed';
+
+export default component$(() => {
+  const location = useLocation();
+  const anomalyCount = useSignal(0);
+
+  useVisibleTask$(() => {
+    initializeSeedData();
+  });
+
+  useVisibleTask$(() => {
+    const anomalies = getAllAnomalies(undefined, false);
+    anomalyCount.value = anomalies.length;
+  });
+
+  const navItems = [
+    { href: '/', label: '📊 项目台账' },
+    { href: '/regions', label: '🗺️ 地区样本库' },
+  ];
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <h1>声调对齐平台</h1>
+          <p>Dialect Tone Alignment</p>
+        </div>
+        <nav class="sidebar-nav">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              class={location.url.pathname === item.href ? 'active' : ''}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        {anomalyCount.value > 0 && (
+          <div class="sidebar-anomaly">
+            <Link href="/?filter=anomaly">
+              ⚠️ 异常数据 <span class="badge">{anomalyCount.value}</span>
+            </Link>
+          </div>
+        )}
+      </aside>
+      <main class="main-content">
+        <Slot />
+      </main>
+    </div>
+  );
+});

@@ -1,0 +1,25 @@
+{
+  "name": "dialect-tone-platform",
+  "description": "方言声调采样对齐平台",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --mode ssr",
+    "build": "vite build && vite build -c adapters/static/vite.config.ts",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node -e \"const fs=require('fs');const p='node_modules/rollup/dist/native.js';try{const b=fs.readFileSync(p,'utf8');if(!b.includes('wasm-node')){fs.writeFileSync(p,'module.exports = require(\\\"@rollup/wasm-node/dist/native.js\\\");\\n');}}catch(e){}\""
+  },
+  "devDependencies": {
+    "@builder.io/qwik": "^1.9.1",
+    "@builder.io/qwik-city": "^1.9.1",
+    "@rollup/wasm-node": "^4.62.0",
+    "@types/node": "^20.14.0",
+    "rollup": "^4.62.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

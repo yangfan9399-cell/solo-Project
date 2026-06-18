@@ -1,0 +1,375 @@
+import { component$, useVisibleTask$, useSignal, useStore, $, type JSXNode } from '@builder.io/qwik';
+import { useLocation, Link } from '@builder.io/qwik-city';
+import type { Project, Sample, Anomaly } from '~/types';
+import { getAllProjects, getAllSamples, getAllAnomalies, resolveAnomaly, saveProject } from '~/utils/storage';
+import { PageHeader } from '~/components/header/header';
+
+type StatusFilter = 'all' | 'active' | 'completed' | 'archived';
+
+const STATUS_CHIPS: { label: string; value: StatusFilter }[] = [
+  { label: '全部', value: 'all' },
+  { label: '进行中', value: 'active' },
+  { label: '已完成', value: 'completed' },
+  { label: '已归档', value: 'archived' },
+];
+
+const STATUS_LABEL: Record<Project['status'], string> = {
+  active: '进行中',
+  completed: '已完成',
+  archived: '已归档',
+};
+
+const SEVERITY_ICON: Record<Anomaly['severity'], string> = {
+  high: '⚠️',
+  medium: '🔶',
+  low: 'ℹ️',
+};
+
+const SEVERITY_ALERT: Record<Anomaly['severity'], string> = {
+  high: 'alert-danger',
+  medium: 'alert-warning',
+  low: 'alert-info',
+};
+
+function formatDate(iso: string): string {
+  return iso.slice(0, 10);
+}
+
+export default component$(() => {
+  const location = useLocation();
+  const showForm = useSignal(false);
+  const searchText = useSignal('');
+  const statusFilter = useSignal<StatusFilter>('all');
+  const anomalyMode = useSignal(false);
+
+  const state = useStore<{
+    projects: Project[];
+    samples: Sample[];
+    anomalies: Anomaly[];
+  }>({
+    projects: [],
+    samples: [],
+    anomalies: [],
+  });
+
+  const form = useStore({
+    name: '',
+    dialect: '',
+    region: '',
+    investigator: '',
+    description: '',
+  });
+
+  const loadData = $(() => {
+    state.projects = getAllProjects();
+    state.samples = getAllSamples();
+    state.anomalies = getAllAnomalies();
+  });
+
+  useVisibleTask$(() => {
+    const filterParam = location.url.searchParams.get('filter');
+    if (filterParam === 'anomaly') {
+      anomalyMode.value = true;
+    }
+    loadData();
+  });
+
+  const unresolvedAnomalies = useSignal<Anomaly[]>([]);
+
+  useVisibleTask$(({ track }) => {
+    track(() => state.anomalies.length);
+    unresolvedAnomalies.value = state.anomalies.filter((a) => !a.resolved);
+  });
+
+  const filteredProjects = useSignal<Project[]>([]);
+
+  useVisibleTask$(({ track }) => {
+    track(() => state.projects.length);
+    track(() => searchText.value);
+    track(() => statusFilter.value);
+    track(() => anomalyMode.value);
+
+    let result = state.projects;
+
+    if (statusFilter.value !== 'all') {
+      result = result.filter((p) => p.status === statusFilter.value);
+    }
+
+    if (anomalyMode.value) {
+      const anomalyProjectIds = new Set(
+        state.anomalies.filter((a) => !a.resolved).map((a) => a.projectId)
+      );
+      result = result.filter((p) => anomalyProjectIds.has(p.id));
+    }
+
+    if (searchText.value.trim()) {
+      const q = searchText.value.trim().toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.dialect.toLowerCase().includes(q) ||
+          p.region.toLowerCase().includes(q)
+      );
+    }
+
+    filteredProjects.value = result;
+  });
+
+  const verifiedCount = useSignal(0);
+  const totalAnomalyCount = useSignal(0);
+
+  useVisibleTask$(({ track }) => {
+    track(() => state.samples.length);
+    track(() => state.anomalies.length);
+    verifiedCount.value = state.samples.filter((s) => s.status === 'verified').length;
+    totalAnomalyCount.value = state.anomalies.filter((a) => !a.resolved).length;
+  });
+
+  const handleResolve = $(async (anomalyId: string) => {
+    resolveAnomaly(anomalyId);
+    await loadData();
+  });
+
+  const handleCreateProject = $(() => {
+    if (!form.name.trim()) return;
+    const now = new Date().toISOString();
+    const project: Project = {
+      id: Date.now().toString(),
+      name: form.name.trim(),
+      dialect: form.dialect.trim(),
+      region: form.region.trim(),
+      investigator: form.investigator.trim(),
+      description: form.description.trim(),
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+    };
+    saveProject(project);
+    form.name = '';
+    form.dialect = '';
+    form.region = '';
+    form.investigator = '';
+    form.description = '';
+    showForm.value = false;
+    loadData();
+  });
+
+  return (
+    <>
+      <PageHeader
+        title="项目台账"
+        subtitle="管理与追踪方言声调调查项目"
+        actions={
+          <div>
+            <button
+              class="btn-primary"
+              onClick$={() => {
+                showForm.value = !showForm.value;
+              }}
+            >
+              + 新建项目
+            </button>
+          </div> as JSXNode
+        }
+      />
+
+      <div class="grid grid-4">
+        <div class="stat-card">
+          <div class="stat-label">项目总数</div>
+          <div class="stat-value">{state.projects.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">样本总数</div>
+          <div class="stat-value">{state.samples.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">异常数量</div>
+          <div class="stat-value" style={{ color: totalAnomalyCount.value > 0 ? 'var(--danger)' : undefined }}>
+            {totalAnomalyCount.value}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">已验证样本</div>
+          <div class="stat-value" style={{ color: 'var(--success)' }}>{verifiedCount.value}</div>
+        </div>
+      </div>
+
+      <div class="card mt-24" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="搜索项目名称、方言、地区..."
+          style={{ width: '280px', flexShrink: 0 }}
+          value={searchText.value}
+          onInput$={(e) => {
+            searchText.value = (e.target as HTMLInputElement).value;
+          }}
+        />
+        <div class="chip-group">
+          {STATUS_CHIPS.map((chip) => (
+            <span
+              key={chip.value}
+              class={`chip ${statusFilter.value === chip.value ? 'selected' : ''}`}
+              onClick$={() => {
+                statusFilter.value = chip.value;
+              }}
+            >
+              {chip.label}
+            </span>
+          ))}
+          {anomalyMode.value && (
+            <span
+              class="chip selected"
+              style={{ background: 'var(--danger-bg)', color: 'var(--danger)', borderColor: 'var(--danger)' }}
+            >
+              异常项目
+            </span>
+          )}
+        </div>
+      </div>
+
+      {(unresolvedAnomalies.value.length > 0 || anomalyMode.value) && (
+        <div class="mt-24">
+          <h3 style={{ marginBottom: '12px', fontSize: '16px', fontWeight: 600 }}>
+            异常提醒
+          </h3>
+          {unresolvedAnomalies.value.length === 0 ? (
+            <div class="alert-bar alert-info" style={{ background: 'var(--success-bg)', color: 'var(--success)', borderColor: 'rgba(52,211,153,0.2)' }}>
+              全部已解决 ✓
+            </div>
+          ) : (
+            unresolvedAnomalies.value.map((anomaly) => (
+              <div key={anomaly.id} class={`alert-bar ${SEVERITY_ALERT[anomaly.severity]}`}>
+                <span>{SEVERITY_ICON[anomaly.severity]}</span>
+                <span style={{ flex: 1 }}>{anomaly.description}</span>
+                <Link href={`/project/${anomaly.projectId}`} style={{ textDecoration: 'none', fontSize: '12px' }}>
+                  样本 {anomaly.sampleId}
+                </Link>
+                <button
+                  class="btn-secondary btn-sm"
+                  onClick$={() => handleResolve(anomaly.id)}
+                >
+                  标记已解决
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {showForm.value && (
+        <div class="card mt-24">
+          <h3 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 600 }}>新建项目</h3>
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label>项目名称 *</label>
+              <input
+                type="text"
+                value={form.name}
+                onInput$={(e) => {
+                  form.name = (e.target as HTMLInputElement).value;
+                }}
+              />
+            </div>
+            <div class="form-group">
+              <label>方言</label>
+              <input
+                type="text"
+                value={form.dialect}
+                onInput$={(e) => {
+                  form.dialect = (e.target as HTMLInputElement).value;
+                }}
+              />
+            </div>
+            <div class="form-group">
+              <label>地区</label>
+              <input
+                type="text"
+                value={form.region}
+                onInput$={(e) => {
+                  form.region = (e.target as HTMLInputElement).value;
+                }}
+              />
+            </div>
+            <div class="form-group">
+              <label>调查人</label>
+              <input
+                type="text"
+                value={form.investigator}
+                onInput$={(e) => {
+                  form.investigator = (e.target as HTMLInputElement).value;
+                }}
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>描述</label>
+            <textarea
+              value={form.description}
+              onInput$={(e) => {
+                form.description = (e.target as HTMLTextAreaElement).value;
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <button
+              class="btn-secondary"
+              onClick$={() => {
+                showForm.value = false;
+              }}
+            >
+              取消
+            </button>
+            <button class="btn-primary" onClick$={handleCreateProject}>
+              创建
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div class="card mt-24" style={{ padding: 0, overflow: 'hidden' }}>
+        {filteredProjects.value.length === 0 ? (
+          <div class="empty-state">
+            <p>📭 没有匹配的项目</p>
+          </div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>项目名称</th>
+                <th>方言</th>
+                <th>地区</th>
+                <th>调查人</th>
+                <th>样本数</th>
+                <th>异常数</th>
+                <th>状态</th>
+                <th>更新时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProjects.value.map((project) => (
+                <tr key={project.id}>
+                  <td>
+                    <Link href={`/project/${project.id}`}>{project.name}</Link>
+                  </td>
+                  <td>{project.dialect}</td>
+                  <td>{project.region}</td>
+                  <td>{project.investigator}</td>
+                  <td>{state.samples.filter((s) => s.projectId === project.id).length}</td>
+                  <td style={{ color: state.anomalies.filter((a) => a.projectId === project.id && !a.resolved).length > 0 ? 'var(--danger)' : undefined }}>
+                    {state.anomalies.filter((a) => a.projectId === project.id && !a.resolved).length}
+                  </td>
+                  <td>
+                    <span class={`badge badge-${project.status}`}>
+                      {STATUS_LABEL[project.status]}
+                    </span>
+                  </td>
+                  <td class="text-secondary">{formatDate(project.updatedAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </>
+  );
+});
