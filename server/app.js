@@ -399,49 +399,146 @@ function applyEventEffect(state, effect) {
   }
 }
 
+function evaluateWinConditions(level, state) {
+  const wc = level.winCondition || {};
+  const litCount = state.cells.filter(c => c.lit).length;
+  const totalLit = state.cells.filter(c => !c.blocked).length;
+  const litRatio = litCount / Math.max(1, totalLit);
+
+  const conditions = [];
+  if (wc.xunran !== undefined) {
+    conditions.push({
+      id: 'xunran',
+      name: '熏染值达标',
+      required: wc.xunran,
+      current: state.xunran,
+      met: state.xunran >= wc.xunran,
+      display: `熏染值 ≥ ${wc.xunran}（当前 ${state.xunran}）`
+    });
+  }
+  if (wc.litRatio !== undefined) {
+    conditions.push({
+      id: 'litRatio',
+      name: '点亮比例达标',
+      required: (wc.litRatio * 100).toFixed(0) + '%',
+      current: (litRatio * 100).toFixed(1) + '%',
+      met: litRatio >= wc.litRatio,
+      display: `点亮比例 ≥ ${(wc.litRatio * 100).toFixed(0)}%（当前 ${(litRatio * 100).toFixed(1)}%）`
+    });
+  }
+  if (wc.goalReached) {
+    const goal = state.cells.find(c => c.goal);
+    const reached = goal ? state.players.some(p => p.x === goal.x && p.y === goal.y) : false;
+    conditions.push({
+      id: 'goalReached',
+      name: '抵达目标格',
+      required: '到达终点',
+      current: reached ? '已到达' : '未到达',
+      met: reached,
+      display: `任一玩家抵达目标格（${reached ? '已达成' : '未达成'}）`
+    });
+  }
+  if (wc.turn !== undefined) {
+    conditions.push({
+      id: 'turn',
+      name: '回合数限制内',
+      required: `≤ ${wc.turn} 回合`,
+      current: `第 ${state.turn} 回合`,
+      met: state.turn <= wc.turn,
+      display: `在 ${wc.turn} 回合内完成（当前第 ${state.turn} 回合）`
+    });
+  }
+
+  let hiddenCondition = null;
+  if (wc.hiddenCondition) {
+    if (wc.hiddenCondition.type === 'xinZero') {
+      const met = state.xinFailure === 0;
+      hiddenCondition = {
+        id: 'xinZero',
+        name: '隐藏：零失败因子',
+        met,
+        display: `辛号失败因子保持为 0（当前 ${state.xinFailure}）`
+      };
+    }
+    if (wc.hiddenCondition.type === 'coopCount') {
+      const coopCount = state.eventsTriggered.filter(e => typeof e === 'string' && e.includes('coop')).length;
+      const met = coopCount >= (wc.hiddenCondition.count || 3);
+      hiddenCondition = {
+        id: 'coopCount',
+        name: '隐藏：协作达人',
+        met,
+        display: `协作次数 ≥ ${wc.hiddenCondition.count || 3}（当前 ${coopCount}）`
+      };
+    }
+  }
+
+  const allMet = conditions.length > 0 && conditions.every(c => c.met);
+  const hiddenMet = hiddenCondition && hiddenCondition.met;
+
+  return { conditions, hiddenCondition, allMet, hiddenMet, won: allMet || hiddenMet };
+}
+
+function evaluateLoseConditions(level, state) {
+  const lc = level.loseCondition || {};
+  const conditions = [];
+
+  if (lc.chenRisk !== undefined) {
+    conditions.push({
+      id: 'chenRisk',
+      name: '辰号风险爆表',
+      threshold: lc.chenRisk,
+      current: state.chenRisk,
+      met: state.chenRisk >= lc.chenRisk,
+      display: `辰号风险 ≥ ${lc.chenRisk}（当前 ${state.chenRisk}）`
+    });
+  }
+  if (lc.xinFailure !== undefined) {
+    conditions.push({
+      id: 'xinFailure',
+      name: '辛号因子爆表',
+      threshold: lc.xinFailure,
+      current: state.xinFailure,
+      met: state.xinFailure >= lc.xinFailure,
+      display: `辛号失败因子 ≥ ${lc.xinFailure}（当前 ${state.xinFailure}）`
+    });
+  }
+  if (lc.turn !== undefined) {
+    conditions.push({
+      id: 'turn',
+      name: '回合数耗尽',
+      threshold: `> ${lc.turn} 回合`,
+      current: `第 ${state.turn} 回合`,
+      met: state.turn > lc.turn,
+      display: `超过 ${lc.turn} 回合（当前第 ${state.turn} 回合）`
+    });
+  }
+
+  return { conditions, lost: conditions.some(c => c.met) };
+}
+
 function checkWinLose(level, state, events) {
-  let win = false;
-  let lose = false;
+  const winEval = evaluateWinConditions(level, state);
+  const loseEval = evaluateLoseConditions(level, state);
+
+  const win = winEval.won && !loseEval.lost;
+  const lose = loseEval.lost && !winEval.won;
+
   let reason = '';
-
-  if (level.winCondition) {
-    const wc = level.winCondition;
-    const litCount = state.cells.filter(c => c.lit).length;
-    const totalLit = state.cells.filter(c => !c.blocked).length;
-    const litRatio = litCount / Math.max(1, totalLit);
-
-    if (wc.xunran && state.xunran >= wc.xunran) win = true;
-    if (wc.litRatio && litRatio >= wc.litRatio) win = true;
-    if (wc.goalReached) {
-      const goal = state.cells.find(c => c.goal);
-      if (goal && state.players.some(p => p.x === goal.x && p.y === goal.y)) win = true;
-    }
-    if (wc.turn && state.turn <= wc.turn && win) win = true;
-    if (wc.hiddenCondition) {
-      if (wc.hiddenCondition.type === 'xinZero' && state.xinFailure === 0) {
-        win = true;
-        reason = '隐藏条件达成！辛号失败因子保持为0';
-      }
-      if (wc.hiddenCondition.type === 'coopCount' && state.eventsTriggered.filter(e => typeof e === 'string' && e.includes('coop')).length >= (wc.hiddenCondition.count || 3)) {
-        win = true;
-        reason = '隐藏条件达成！协作次数达标';
-      }
-    }
+  if (win && winEval.hiddenMet && !winEval.allMet) {
+    reason = '隐藏条件达成！' + (winEval.hiddenCondition?.name || '');
+  } else if (win) {
+    reason = '所有胜利条件达成！';
+  } else if (lose) {
+    const failCond = loseEval.conditions.find(c => c.met);
+    reason = (failCond?.name || '挑战失败') + '！';
   }
 
-  if (level.loseCondition) {
-    const lc = level.loseCondition;
-    if (lc.chenRisk && state.chenRisk >= lc.chenRisk) { lose = true; reason = '辰号风险爆表！'; }
-    if (lc.xinFailure && state.xinFailure >= lc.xinFailure) { lose = true; reason = '辛号失败因子爆表！'; }
-    if (lc.turn && state.turn > lc.turn && !win) { lose = true; reason = '回合数耗尽！'; }
-  }
-
-  if (win && !lose) {
+  if (win) {
     state.phase = 'win';
-    events.push({ type: 'win', message: reason || '闯关成功！' });
+    events.push({ type: 'win', message: reason, winDetails: winEval, loseDetails: loseEval });
   } else if (lose) {
     state.phase = 'lose';
-    events.push({ type: 'lose', message: reason || '闯关失败！' });
+    events.push({ type: 'lose', message: reason, winDetails: winEval, loseDetails: loseEval });
   }
 }
 
@@ -468,6 +565,7 @@ function calculateSettlement(level, state, replay) {
   const coopSteps = replay.filter(r => r.action?.type === 'coop').length;
   const moveSteps = replay.filter(r => r.action?.type === 'move').length;
   const lightSteps = replay.filter(r => r.action?.type === 'light').length;
+  const eventSteps = replay.filter(r => r.action?.type === 'triggerEvent').length;
   const totalSteps = replay.length;
 
   const xunranScore = state.xunran * 2;
@@ -492,8 +590,12 @@ function calculateSettlement(level, state, replay) {
   else if (finalScore >= 350) rank = '协作达人';
   else if (finalScore >= 250) rank = '合格闯将';
 
+  const winEval = evaluateWinConditions(level, state);
+  const loseEval = evaluateLoseConditions(level, state);
+
   return {
     success: state.phase === 'win',
+    phase: state.phase,
     finalScore,
     grade,
     rank,
@@ -506,7 +608,19 @@ function calculateSettlement(level, state, replay) {
       maoReward: state.maoReward,
       xinFailure: state.xinFailure,
       turns: state.turn,
-      steps: { total: totalSteps, move: moveSteps, light: lightSteps, coop: coopSteps }
+      steps: { total: totalSteps, move: moveSteps, light: lightSteps, coop: coopSteps, event: eventSteps }
+    },
+    conditions: {
+      win: {
+        allMet: winEval.allMet,
+        hiddenMet: winEval.hiddenMet,
+        conditions: winEval.conditions,
+        hiddenCondition: winEval.hiddenCondition
+      },
+      lose: {
+        anyMet: loseEval.lost,
+        conditions: loseEval.conditions
+      }
     },
     breakdown: {
       xunranScore,

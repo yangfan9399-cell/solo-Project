@@ -74,7 +74,50 @@ function renderSettlement(s) {
 
 function renderSettlementDetails(s) {
   const d = s.details;
-  const st = s.steps;
+  const st = d.steps;
+  const wc = s.conditions?.win;
+  const lc = s.conditions?.lose;
+
+  let conditionsHtml = '';
+  if (wc && wc.conditions && wc.conditions.length) {
+    conditionsHtml += `
+      <div style="margin-top:12px;padding-top:12px;border-top:2px dashed rgba(148,163,184,0.2);">
+        <h4 style="color:var(--accent-gold);margin-bottom:10px;font-size:13px;">🏆 胜利条件（需全部达成）</h4>
+        ${wc.conditions.map(c => `
+          <div style="display:flex;align-items:center;gap:6px;padding:5px 0;font-size:12px;">
+            <span style="color:${c.met ? 'var(--accent-green)' : 'var(--text-muted)'};font-size:14px;">${c.met ? '✅' : '⬜'}</span>
+            <span style="${c.met ? 'color:var(--accent-green);font-weight:600;' : 'color:var(--text-muted);'}">${c.display}</span>
+          </div>
+        `).join('')}
+    `;
+    if (wc.hiddenCondition) {
+      conditionsHtml += `
+        <div style="margin-top:8px;padding:8px;background:rgba(168,85,247,0.1);border-radius:8px;border-left:3px solid var(--accent-purple);">
+          <div style="font-size:11px;color:var(--accent-purple);font-weight:700;margin-bottom:3px;">🔮 隐藏胜利条件</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;">
+            <span style="color:${wc.hiddenCondition.met ? 'var(--accent-purple)' : 'var(--text-muted)'};">${wc.hiddenCondition.met ? '✨' : '🔒'}</span>
+            <span style="${wc.hiddenCondition.met ? 'color:var(--accent-purple);font-weight:600;' : 'color:var(--text-muted);'}">${wc.hiddenCondition.display}</span>
+          </div>
+        </div>
+      `;
+    }
+    conditionsHtml += '</div>';
+  }
+
+  if (lc && lc.conditions && lc.conditions.length) {
+    conditionsHtml += `
+      <div style="margin-top:12px;padding-top:12px;border-top:2px dashed rgba(148,163,184,0.2);">
+        <h4 style="color:var(--accent-red);margin-bottom:10px;font-size:13px;">💀 失败条件（触发任一即败）</h4>
+        ${lc.conditions.map(c => `
+          <div style="display:flex;align-items:center;gap:6px;padding:5px 0;font-size:12px;">
+            <span style="color:${c.met ? 'var(--accent-red)' : 'var(--text-muted)'};font-size:14px;">${c.met ? '⚠️' : '✅'}</span>
+            <span style="${c.met ? 'color:var(--accent-red);font-weight:600;' : 'color:var(--text-muted);'}">${c.display}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
   document.getElementById('settlementDetails').innerHTML = `
     <div style="display:grid;gap:10px;">
       <div class="breakdown-row"><span>🎨 星尘棋盘熏染值</span><span style="font-weight:700;color:var(--accent-gold);">${d.xunran}</span></div>
@@ -83,11 +126,13 @@ function renderSettlementDetails(s) {
       <div class="breakdown-row"><span>💎 卯号奖励</span><span style="font-weight:700;color:var(--accent-green);">${d.maoReward}</span></div>
       <div class="breakdown-row"><span>☠️ 辛号失败因子</span><span style="font-weight:700;color:var(--accent-pink);">${d.xinFailure}</span></div>
       <div class="breakdown-row"><span>🔄 回合数</span><span style="font-weight:700;">${d.turns}</span></div>
+      ${conditionsHtml}
       <div style="margin-top:12px;padding-top:12px;border-top:2px dashed rgba(148,163,184,0.2);">
         <h4 style="color:var(--accent-cyan);margin-bottom:10px;font-size:13px;">👣 协作闯关步骤统计</h4>
         <div class="breakdown-row"><span>总步骤数</span><span style="font-weight:700;">${st.total}</span></div>
         <div class="breakdown-row"><span>🚶 移动步数</span><span>${st.move}</span></div>
         <div class="breakdown-row"><span>💡 点亮步数</span><span>${st.light}</span></div>
+        <div class="breakdown-row"><span>🎁 事件触发</span><span>${st.event}</span></div>
         <div class="breakdown-row" style="background:rgba(16,185,129,0.08);padding:8px;border-radius:8px;margin:8px 0;">
           <span style="color:var(--accent-green);font-weight:700;">🤝 协作爆发</span>
           <span style="color:var(--accent-green);font-weight:800;">${st.coop} 次</span>
