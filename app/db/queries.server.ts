@@ -150,6 +150,11 @@ export function getBatch(id: number): BatchJoin | undefined {
   return getAllBatches().find((b: any) => b.id === id);
 }
 
+export function getBatchCurrentVersion(id: number): number {
+  const b = loadDb().cleaning_batches.find((x: any) => x.id === id) as any;
+  return b ? Number(b.version || 1) : 0;
+}
+
 export function getBatchesByRecord(recordId: number): (CleaningBatch & { solution_name: string })[] {
   const db = loadDb();
   const solutionsById = Object.fromEntries(db.cleaning_solutions.map((s: any) => [s.id, s]));

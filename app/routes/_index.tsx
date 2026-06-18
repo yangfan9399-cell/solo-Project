@@ -69,7 +69,7 @@ export default function Dashboard() {
           <div className="stat-card">
             <div className="stat-label">数据告警</div>
             <div className="stat-value" style={{ color: alerts.length > 0 ? "var(--error)" : "var(--success)" }}>
-              {stats.alertsCount}
+              {alerts.length}
             </div>
             <div className="stat-sub">待关注项</div>
           </div>

@@ -149,7 +149,7 @@ export default function RecordsIndex() {
                   </td>
                   <td>
                     <Form method="post" style={{ display: "inline" }} onSubmit={(e) => {
-                      if (!confirm("删除唱片将同时删除相关批次记录，确认？")) e.preventDefault();
+                      if (!confirm("删除唱片将同时删除其全部清洗批次、版本历史和试听记录，确认？")) e.preventDefault();
                     }}>
                       <input type="hidden" name="intent" value="delete" />
                       <input type="hidden" name="id" value={r.id} />

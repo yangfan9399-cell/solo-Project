@@ -110,7 +110,16 @@ export default function MaintenanceIndex() {
                 </tr>
               </thead>
               <tbody>
-                {reminders.map((r: any) => {
+                {reminders.length === 0 ? (
+                  <tr>
+                    <td colSpan={8}>
+                      <div className="empty-state">
+                        <div className="empty-icon">🔔</div>
+                        <div className="empty-text">暂无维护提醒 · 添加耗材或设备即可开始追踪</div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : reminders.map((r: any) => {
                   const info = typeLabels[r.type] || { icon: "🔔", name: r.type };
                   const pct = r.threshold_count
                     ? Math.min(100, Math.round((r.current_count / r.threshold_count) * 100))

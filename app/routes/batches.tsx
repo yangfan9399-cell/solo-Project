@@ -144,7 +144,7 @@ export default function BatchesIndex() {
               <option value="">全部</option>
               <option value="5">★★★★★ 仅五星</option>
               <option value="4">★★★★ 四星以上</option>
-              <option value="3">★★★ 三星以上</option>
+              <option value="3">★★★ 仅三星</option>
               <option value="2">★★ 二星及以下</option>
               <option value="1">★ 仅一星</option>
             </select>

@@ -1,7 +1,7 @@
 import { Link, useLoaderData, Form, useActionData, useNavigation } from "@remix-run/react";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { getBatch, getBatchVersions, updateBatch, getAuditionsByRecord, getAllRecords, getActiveSolutions } from "~/db/queries.server";
+import { getBatch, getBatchVersions, updateBatch, getAuditionsByRecord, getAllRecords, getActiveSolutions, getBatchCurrentVersion } from "~/db/queries.server";
 import Layout from "./_layout";
 import { useState } from "react";
 
@@ -19,6 +19,8 @@ export const loader: LoaderFunction = async ({ params }) => {
 export const action: ActionFunction = async ({ request, params }) => {
   const id = Number(params.id);
   const formData = await request.formData();
+  const expectedVersion = Number(formData.get("expected_version") || 0);
+  const operatorValue = String(formData.get("operator") || "");
   const data: Record<string, any> = {};
   const numericFields = [
     "brush_count", "ultrasonic_minutes", "ultrasonic_temp_c",
@@ -26,15 +28,24 @@ export const action: ActionFunction = async ({ request, params }) => {
     "post_noise_level", "crackle_reduction", "result_rating",
     "record_id", "solution_id",
   ];
+
+  const currentVersion = getBatchCurrentVersion(id);
+  if (expectedVersion > 0 && currentVersion !== expectedVersion) {
+    return json({
+      ok: false,
+      error: "该记录在此期间已被他人修改 (v" + expectedVersion + " → v" + currentVersion + ")，请刷新页面后重试以避免覆盖数据。",
+    }, { status: 409 });
+  }
+
   for (const [key, value] of formData.entries()) {
-    if (key === "intent") continue;
+    if (key === "intent" || key === "expected_version") continue;
     if (numericFields.includes(key)) {
       data[key] = Number(value) || 0;
     } else {
       data[key] = value;
     }
   }
-  updateBatch(id, data, "operator");
+  updateBatch(id, data, operatorValue || "operator");
   return redirect(`/batches/${id}`);
 };
 
@@ -69,6 +80,7 @@ function Stars({ count }: { count: number }) {
 
 export default function BatchDetail() {
   const { batch, versions, auditions, records, solutions } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
   const [activeTab, setActiveTab] = useState("overview");
   const navigation = useNavigation();
   const isSaving = navigation.state === "submitting";
@@ -265,6 +277,16 @@ export default function BatchDetail() {
         {activeTab === "edit" && (
           <div className="card">
             <Form method="post" className="card-body">
+              {actionData && actionData.error && (
+                <div className="alert alert-error" style={{ marginBottom: 20 }}>
+                  <span className="alert-icon">🔴</span>
+                  <div className="alert-body">
+                    <strong>保存失败</strong>
+                    <div className="alert-detail">{actionData.error}</div>
+                  </div>
+                </div>
+              )}
+              <input type="hidden" name="expected_version" value={batch.version} readOnly />
               <div className="detail-section">
                 <div className="section-title">基础信息</div>
                 <div className="form-grid">

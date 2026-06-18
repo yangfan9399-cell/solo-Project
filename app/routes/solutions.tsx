@@ -84,7 +84,16 @@ export default function SolutionsIndex() {
               </tr>
             </thead>
             <tbody>
-              {solutions.map((s: any) => {
+              {solutions.length === 0 ? (
+                <tr>
+                  <td colSpan={10}>
+                    <div className="empty-state">
+                      <div className="empty-icon">🧴</div>
+                      <div className="empty-text">暂无清洗液 · 添加后可关联到清洗批次</div>
+                    </div>
+                  </td>
+                </tr>
+              ) : solutions.map((s: any) => {
                 const expiring = s.expiry_date && new Date(s.expiry_date) < new Date(today.getTime() + 30 * 86400000);
                 const expired = s.expiry_date && new Date(s.expiry_date) < today;
                 return (
