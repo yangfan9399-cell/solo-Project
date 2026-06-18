@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陨铁工坊限时运营盘</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header class="top-bar">
+            <h1 class="title">陨铁工坊 · 限时运营盘</h1>
+            <div class="session-selector">
+                <button class="session-btn active" data-session="ren">壬局 · 教学</button>
+                <button class="session-btn" data-session="ding">丁局 · 短缺</button>
+                <button class="session-btn" data-session="mao">卯局 · 隐匿</button>
+            </div>
+        </header>
+
+        <main class="main-layout">
+            <section id="board-panel" class="panel">
+                <h2 class="panel-title">局面盘</h2>
+                <div id="workshop-scene" class="workshop-scene"></div>
+                <div id="field-display" class="field-display"></div>
+                <div id="map-display" class="map-display"></div>
+            </section>
+
+            <section id="event-panel" class="panel">
+                <h2 class="panel-title">事件匣</h2>
+                <div id="event-list" class="event-list"></div>
+            </section>
+
+            <section id="replay-panel" class="panel">
+                <h2 class="panel-title">回放轴</h2>
+                <div id="replay-controls" class="replay-controls"></div>
+                <div id="replay-timeline" class="replay-timeline"></div>
+                <div id="session-status" class="session-status"></div>
+            </section>
+
+            <section id="settlement-panel" class="panel">
+                <h2 class="panel-title">结算簿</h2>
+                <div id="settlement-content" class="settlement-content"></div>
+                <button id="recalc-btn" class="btn-recalc">后端重算结算</button>
+            </section>
+        </main>
+    </div>
+
+    <script src="data/config.js"></script>
+    <script src="data/events.js"></script>
+    <script src="core/state.js"></script>
+    <script src="core/engine.js"></script>
+    <script src="ui/board.js"></script>
+    <script src="ui/events.js"></script>
+    <script src="ui/replay.js"></script>
+    <script src="ui/settlement.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
