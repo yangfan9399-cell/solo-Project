@@ -24,6 +24,7 @@ export function createSession(mazeKey: DifficultyKey): GameSession {
     ],
     status: 'playing',
     hiddenTriggered: false,
+    visitedReverseMarks: [],
     startTime: Date.now(),
   };
 
@@ -98,7 +99,11 @@ export function move(sessionId: string, toPos: { x: number; y: number }): GameSe
     }
   }
   if (cell.reverseMark) {
-    newField.reverseMark += 1;
+    const markId = `rm_${cell.x}_${cell.y}`;
+    if (!session.visitedReverseMarks.includes(markId)) {
+      session.visitedReverseMarks.push(markId);
+      newField.reverseMark += 1;
+    }
   }
 
   const triggered: string[] = [];
@@ -115,7 +120,7 @@ export function move(sessionId: string, toPos: { x: number; y: number }): GameSe
   if (hiddenEvtId) {
     session.hiddenTriggered = true;
     triggered.push(hiddenEvtId);
-    newField.lightValue += 5;
+    newField.lightValue += 8;
     newField.rewardD += 3;
   }
 
@@ -140,7 +145,11 @@ export function move(sessionId: string, toPos: { x: number; y: number }): GameSe
   };
   session.steps.push(record);
 
-  if (toPos.x === maze.endPos.x && toPos.y === maze.endPos.y && newField.lightValue >= (maze.key === 'D' ? 5 : 8)) {
+  let winThreshold = 8;
+  if (maze.key === 'D') winThreshold = 5;
+  if (maze.key === 'B' && session.hiddenTriggered) winThreshold = 4;
+
+  if (toPos.x === maze.endPos.x && toPos.y === maze.endPos.y && newField.lightValue >= winThreshold) {
     session.status = 'won';
   }
   if (newField.failureB >= (maze.key === 'D' ? 3 : 5) || newField.lightValue <= 0) {

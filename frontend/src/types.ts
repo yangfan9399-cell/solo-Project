@@ -74,6 +74,7 @@ export interface GameSession {
   steps: StepRecord[];
   status: 'playing' | 'won' | 'lost';
   hiddenTriggered: boolean;
+  visitedReverseMarks: string[];
   startTime: number;
 }
 

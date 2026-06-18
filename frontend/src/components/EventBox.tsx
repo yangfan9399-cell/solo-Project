@@ -16,7 +16,7 @@ export function EventBox({ maze, steps }: EventBoxProps) {
 
   const resolveEvent = (id: string) => {
     if (id === 'hidden_awakening') {
-      return { name: '隐藏觉醒', type: 'hidden' as const, description: '隐藏封印全面激活！点亮值+5，丁号奖励+3' };
+      return { name: '隐藏觉醒', type: 'hidden' as const, description: '隐藏封印全面激活！点亮值+8，丁号奖励+3' };
     }
     if (id === 'hidden_revealed') {
       return { name: '隐藏格揭示', type: 'hidden' as const, description: '点亮值+4，丁号奖励+2' };
