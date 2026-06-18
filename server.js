@@ -228,14 +228,14 @@ function recalculateSettlement(scenarioId, steps, finalState) {
           state.sealedValue += sealAmount;
           state.resources.energy -= Math.ceil(sealAmount * 0.5);
           state.traceMarks += 1;
-          if (node.id === 'B' && state.sealedValue >= 80 + (state.nodeSeals?.['B'] || 0)) {
-            state.prismActivated = true;
-          }
-          if (node.id === 'C' && state.sealedValue >= 80 + (state.nodeSeals?.['C'] || 0)) {
-            state.echoActivated = true;
-          }
           state.nodeSeals = state.nodeSeals || {};
           state.nodeSeals[node.id] = (state.nodeSeals[node.id] || 0) + sealAmount;
+          if (node.id === 'B' && state.nodeSeals['B'] >= 80) {
+            state.prismActivated = true;
+          }
+          if (node.id === 'C' && state.nodeSeals['C'] >= 80) {
+            state.echoActivated = true;
+          }
           result.sealAmount = sealAmount;
         }
         break;

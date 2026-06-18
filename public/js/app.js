@@ -51,20 +51,26 @@ const App = (function () {
 
   function replaySteps(savedSteps) {
     if (!savedSteps || savedSteps.length === 0) return;
-    for (const step of savedSteps) {
+    EventsBox.init(currentScenario, 1);
+    currentRound = 1;
+    for (let i = 0; i < savedSteps.length; i++) {
+      const step = savedSteps[i];
       if (step.action) {
         applyActionToState(step.action, false);
       }
+      currentRound = i + 2;
+      if (currentRound <= currentScenario.rounds) {
+        EventsBox.setRound(currentRound);
+      }
     }
     currentRound = Math.min(savedSteps.length + 1, currentScenario.rounds);
-    const firedIds = savedSteps.filter(s => s.eventApplied).map(s => s.eventApplied);
-    EventsBox.init(currentScenario, currentRound);
-    firedIds.forEach(id => EventsBox.markFired(id));
+    if (currentRound > currentScenario.rounds) currentRound = currentScenario.rounds + 1;
     Board.init(currentScenario, gameState);
     Board.render();
     Board.renderMap();
     Timeline.restoreSteps(savedSteps);
-    toast(`已恢复 ${savedSteps.length} 步操作记录，当前第 ${currentRound} 回`, 'info');
+    const firedCount = EventsBox.getFiredIds().length;
+    toast(`已恢复 ${savedSteps.length} 步操作，已触发 ${firedCount} 个事件，当前第 ${Math.min(currentRound, currentScenario.rounds)} 回`, 'info');
   }
 
   function resetGame(keepTimeline) {
