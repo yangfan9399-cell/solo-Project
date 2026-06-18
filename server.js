@@ -291,10 +291,13 @@ app.get('/api/sessions/:sessionId/history', (req, res) => {
   const history = session.history.map(h => ({
     step: h.step,
     action: h.action,
+    state: deepClone(h.state),
     eventTriggered: h.eventTriggered ? {
       id: h.eventTriggered.event.id,
       name: h.eventTriggered.event.name,
-      type: h.eventTriggered.event.type
+      type: h.eventTriggered.event.type,
+      description: h.eventTriggered.event.description,
+      effects: h.eventTriggered.event.effects || null
     } : null
   }));
 

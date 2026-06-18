@@ -108,6 +108,7 @@ async function startGame(gameId) {
     renderReplay();
     renderSettle();
     $('#events-list').innerHTML = `<div class="empty-tip">推演开始！从【${getNodeName(start.currentState.currentNode)}】出发，点击高亮节点进行移动。</div>`;
+    await refreshHistory();
     saveLocalSession();
     showToast('推演局启动', cfg.name + ' · ' + cfg.subtitle, 'info');
   } catch (e) {
@@ -183,7 +184,10 @@ function buildSessionSnapshot() {
 
 function buildFullHistoryWithState() {
   if (!AppState.history || AppState.history.length === 0) {
-    return [{ step: 0, action: { type: 'init', description: '推演局初始化' }, state: AppState.currentState, eventTriggered: null }];
+    const baseState = AppState.currentState || {};
+    if (!baseState.unlockedEdges) baseState.unlockedEdges = [];
+    if (AppState.gameId === 'wu' && !baseState.wuFlames) baseState.wuFlames = { a: false, b: false, c: false };
+    return [{ step: 0, action: { type: 'init', description: '推演局初始化' }, state: baseState, eventTriggered: null }];
   }
   return AppState.history;
 }
@@ -243,21 +247,27 @@ function renderEvents(reset = false, newEvent = null) {
     const type = et.type || 'mixed';
     const card = document.createElement('div');
     card.className = `event-card ${type}`;
-    const evCfg = AppState.gameConfig ? Object.values(AppState.gameConfig.eventList || {}).find(e => e.id === et.id) : null;
     const effects = [];
-    const fullCfg = window.__configCache?.[AppState.gameId];
-    if (fullCfg && fullCfg.events && fullCfg.events[et.id]) {
-      fullCfg.events[et.id].effects.forEach(ef => {
+    if (et.effects && Array.isArray(et.effects)) {
+      et.effects.forEach(ef => {
         const f = formatEffect(ef);
         effects.push(`<span class="effect-tag ${f.cls}">${f.text}</span>`);
       });
+    } else {
+      const fullCfg = window.__configCache?.[AppState.gameId];
+      if (fullCfg && fullCfg.events && fullCfg.events[et.id]) {
+        fullCfg.events[et.id].effects.forEach(ef => {
+          const f = formatEffect(ef);
+          effects.push(`<span class="effect-tag ${f.cls}">${f.text}</span>`);
+        });
+      }
     }
     card.innerHTML = `
       <div class="event-head">
         <span class="event-name">${et.name}</span>
         <span class="event-step">第 ${h.step} 步</span>
       </div>
-      <div class="event-desc">${evCfg?.description || ''}</div>
+      <div class="event-desc">${et.description || ''}</div>
       ${effects.length ? `<div class="event-effects">${effects.join('')}</div>` : ''}
     `;
     list.appendChild(card);
@@ -487,7 +497,8 @@ function renderReplay() {
     if (i === latestIdx && AppState.replayIndex === latestIdx) cls += ' latest';
     item.className = cls;
     const action = h.action || { type: 'init', description: '初始化' };
-    let sub = `节点: ${h.state.currentNode}`;
+    const state = h.state || {};
+    let sub = `节点: ${state.currentNode || '—'}`;
     if (action.switchUsed != null) sub += ` · 换轨${action.switchUsed}`;
     if (action.translationUsed) sub += ' · 转译';
     item.innerHTML = `
