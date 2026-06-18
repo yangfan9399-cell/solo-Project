@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>霜花塔楼竞速经营游戏</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header class="game-header">
+            <h1>❄️ 霜花塔楼竞速经营游戏 ❄️</h1>
+            <div class="game-meta">
+                <span id="current-game-label">当前局：未开始</span>
+                <span id="current-turn-label">回合：0</span>
+            </div>
+        </header>
+
+        <main class="game-container">
+            <section class="game-board" id="board">
+                <div class="board-title">局面盘</div>
+                <div class="board-grid">
+                    <div class="stat-card" data-stat="shiming-value">
+                        <div class="stat-label">霜花塔楼试鸣值</div>
+                        <div class="stat-value" id="shiming-value">0</div>
+                        <div class="stat-bar"><div class="stat-bar-fill" id="shiming-bar"></div></div>
+                    </div>
+                    <div class="stat-card" data-stat="calibration-slots">
+                        <div class="stat-label">霜花塔楼校准槽</div>
+                        <div class="stat-value" id="calibration-slots">0</div>
+                        <div class="stat-slots" id="calibration-slots-display"></div>
+                    </div>
+                    <div class="stat-card" data-stat="shiming-mark">
+                        <div class="stat-label">霜花塔楼试鸣痕</div>
+                        <div class="stat-value" id="shiming-mark">0</div>
+                        <div class="stat-marks" id="shiming-marks-display"></div>
+                    </div>
+                    <div class="stat-card" data-stat="mao-risk">
+                        <div class="stat-label">卯号风险</div>
+                        <div class="stat-value risk" id="mao-risk">0</div>
+                        <div class="stat-bar"><div class="stat-bar-fill risk" id="mao-risk-bar"></div></div>
+                    </div>
+                    <div class="stat-card" data-stat="ren-reward">
+                        <div class="stat-label">壬号奖励</div>
+                        <div class="stat-value reward" id="ren-reward">0</div>
+                        <div class="stat-bar"><div class="stat-bar-fill reward" id="ren-reward-bar"></div></div>
+                    </div>
+                    <div class="stat-card" data-stat="shen-failure">
+                        <div class="stat-label">申号失败因子</div>
+                        <div class="stat-value failure" id="shen-failure">0</div>
+                        <div class="stat-bar"><div class="stat-bar-fill failure" id="shen-failure-bar"></div></div>
+                    </div>
+                </div>
+                <div class="resources-panel">
+                    <div class="resource-item">
+                        <span class="resource-icon">⚡</span>
+                        <span class="resource-label">能量</span>
+                        <span class="resource-value" id="resource-energy">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">💎</span>
+                        <span class="resource-label">晶核</span>
+                        <span class="resource-value" id="resource-crystal">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">🔧</span>
+                        <span class="resource-label">零件</span>
+                        <span class="resource-value" id="resource-parts">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="game-events" id="events">
+                <div class="events-title">事件匣</div>
+                <div class="events-container" id="events-container">
+                    <div class="events-empty">等待事件触发...</div>
+                </div>
+            </section>
+
+            <section class="game-timeline" id="timeline">
+                <div class="timeline-title">
+                    <span>回放轴</span>
+                    <div class="timeline-controls">
+                        <button id="btn-export" class="btn-small">导出</button>
+                        <button id="btn-clear" class="btn-small danger">清空</button>
+                    </div>
+                </div>
+                <div class="timeline-container" id="timeline-container">
+                    <div class="timeline-empty">暂无操作记录</div>
+                </div>
+            </section>
+
+            <section class="game-settlement" id="settlement">
+                <div class="settlement-title">结算簿</div>
+                <div class="settlement-content" id="settlement-content">
+                    <div class="settlement-empty">游戏结束后显示结算详情</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="game-footer">
+            <div class="game-selector">
+                <label>选择局：</label>
+                <select id="game-selector">
+                    <option value="mao">卯局 - 教学入门</option>
+                    <option value="ren">壬局 - 资源短缺</option>
+                    <option value="shen">申局 - 隐藏挑战</option>
+                </select>
+                <button id="btn-start" class="btn-primary">开始游戏</button>
+                <button id="btn-restart" class="btn-secondary" style="display:none;">重新开始</button>
+            </div>
+            <div class="game-status" id="game-status">
+                选择一局开始你的霜花塔楼之旅
+            </div>
+        </footer>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header" id="modal-title">提示</div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer">
+                <button id="modal-close" class="btn-primary">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/timeline.js"></script>
+    <script src="js/settlement.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
