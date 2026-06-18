@@ -22,6 +22,29 @@ const severityCls: Record<string, string> = {
   high: "bg-red-100 text-red-800",
 };
 
+const bowTypeLabels: Record<string, string> = {
+  recurve: "Recurve 竞技反曲",
+  compound: "Compound 复合",
+  traditional: "Traditional 传统角弓",
+  "traditional-wood": "Traditional 传统木弓",
+  longbow: "Longbow 英式长弓",
+  barebow: "Barebow 光弓",
+};
+
+const releaseTypeLabels: Record<string, string> = {
+  finger: "地中海式 (Finger)",
+  thumb: "蒙古式/扳指 (Thumb)",
+  pinch: "捏箭式 (Pinch)",
+  release: "撒放器 (Release)",
+};
+
+const SNAPSHOT_HIDDEN = new Set(["id", "createdAt", "updatedAt", "equipmentId"]);
+
+function display(v: any, suffix = ""): string {
+  if (v === null || v === undefined || v === "") return "—";
+  return `${v}${suffix}`;
+}
+
 export default function ArchiveDetail({ params }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -32,16 +55,20 @@ export default function ArchiveDetail({ params }: Props) {
   const [anomalies, setAnomalies] = useState<AnomalyAlert[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState(searchParams.get("tab") || "params");
   const [form, setForm] = useState<Partial<BowArchive>>({});
   const [newVersion, setNewVersion] = useState({ changeLog: "", createdBy: "" });
+  const [snapshotSaving, setSnapshotSaving] = useState(false);
 
   useEffect(() => {
     params.then((p) => {
       setId(p.id);
       fetch(`/api/archives/${p.id}`).then((r) => r.json()).then((a) => {
-        setArchive(a);
-        setForm(a);
+        if (a && !a.error) {
+          setArchive(a);
+          setForm(a);
+        }
       });
       fetch(`/api/archives/${p.id}/versions`).then((r) => r.json()).then(setVersions);
       fetch(`/api/archives/${p.id}/points`).then((r) => r.json()).then(setPoints);
@@ -51,47 +78,70 @@ export default function ArchiveDetail({ params }: Props) {
   }, [params]);
 
   if (!archive) {
-    return <div className="card text-center py-12">加载中...</div>;
+    return <div className="card text-center py-12 text-leather-500">加载中...</div>;
   }
 
   const saveForm = async () => {
-    const res = await fetch(`/api/archives/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setArchive(updated);
-      setEditing(false);
-      fetch(`/api/archives/${id}/anomalies`).then((r) => r.json()).then(setAnomalies);
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/archives/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setArchive(updated);
+        setEditing(false);
+        fetch(`/api/archives/${id}/anomalies`).then((r) => r.json()).then(setAnomalies);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`保存失败：${err.error || "请检查参数"}`);
+      }
+    } catch {
+      alert("保存失败：网络错误");
+    } finally {
+      setSaving(false);
     }
   };
 
   const createVersion = async () => {
     if (!newVersion.changeLog) return alert("请填写变更记录");
-    const batchCode = `BATCH-${Date.now().toString(36).toUpperCase()}`;
-    const res = await fetch(`/api/archives/${id}/versions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        versionNumber: (versions[0]?.versionNumber ?? 0) + 1,
-        batchCode,
-        changeLog: newVersion.changeLog,
-        createdBy: newVersion.createdBy || "匿名",
-        snapshot: archive,
-      }),
-    });
-    if (res.ok) {
-      setNewVersion({ changeLog: "", createdBy: "" });
-      fetch(`/api/archives/${id}/versions`).then((r) => r.json()).then(setVersions);
+    setSnapshotSaving(true);
+    try {
+      const batchCode = `BATCH-${Date.now().toString(36).toUpperCase()}`;
+      const res = await fetch(`/api/archives/${id}/versions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          versionNumber: (versions[0]?.versionNumber ?? 0) + 1,
+          batchCode,
+          changeLog: newVersion.changeLog,
+          createdBy: newVersion.createdBy || "匿名",
+          snapshot: archive,
+        }),
+      });
+      if (res.ok) {
+        setNewVersion({ changeLog: "", createdBy: "" });
+        fetch(`/api/archives/${id}/versions`).then((r) => r.json()).then(setVersions);
+      } else {
+        alert("快照创建失败，请重试");
+      }
+    } catch {
+      alert("快照创建失败：网络错误");
+    } finally {
+      setSnapshotSaving(false);
     }
   };
 
   const removeArchive = async () => {
     if (!confirm("确认删除此档案？此操作不可撤销。")) return;
-    await fetch(`/api/archives/${id}`, { method: "DELETE" });
-    router.push("/");
+    const res = await fetch(`/api/archives/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      router.push("/");
+    } else {
+      alert("删除失败");
+    }
   };
 
   const tabs = [
@@ -118,7 +168,7 @@ export default function ArchiveDetail({ params }: Props) {
               )}
             </div>
             <p className="text-sm text-leather-600">
-              {archive.bowType} · 弓长 {archive.bowLength}&quot; · 拉力 {archive.drawWeight} lb · 弦距 {archive.braceHeight}&quot;
+              {bowTypeLabels[archive.bowType] ?? archive.bowType} · 弓长 {archive.bowLength}&quot; · 拉力 {archive.drawWeight} lb · 弦距 {archive.braceHeight}&quot;
               {" · "}更新于 {new Date(archive.updatedAt).toLocaleString("zh-CN")}
             </p>
           </div>
@@ -133,7 +183,9 @@ export default function ArchiveDetail({ params }: Props) {
             ) : (
               <>
                 <button className="btn btn-secondary" onClick={() => { setEditing(false); setForm(archive); }}>取消</button>
-                <button className="btn btn-primary" onClick={saveForm}>💾 保存</button>
+                <button className="btn btn-primary" onClick={saveForm} disabled={saving}>
+                  {saving ? "保存中..." : "💾 保存"}
+                </button>
               </>
             )}
             <button className="btn btn-danger" onClick={removeArchive}>🗑</button>
@@ -173,23 +225,21 @@ export default function ArchiveDetail({ params }: Props) {
           {!editing ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
               {[
-                ["弓型", archive.bowType],
-                ["弓长", `${archive.bowLength} 英寸`],
-                ["拉力 (Draw Weight)", `${archive.drawWeight} lb`],
-                ["弦距 (Brace Height)", `${archive.braceHeight} 英寸`],
-                ["箭重", `${archive.arrowWeight} 格令 (gr)`],
-                ["箭杆挠度 (Spine)", archive.arrowSpine],
-                ["撒放方式", archive.releaseType],
-                ["弓弦材质", archive.stringMaterial],
-                ["弦股数", `${archive.stringStrands} 股`],
-                ["搭箭点位置", `${archive.nockingPoint} cm`],
-                ["上弓梢梢差", `${archive.tillerTop} 英寸`],
-                ["下弓梢梢差", `${archive.tillerBottom} 英寸`],
-                ["弓片对齐", archive.limbAlignment],
-                ["中心射偏移", `${archive.centerShot} mm`],
-                ["箭台弹簧", archive.plungerSpring],
-                ["弹簧张力", `${archive.plungerTension} 档`],
-                ["瞄点标记", archive.sightMark ? `${archive.sightMark}` : "—"],
+                ["弓型", bowTypeLabels[archive.bowType] ?? archive.bowType],
+                ["弓长", display(archive.bowLength, " 英寸")],
+                ["拉力 (Draw Weight)", display(archive.drawWeight, " lb")],
+                ["拉距 (Draw Length)", display(archive.drawLength, " 英寸")],
+                ["弦距 (Brace Height)", display(archive.braceHeight, " 英寸")],
+                ["箭重", display(archive.arrowWeight, " gr")],
+                ["箭杆挠度 (Spine)", display(archive.arrowSpine)],
+                ["撒放方式", releaseTypeLabels[archive.releaseType] ?? display(archive.releaseType)],
+                ["弓弦材质", display(archive.stringMaterial)],
+                ["弦股数", display(archive.stringStrands, " 股")],
+                ["上弓梢重量", display(archive.upperTipWeight, " oz")],
+                ["下弓梢重量", display(archive.lowerTipWeight, " oz")],
+                ["弓片弹力比", display(archive.limbRatio)],
+                ["箭台类型", display(archive.restType)],
+                ["瞄准器类型", display(archive.sightType)],
                 ["关联器材", equipment.find((e) => e.id === archive.equipmentId)?.name ?? "未关联"],
               ].map(([k, v]) => (
                 <div key={k} className="p-3 rounded-md bg-leather-50 border border-leather-100">
@@ -209,12 +259,12 @@ export default function ArchiveDetail({ params }: Props) {
               </Field>
               <Field label="弓型" required>
                 <select className="input" value={form.bowType || ""} onChange={(e) => setForm({ ...form, bowType: e.target.value })}>
-                  <option>Recurve 竞技反曲</option>
-                  <option>Compound 复合</option>
-                  <option>Traditional 传统角弓</option>
-                  <option>Traditional 传统木弓</option>
-                  <option>Longbow 英式长弓</option>
-                  <option>Barebow 光弓</option>
+                  <option value="recurve">Recurve 竞技反曲</option>
+                  <option value="compound">Compound 复合</option>
+                  <option value="traditional">Traditional 传统角弓</option>
+                  <option value="traditional-wood">Traditional 传统木弓</option>
+                  <option value="longbow">Longbow 英式长弓</option>
+                  <option value="barebow">Barebow 光弓</option>
                 </select>
               </Field>
               <Field label="状态">
@@ -230,73 +280,46 @@ export default function ArchiveDetail({ params }: Props) {
               <Field label="拉力 (lb)" required>
                 <input type="number" step="0.5" className="input" value={form.drawWeight || ""} onChange={(e) => setForm({ ...form, drawWeight: Number(e.target.value) })} />
               </Field>
+              <Field label="拉距 (英寸)" required>
+                <input type="number" step="0.5" className="input" value={form.drawLength || ""} onChange={(e) => setForm({ ...form, drawLength: Number(e.target.value) })} />
+              </Field>
               <Field label="弦距 (英寸)" required>
                 <input type="number" step="0.1" className="input" value={form.braceHeight || ""} onChange={(e) => setForm({ ...form, braceHeight: Number(e.target.value) })} />
               </Field>
               <Field label="箭重 (gr)" required>
                 <input type="number" className="input" value={form.arrowWeight || ""} onChange={(e) => setForm({ ...form, arrowWeight: Number(e.target.value) })} />
               </Field>
-              <Field label="箭杆挠度 (Spine)" required>
+              <Field label="上弓梢重量 (oz)">
+                <input type="number" step="0.1" className="input" value={form.upperTipWeight ?? ""} onChange={(e) => setForm({ ...form, upperTipWeight: Number(e.target.value) || undefined })} />
+              </Field>
+              <Field label="下弓梢重量 (oz)">
+                <input type="number" step="0.1" className="input" value={form.lowerTipWeight ?? ""} onChange={(e) => setForm({ ...form, lowerTipWeight: Number(e.target.value) || undefined })} />
+              </Field>
+              <Field label="弓片弹力比">
+                <input type="number" step="0.1" className="input" value={form.limbRatio ?? ""} onChange={(e) => setForm({ ...form, limbRatio: Number(e.target.value) || undefined })} />
+              </Field>
+              <Field label="箭杆挠度 (Spine)">
                 <input className="input" value={form.arrowSpine || ""} onChange={(e) => setForm({ ...form, arrowSpine: e.target.value })} />
               </Field>
               <Field label="撒放方式" required>
                 <select className="input" value={form.releaseType || ""} onChange={(e) => setForm({ ...form, releaseType: e.target.value })}>
-                  <option>地中海式</option>
-                  <option>蒙古式</option>
-                  <option>捏箭式</option>
-                  <option>撒放器</option>
+                  <option value="finger">地中海式 (Finger)</option>
+                  <option value="thumb">蒙古式/扳指 (Thumb)</option>
+                  <option value="pinch">捏箭式 (Pinch)</option>
+                  <option value="release">撒放器 (Release)</option>
                 </select>
               </Field>
-              <Field label="弓弦材质" required>
+              <Field label="弓弦材质">
                 <input className="input" value={form.stringMaterial || ""} onChange={(e) => setForm({ ...form, stringMaterial: e.target.value })} />
               </Field>
-              <Field label="弦股数" required>
-                <input type="number" className="input" value={form.stringStrands || ""} onChange={(e) => setForm({ ...form, stringStrands: Number(e.target.value) })} />
+              <Field label="弦股数">
+                <input type="number" className="input" value={form.stringStrands || ""} onChange={(e) => setForm({ ...form, stringStrands: Number(e.target.value) || undefined })} />
               </Field>
-              <Field label="搭箭点 (cm)" required>
-                <input type="number" step="0.05" className="input" value={form.nockingPoint || ""} onChange={(e) => setForm({ ...form, nockingPoint: Number(e.target.value) })} />
+              <Field label="箭台类型">
+                <input className="input" placeholder="如 Magnetic Rest" value={form.restType || ""} onChange={(e) => setForm({ ...form, restType: e.target.value })} />
               </Field>
-              <Field label="上弓梢梢差 (英寸)" required>
-                <input type="number" step="0.05" className="input" value={form.tillerTop || ""} onChange={(e) => setForm({ ...form, tillerTop: Number(e.target.value) })} />
-              </Field>
-              <Field label="下弓梢梢差 (英寸)" required>
-                <input type="number" step="0.05" className="input" value={form.tillerBottom || ""} onChange={(e) => setForm({ ...form, tillerBottom: Number(e.target.value) })} />
-              </Field>
-              <Field label="弓片对齐" required>
-                <select className="input" value={form.limbAlignment || ""} onChange={(e) => setForm({ ...form, limbAlignment: e.target.value })}>
-                  <option>正中</option>
-                  <option>微偏左</option>
-                  <option>微偏右</option>
-                  <option>偏左</option>
-                  <option>偏右</option>
-                  <option>严重偏左</option>
-                  <option>严重偏右</option>
-                </select>
-              </Field>
-              <Field label="中心射偏移 (mm)" required>
-                <input type="number" step="0.5" className="input" value={form.centerShot || ""} onChange={(e) => setForm({ ...form, centerShot: Number(e.target.value) })} />
-              </Field>
-              <Field label="箭台弹簧" required>
-                <select className="input" value={form.plungerSpring || ""} onChange={(e) => setForm({ ...form, plungerSpring: e.target.value })}>
-                  <option>Soft</option>
-                  <option>Medium</option>
-                  <option>Hard</option>
-                  <option>N/A</option>
-                </select>
-              </Field>
-              <Field label="弹簧张力 (档)" required>
-                <input type="number" step="0.5" className="input" value={form.plungerTension || ""} onChange={(e) => setForm({ ...form, plungerTension: Number(e.target.value) })} />
-              </Field>
-              <Field label="瞄点标记">
-                <input type="number" step="0.1" className="input" value={form.sightMark ?? ""} onChange={(e) => setForm({ ...form, sightMark: Number(e.target.value) || undefined })} />
-              </Field>
-              <Field label="关联器材">
-                <select className="input" value={form.equipmentId || ""} onChange={(e) => setForm({ ...form, equipmentId: e.target.value || undefined })}>
-                  <option value="">—</option>
-                  {equipment.filter((e) => e.category === "bow").map((e) => (
-                    <option key={e.id} value={e.id}>{e.name}</option>
-                  ))}
-                </select>
+              <Field label="瞄准器类型">
+                <input className="input" placeholder="如 Recurve Sight" value={form.sightType || ""} onChange={(e) => setForm({ ...form, sightType: e.target.value })} />
               </Field>
               <div className="md:col-span-2 lg:col-span-3">
                 <label className="label">备注</label>
@@ -317,7 +340,9 @@ export default function ArchiveDetail({ params }: Props) {
               <input className="input" placeholder="操作员/调弓师" value={newVersion.createdBy} onChange={(e) => setNewVersion({ ...newVersion, createdBy: e.target.value })} />
               <div className="md:col-span-2 flex gap-2">
                 <input className="input flex-1" placeholder="变更记录 (如：抬高搭箭点 0.25cm)" value={newVersion.changeLog} onChange={(e) => setNewVersion({ ...newVersion, changeLog: e.target.value })} />
-                <button className="btn btn-primary" onClick={createVersion}>📸 快照</button>
+                <button className="btn btn-primary" onClick={createVersion} disabled={snapshotSaving}>
+                  {snapshotSaving ? "保存中..." : "📸 快照"}
+                </button>
               </div>
             </div>
           </div>
@@ -326,9 +351,11 @@ export default function ArchiveDetail({ params }: Props) {
             <div className="p-4 border-b border-leather-200">
               <h3 className="font-bold text-bow-dark">版本批次历史（共 {versions.length} 次）</h3>
             </div>
-            {versions.length === 0 && <div className="p-8 text-center text-leather-500">暂无版本记录</div>}
+            {versions.length === 0 && <div className="p-8 text-center text-leather-500">暂无版本记录，点击上方「快照」创建第一份参数快照</div>}
             <ol className="relative border-l border-leather-200 ml-5 mb-4">
-              {versions.map((v, i) => (
+              {versions.map((v, i) => {
+                const snapEntries = Object.entries(v.snapshot || {}).filter(([k]) => !SNAPSHOT_HIDDEN.has(k));
+                return (
                 <li key={v.id} className="mb-4 ml-6 mt-4">
                   <span className="absolute -left-[9px] flex items-center justify-center w-4 h-4 rounded-full bg-bow ring-4 ring-leather-100" />
                   <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
@@ -336,18 +363,18 @@ export default function ArchiveDetail({ params }: Props) {
                       v{v.versionNumber} · <span className="font-mono text-sm">{v.batchCode}</span>
                     </h4>
                     <span className="text-xs text-leather-500">
-                      {v.createdBy} · {new Date(v.createdAt).toLocaleString("zh-CN")}
+                      {v.createdBy || "系统记录"} · {new Date(v.createdAt).toLocaleString("zh-CN")}
                     </span>
                   </div>
-                  <p className="text-sm text-bow-dark mb-2">{v.changeLog}</p>
-                  {v.snapshot && (
+                  <p className="text-sm text-bow-dark mb-2">{v.changeLog || "无变更记录"}</p>
+                  {snapEntries.length > 0 && (
                     <details className="text-xs bg-leather-50 rounded p-2 border border-leather-200">
-                      <summary className="cursor-pointer text-leather-600 hover:text-bow">查看参数快照</summary>
+                      <summary className="cursor-pointer text-leather-600 hover:text-bow">查看参数快照（{snapEntries.length} 项）</summary>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 font-mono">
-                        {Object.entries(v.snapshot).map(([k, val]) => (
+                        {snapEntries.map(([k, val]) => (
                           <div key={k} className="p-1">
                             <span className="text-leather-500">{k}:</span>{" "}
-                            <span className="text-bow-dark">{typeof val === "object" ? JSON.stringify(val) : String(val)}</span>
+                            <span className="text-bow-dark">{typeof val === "object" ? JSON.stringify(val) : String(val ?? "—")}</span>
                           </div>
                         ))}
                       </div>
@@ -357,7 +384,7 @@ export default function ArchiveDetail({ params }: Props) {
                     <VersionCompare current={v.snapshot} previous={versions[1].snapshot} />
                   )}
                 </li>
-              ))}
+              );})}
             </ol>
           </div>
         </div>
@@ -419,8 +446,8 @@ function Field({ label, children, required }: { label: string; children: React.R
 function VersionCompare({ current, previous }: { current: any; previous: any }) {
   const diffs: { field: string; before: any; after: any }[] = [];
   for (const k of Object.keys(current || {})) {
-    if (typeof current[k] === "object") continue;
-    if (String(current[k]) !== String(previous?.[k])) {
+    if (SNAPSHOT_HIDDEN.has(k) || typeof current[k] === "object") continue;
+    if (String(current[k] ?? "") !== String(previous?.[k] ?? "")) {
       diffs.push({ field: k, before: previous?.[k], after: current[k] });
     }
   }

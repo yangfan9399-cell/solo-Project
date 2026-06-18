@@ -8,7 +8,17 @@ const conditionMap: Record<string, string> = {
   excellent: "bg-green-100 text-green-800",
   good: "bg-blue-100 text-blue-800",
   fair: "bg-yellow-100 text-yellow-800",
+  repair: "bg-red-100 text-red-800",
   poor: "bg-red-100 text-red-800",
+};
+
+const conditionLabels: Record<string, string> = {
+  new: "全新",
+  excellent: "优秀",
+  good: "良好",
+  fair: "一般",
+  repair: "待修",
+  poor: "待修",
 };
 
 const categoryLabel: Record<string, string> = {
@@ -28,8 +38,8 @@ export default function EquipmentPage() {
 
   const [form, setForm] = useState<Partial<Equipment>>({
     category: "bow",
-    condition: "good",
-    specs: {},
+    status: "good",
+    spec: "",
   });
 
   const load = () => {
@@ -50,7 +60,7 @@ export default function EquipmentPage() {
       body: JSON.stringify(form),
     });
     if (res.ok) {
-      setForm({ category: "bow", condition: "good", specs: {} });
+      setForm({ category: "bow", status: "good", spec: "" });
       setEditing(null);
       setShowForm(false);
       load();
@@ -107,12 +117,12 @@ export default function EquipmentPage() {
             </div>
             <div>
               <label className="label">状态</label>
-              <select className="input" value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value as any })}>
+              <select className="input" value={form.status || "good"} onChange={(e) => setForm({ ...form, status: e.target.value as any })}>
                 <option value="new">全新</option>
                 <option value="excellent">优秀</option>
                 <option value="good">良好</option>
                 <option value="fair">一般</option>
-                <option value="poor">待修</option>
+                <option value="repair">待修</option>
               </select>
             </div>
             <div>
@@ -145,7 +155,7 @@ export default function EquipmentPage() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {items.map((it) => {
-          const cond: string = (it.condition || it.status || "good") as string;
+          const cond: string = (it.status || it.condition || "good") as string;
           const specObj: Record<string, any> =
             typeof it.specs === "object" && it.specs !== null
               ? it.specs
@@ -164,7 +174,7 @@ export default function EquipmentPage() {
                 </p>
               </div>
               <span className={`badge ${conditionMap[cond] ?? ""}`}>
-                {cond === "new" ? "全新" : cond === "excellent" ? "优秀" : cond === "good" ? "良好" : cond === "fair" ? "一般" : cond === "poor" || cond === "repair" ? "待修" : cond}
+                {conditionLabels[cond] ?? cond}
               </span>
             </div>
             <div className="text-sm text-leather-700 space-y-1 mb-3">

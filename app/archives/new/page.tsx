@@ -5,26 +5,32 @@ import { useRouter } from "next/navigation";
 
 const defaultForm = {
   name: "",
-  bowType: "Recurve 竞技反曲",
-  bowLength: 70,
-  drawWeight: 36,
-  braceHeight: 8.5,
-  arrowWeight: 340,
-  arrowSpine: "600",
-  releaseType: "地中海式",
+  bowType: "recurve",
+  bowLength: 68,
+  drawWeight: 34,
+  drawLength: 28,
+  braceHeight: 8.25,
+  arrowWeight: 380,
+  arrowSpine: "500",
+  releaseType: "finger",
   stringMaterial: "BCY X99",
   stringStrands: 16,
-  nockingPoint: 0.5,
-  tillerTop: 0.15,
-  tillerBottom: 0.1,
-  limbAlignment: "正中",
-  centerShot: 15,
-  plungerSpring: "Medium",
-  plungerTension: 4,
-  sightMark: undefined as number | undefined,
   notes: "",
   status: "active" as "active" | "testing" | "archived",
   equipmentId: undefined as string | undefined,
+  nockingPoint: undefined as number | undefined,
+  tillerTop: undefined as number | undefined,
+  tillerBottom: undefined as number | undefined,
+  limbAlignment: "正中",
+  centerShot: undefined as number | undefined,
+  plungerSpring: "Medium",
+  plungerTension: undefined as number | undefined,
+  sightMark: undefined as number | undefined,
+  upperTipWeight: undefined as number | undefined,
+  lowerTipWeight: undefined as number | undefined,
+  limbRatio: undefined as number | undefined,
+  restType: undefined as string | undefined,
+  sightType: undefined as string | undefined,
 };
 
 export default function NewArchive() {
@@ -35,6 +41,9 @@ export default function NewArchive() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name) return alert("请填写档案名称");
+    if (!form.drawWeight || !form.arrowWeight || !form.bowLength || !form.braceHeight) {
+      return alert("请填写必要的弓体参数（弓长、拉力、弦距、箭重）");
+    }
     setSaving(true);
     const res = await fetch("/api/archives", {
       method: "POST",
@@ -44,6 +53,9 @@ export default function NewArchive() {
     if (res.ok) {
       const a = await res.json();
       router.push(`/archives/${a.id}`);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(`创建失败：${err.error || "请检查参数是否完整"}`);
     }
     setSaving(false);
   };
@@ -71,12 +83,12 @@ export default function NewArchive() {
           </Field>
           <Field label="弓型" required>
             <select className="input" value={form.bowType} onChange={(e) => setForm({ ...form, bowType: e.target.value })}>
-              <option>Recurve 竞技反曲</option>
-              <option>Compound 复合</option>
-              <option>Traditional 传统角弓</option>
-              <option>Traditional 传统木弓</option>
-              <option>Longbow 英式长弓</option>
-              <option>Barebow 光弓</option>
+              <option value="recurve">Recurve 竞技反曲</option>
+              <option value="compound">Compound 复合</option>
+              <option value="traditional">Traditional 传统角弓</option>
+              <option value="traditional-wood">Traditional 传统木弓</option>
+              <option value="longbow">Longbow 英式长弓</option>
+              <option value="barebow">Barebow 光弓</option>
             </select>
           </Field>
           <Field label="状态">
@@ -97,6 +109,9 @@ export default function NewArchive() {
           </Field>
           <Field label="拉力 Draw Weight (lb)" required>
             <input type="number" step="0.5" className="input" value={form.drawWeight} onChange={(e) => setForm({ ...form, drawWeight: Number(e.target.value) })} />
+          </Field>
+          <Field label="拉距 Draw Length (英寸)" required>
+            <input type="number" step="0.5" className="input" value={form.drawLength || ""} onChange={(e) => setForm({ ...form, drawLength: Number(e.target.value) })} />
           </Field>
           <Field label="弦距 Brace Height (英寸)" required>
             <input type="number" step="0.1" className="input" value={form.braceHeight} onChange={(e) => setForm({ ...form, braceHeight: Number(e.target.value) })} />
@@ -127,7 +142,10 @@ export default function NewArchive() {
           </Field>
           <Field label="撒放方式" required>
             <select className="input" value={form.releaseType} onChange={(e) => setForm({ ...form, releaseType: e.target.value })}>
-              <option>地中海式</option><option>蒙古式</option><option>捏箭式</option><option>撒放器</option>
+              <option value="finger">地中海式 (Finger)</option>
+              <option value="thumb">蒙古式/扳指 (Thumb)</option>
+              <option value="pinch">捏箭式 (Pinch)</option>
+              <option value="release">撒放器 (Release)</option>
             </select>
           </Field>
           <Field label="弓弦材质" required>

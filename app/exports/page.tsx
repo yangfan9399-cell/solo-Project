@@ -19,15 +19,22 @@ export default function ExportsPage() {
   }, []);
 
   const runExport = async () => {
+    if (!selectedArchive) {
+      alert("请先选择要导出的档案");
+      return;
+    }
     const res = await fetch("/api/exports", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ archiveId: selectedArchive || null, format }),
+      body: JSON.stringify({ archiveId: selectedArchive, format }),
     });
     if (res.ok) {
       const created = await res.json();
       setPreview(created.content);
       fetch("/api/exports").then((r) => r.json()).then(setExports);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(`导出失败：${err.error || "请检查参数"}`);
     }
   };
 
@@ -56,7 +63,7 @@ export default function ExportsPage() {
           <div>
             <label className="label">选择档案</label>
             <select className="input" value={selectedArchive} onChange={(e) => setSelectedArchive(e.target.value)}>
-              <option value="">— 全部档案 —</option>
+              <option value="">— 请选择档案 —</option>
               {archives.map((a) => (
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}

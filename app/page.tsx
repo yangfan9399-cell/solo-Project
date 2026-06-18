@@ -20,6 +20,22 @@ const statusMap: Record<string, { label: string; cls: string }> = {
   testing: { label: "调试中", cls: "bg-yellow-100 text-yellow-800" },
 };
 
+const bowTypeLabels: Record<string, string> = {
+  recurve: "竞技反曲",
+  compound: "复合",
+  traditional: "传统角弓",
+  "traditional-wood": "传统木弓",
+  longbow: "英式长弓",
+  barebow: "光弓",
+};
+
+const releaseTypeLabels: Record<string, string> = {
+  finger: "地中海",
+  thumb: "蒙古式",
+  pinch: "捏箭",
+  release: "撒放器",
+};
+
 export default function Home() {
   const [archives, setArchives] = useState<BowArchive[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -95,7 +111,7 @@ export default function Home() {
             <select className="input !w-auto" value={bowType} onChange={(e) => setBowType(e.target.value)}>
               <option value="">全部弓型</option>
               {bowTypes.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>{bowTypeLabels[t] ?? t}</option>
               ))}
             </select>
           </div>
@@ -128,12 +144,12 @@ export default function Home() {
                       {a.name}
                     </Link>
                   </td>
-                  <td className="py-2 px-3 text-leather-700">{a.bowType}</td>
+                  <td className="py-2 px-3 text-leather-700">{bowTypeLabels[a.bowType] ?? a.bowType}</td>
                   <td className="py-2 px-3">{a.bowLength}&quot;</td>
                   <td className="py-2 px-3">{a.drawWeight} lb</td>
                   <td className="py-2 px-3">{a.braceHeight}&quot;</td>
                   <td className="py-2 px-3">{a.arrowWeight} gr</td>
-                  <td className="py-2 px-3">{a.releaseType}</td>
+                  <td className="py-2 px-3">{releaseTypeLabels[a.releaseType] ?? a.releaseType}</td>
                   <td className="py-2 px-3">
                     <span className={`badge ${statusMap[a.status]?.cls ?? ""}`}>
                       {statusMap[a.status]?.label ?? a.status}
