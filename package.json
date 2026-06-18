@@ -1,0 +1,23 @@
+{
+  "name": "frostflower-tower-game",
+  "version": "2.0.0",
+  "description": "《霜花塔楼竞速经营游戏》- 含 Node.js 后端结算服务",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node test_fix.js"
+  },
+  "keywords": [
+    "game",
+    "frostflower",
+    "tower",
+    "racing",
+    "management"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

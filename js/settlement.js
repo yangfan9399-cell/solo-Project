@@ -38,6 +38,45 @@ const Settlement = {
         return { stats, steps, hiddenTriggered, choices };
     },
 
+    async calculateFromServer() {
+        const config = GameState.getGameConfig();
+        if (!config) {
+            return { error: '无效的游戏配置' };
+        }
+
+        try {
+            const response = await fetch('/api/settlement', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    gameId: GameState.currentGame,
+                    history: GameState.history,
+                    storedStats: { ...GameState.stats }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (result.error) {
+                throw new Error(result.error);
+            }
+
+            if (result.hiddenTriggered !== undefined) {
+                GameState.hiddenTriggered = result.hiddenTriggered;
+            }
+
+            return result;
+        } catch (e) {
+            console.warn('后端结算调用失败，使用本地计算:', e);
+            return this.calculate();
+        }
+    },
+
     calculate() {
         const config = GameState.getGameConfig();
         if (!config) return null;
@@ -67,6 +106,7 @@ const Settlement = {
             verified,
             steps,
             history: GameState.history,
+            serverCalculated: false,
             breakdown: this.getBreakdown(config, recalcStats, steps, hiddenTriggered, score)
         };
     },
@@ -132,19 +172,37 @@ const Settlement = {
 
         const rankColors = { S: 'S', A: 'A', B: 'B', C: 'C', F: 'F' };
 
-        let replayHtml = '<div class="settlement-replay"><div class="replay-title">后端回放验证</div>';
-        replayHtml += `<div class="replay-item">初始状态加载 ✓</div>`;
-        replayHtml += `<div class="replay-item">回放 ${result.steps} 个竞速经营步骤 ✓</div>`;
-        replayHtml += `<div class="replay-item">重算霜花塔楼试鸣值: ${result.stats.shimingValue} ✓</div>`;
-        replayHtml += `<div class="replay-item">重算卯号风险: ${result.stats.maoRisk} ✓</div>`;
-        replayHtml += `<div class="replay-item">按试鸣值与步骤套用公式 ✓</div>`;
-        replayHtml += `<div class="replay-item ${result.verified ? 'verified-ok' : 'verified-mismatch'}">数据校验: ${result.verified ? '回放值与存储值一致 ✓' : '存在偏差 ⚠️'}</div>`;
+        let replayHtml = '<div class="settlement-replay">';
+        if (result.serverCalculated) {
+            replayHtml += '<div class="replay-title" style="color: var(--primary-dark);">🔙 后端回放验证（Node.js 重算）</div>';
+        } else {
+            replayHtml += '<div class="replay-title">📱 本地回放验证</div>';
+        }
+
+        if (result.replayLog && Array.isArray(result.replayLog)) {
+            result.replayLog.forEach(item => {
+                const statusIcon = item.status === 'ok' ? '✓' : (item.status === 'warning' ? '⚠️' : '✗');
+                const statusClass = item.status === 'ok' ? 'verified-ok' : 'verified-mismatch';
+                replayHtml += `<div class="replay-item ${statusClass}">${statusIcon} ${item.step}</div>`;
+            });
+        } else {
+            replayHtml += `<div class="replay-item">初始状态加载 ✓</div>`;
+            replayHtml += `<div class="replay-item">回放 ${result.steps} 个竞速经营步骤 ✓</div>`;
+            replayHtml += `<div class="replay-item">重算霜花塔楼试鸣值: ${result.stats.shimingValue} ✓</div>`;
+            replayHtml += `<div class="replay-item">重算卯号风险: ${result.stats.maoRisk} ✓</div>`;
+            replayHtml += `<div class="replay-item">按试鸣值与步骤套用公式 ✓</div>`;
+            replayHtml += `<div class="replay-item ${result.verified ? 'verified-ok' : 'verified-mismatch'}">数据校验: ${result.verified ? '回放值与存储值一致 ✓' : '存在偏差 ⚠️'}</div>`;
+        }
         replayHtml += '</div>';
+
+        const serverBadge = result.serverCalculated
+            ? '<span style="display: inline-block; background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">后端结算</span>'
+            : '';
 
         this.container.innerHTML = `
             <div class="settlement-result">
                 <div class="settlement-rank ${rankColors[result.rank]}">${result.rank}</div>
-                <div class="settlement-title-text" style="color: ${titleColor}">${title}</div>
+                <div class="settlement-title-text" style="color: ${titleColor}">${title}${serverBadge}</div>
                 ${result.hiddenTriggered ? '<div style="color: var(--reward); margin-bottom: 12px;">✨ 隐藏结局已解锁！</div>' : ''}
                 <div style="font-size: 14px; color: var(--text-light); margin-bottom: 8px;">
                     最终得分：<strong style="color: var(--primary); font-size: 20px;">${result.score}</strong>

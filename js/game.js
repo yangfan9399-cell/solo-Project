@@ -33,10 +33,20 @@ const Game = {
         document.getElementById('game-selector').value = GameState.currentGame;
 
         if (GameState.gameOver) {
-            const result = Settlement.calculate();
-            Settlement.render(result);
-            Events.renderEnd();
-            UI.updateStatus('游戏已结束，点击"重新开始"开始新游戏');
+            (async () => {
+                Events.renderLoading('正在加载结算数据...');
+                const result = await Settlement.calculateFromServer();
+                if (result && !result.error) {
+                    Settlement.render(result);
+                    Events.renderEnd();
+                    UI.updateStatus('游戏已结束，点击"重新开始"开始新游戏');
+                } else {
+                    const fallbackResult = Settlement.calculate();
+                    Settlement.render(fallbackResult);
+                    Events.renderEnd();
+                    UI.updateStatus('游戏已结束，点击"重新开始"开始新游戏');
+                }
+            })();
         } else {
             const config = GameState.getGameConfig();
             const nextTurnNum = GameState.history.length + 1;
@@ -101,15 +111,25 @@ const Game = {
         this.nextTurn();
     },
 
-    endGame(forceWin = null, reason = null) {
+    async endGame(forceWin = null, reason = null) {
         GameState.gameOver = true;
         
-        let isWin = forceWin;
-        if (isWin === null) {
-            isWin = GameState.checkWin();
+        Events.renderLoading('后端正在结算...');
+        UI.updateStatus('正在请求后端结算...');
+
+        let result = await Settlement.calculateFromServer();
+        if (result && !result.error) {
+            console.log('[结算] 后端结算成功:', result.score, result.rank);
+        } else {
+            console.warn('[结算] 后端结算失败，使用本地计算');
+            result = Settlement.calculate();
         }
 
-        const result = Settlement.calculate();
+        let isWin = forceWin;
+        if (isWin === null) {
+            isWin = result.isWin;
+        }
+
         if (result) {
             result.isWin = isWin;
             result.isFail = reason === 'fail';

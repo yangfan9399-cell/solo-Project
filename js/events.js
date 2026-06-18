@@ -88,7 +88,8 @@ const Events = {
             eventId: event.id,
             choice: choice.text,
             effects: effects,
-            hidden: choice.hidden || false
+            hidden: choice.hidden || false,
+            special: choice.special || undefined
         });
 
         Timeline.addEntry({
@@ -113,6 +114,17 @@ const Events = {
                 <div style="font-size: 32px; margin-bottom: 12px;">🏁</div>
                 <div class="event-title" style="font-size: 16px;">本局已结束</div>
                 <div class="event-desc">查看结算簿获取详细成绩</div>
+            </div>
+        `;
+        this.currentEvent = null;
+    },
+
+    renderLoading(message = '正在结算...') {
+        this.container.innerHTML = `
+            <div class="event-card" style="text-align: center; padding: 40px 16px;">
+                <div style="font-size: 24px; margin-bottom: 12px; animation: spin 1s linear infinite;">⏳</div>
+                <div class="event-title" style="font-size: 15px;">${message}</div>
+                <div class="event-desc">后端正在按霜花塔楼试鸣值和竞速经营步骤重算</div>
             </div>
         `;
         this.currentEvent = null;
