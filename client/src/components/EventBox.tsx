@@ -8,7 +8,7 @@ interface Props {
   loading: boolean;
 }
 
-const CATEGORY_META: Record<GameEvent['category'], { icon: string; color: string; label: string } = {
+const CATEGORY_META: Record<GameEvent['category'], { icon: string; color: string; label: string }> = {
   trace: { icon: '✏️', color: '#3b82f6', label: '描线类' },
   measure: { icon: '📏', color: '#10b981', label: '量测类' },
   balance: { icon: '⚖️', color: '#8b5cf6', label: '配平类' },
