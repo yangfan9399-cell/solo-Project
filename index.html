@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>苔藓邮站竞速经营游戏</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1 class="game-title">🌿 苔藓邮站竞速经营游戏</h1>
+            <div class="game-meta">
+                <span id="current-level-label">当前局：未选择</span>
+                <span id="turn-counter">回合：0 / 0</span>
+            </div>
+        </header>
+
+        <main class="game-main">
+            <section class="panel board-panel">
+                <h2 class="panel-title">📋 苔藓邮站局面盘</h2>
+                <div id="board-content" class="board-content">
+                    <div class="board-empty">请选择一局开始游戏</div>
+                </div>
+            </section>
+
+            <section class="panel event-panel">
+                <h2 class="panel-title">🎲 苔藓邮站事件匣</h2>
+                <div id="event-content" class="event-content">
+                    <div class="event-empty">等待抽取事件...</div>
+                </div>
+            </section>
+
+            <section class="panel replay-panel">
+                <h2 class="panel-title">⏪ 苔藓邮站回放轴</h2>
+                <div id="replay-content" class="replay-content">
+                    <div class="replay-empty">暂无记录</div>
+                </div>
+                <div class="replay-controls">
+                    <button id="btn-undo" class="btn btn-secondary" disabled>↶ 撤销一步</button>
+                    <button id="btn-reset" class="btn btn-danger" disabled>↻ 重置本局</button>
+                </div>
+            </section>
+
+            <section class="panel settlement-panel">
+                <h2 class="panel-title">📖 苔藓邮站结算簿</h2>
+                <div id="settlement-content" class="settlement-content">
+                    <div class="settlement-empty">游戏结束后显示结算</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="game-footer">
+            <div class="level-selector">
+                <button class="btn btn-level" data-level="ren">壬局 · 教学</button>
+                <button class="btn btn-level" data-level="ding">丁局 · 短缺</button>
+                <button class="btn btn-level" data-level="mao">卯局 · 隐藏</button>
+            </div>
+            <div class="game-controls">
+                <button id="btn-draw" class="btn btn-primary" disabled>🎴 抽取事件</button>
+                <button id="btn-settle" class="btn btn-success" disabled>📊 结算</button>
+            </div>
+        </footer>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modal-title">提示</h3>
+            <p id="modal-message"></p>
+            <button id="modal-close" class="btn btn-primary">确定</button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/components/board.js"></script>
+    <script src="js/components/eventBox.js"></script>
+    <script src="js/components/replayTimeline.js"></script>
+    <script src="js/components/settlement.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
