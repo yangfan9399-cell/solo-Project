@@ -19,6 +19,49 @@ interface SealGeneratorOptions {
 	size?: number;
 }
 
+export function generateCharacterPositions(options: SealGeneratorOptions): CharacterPosition[] {
+	const { shape, characters, size = 200 } = options;
+	const charCount = characters.length;
+	let cols = Math.ceil(Math.sqrt(charCount));
+	let rows = Math.ceil(charCount / cols);
+
+	if (charCount === 2) {
+		cols = 2;
+		rows = 1;
+	} else if (charCount === 3) {
+		cols = 3;
+		rows = 1;
+	}
+
+	const padding = size * 0.1;
+	const contentSize = size - padding * 2;
+	const charWidth = contentSize / cols;
+	const charHeight = contentSize / rows;
+
+	const charPositions: CharacterPosition[] = [];
+
+	for (let i = 0; i < charCount; i++) {
+		const row = Math.floor(i / cols);
+		const col = i % cols;
+		const x = padding + col * charWidth + charWidth / 2;
+		const y = padding + row * charHeight + charHeight / 2;
+
+		const char = characters[i] || '';
+		charPositions.push({
+			index: i,
+			character: char,
+			x,
+			y,
+			width: charWidth * 0.8,
+			height: charHeight * 0.8,
+			rotation: 0,
+			strokeCount: Math.floor(Math.random() * 8) + 4
+		});
+	}
+
+	return charPositions;
+}
+
 export function generateSealSvg(options: SealGeneratorOptions): string {
 	const { shape, scriptType, borderType, characters, size = 200 } = options;
 	const isZhuwen = scriptType === 'zhuwen';

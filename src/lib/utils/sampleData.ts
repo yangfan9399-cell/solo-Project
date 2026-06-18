@@ -12,7 +12,8 @@ import {
 	generateBorderAssessment,
 	generateZhuBaiAnalysis,
 	generateDensityAssessment,
-	generateKnifeTechniqueSuggestion
+	generateKnifeTechniqueSuggestion,
+	generateCharacterPositions
 } from '$lib/utils/sealGenerator';
 import type {
 	SealDraft,
@@ -242,7 +243,13 @@ function createVersions(
 			label: `V${versionNumber}`,
 			description: getVersionDescription(versionNumber, config),
 			imageData,
-			characters: [],
+			characters: generateCharacterPositions({
+				shape: config.shape,
+				scriptType: config.scriptType,
+				borderType: config.borderType,
+				characters: variantChars,
+				size: 300
+			}),
 			border: generateBorderAssessment(config.borderType),
 			zhuBai: generateZhuBaiAnalysis(config.scriptType, config.characters.length),
 			density: generateDensityAssessment(config.characters.length),

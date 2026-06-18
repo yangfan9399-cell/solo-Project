@@ -6,6 +6,7 @@
 	export let versions: DraftVersion[];
 	export let currentVersionId: string;
 	export let onSelect: (versionId: string) => void = () => {};
+	export let onCreateNew: () => void = () => {};
 </script>
 
 <div class="version-history">
@@ -37,7 +38,7 @@
 	</div>
 	
 	<div class="version-actions">
-		<button class="btn btn-outline btn-sm w-full">
+		<button class="btn btn-outline btn-sm w-full" on:click={onCreateNew}>
 			<span>➕ 新建版本</span>
 		</button>
 	</div>

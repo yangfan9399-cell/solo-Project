@@ -10,7 +10,7 @@
 	import { 
 		generateSealSvg, generateBorderAssessment, generateZhuBaiAnalysis,
 		generateDensityAssessment, generateKnifeTechniqueSuggestion,
-		getScriptTypeName, getBorderName
+		getScriptTypeName, getBorderName, generateCharacterPositions
 	} from '$lib/utils/sealGenerator';
 	import type { SealDraft, DraftVersion, SealShape, SealScriptType, BorderType, Priority } from '$lib/types';
 	import { getShapeLabel } from '$lib/utils/helpers';
@@ -145,7 +145,13 @@
 			label: 'V1',
 			description: `${newDraft.title} - 初稿`,
 			imageData,
-			characters: [],
+			characters: generateCharacterPositions({
+				shape: newDraft.shape,
+				scriptType: newDraft.scriptType,
+				borderType: newDraft.borderType,
+				characters: charsArray,
+				size: 300
+			}),
 			border: generateBorderAssessment(newDraft.borderType),
 			zhuBai: generateZhuBaiAnalysis(newDraft.scriptType, charsArray.length),
 			density: generateDensityAssessment(charsArray.length),

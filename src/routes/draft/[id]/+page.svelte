@@ -10,7 +10,8 @@
 	} from '$lib/utils/helpers';
 	import { 
 		generateSealSvg, generateBorderAssessment, generateZhuBaiAnalysis,
-		generateDensityAssessment, generateKnifeTechniqueSuggestion, getScriptTypeName 
+		generateDensityAssessment, generateKnifeTechniqueSuggestion, getScriptTypeName,
+		generateCharacterPositions
 	} from '$lib/utils/sealGenerator';
 	import VersionHistory from '$lib/components/VersionHistory.svelte';
 	import ZhuBaiAnalysisPanel from '$lib/components/ZhuBaiAnalysisPanel.svelte';
@@ -29,6 +30,16 @@
 	let newVersionSummary = '';
 	let showReviewModal = false;
 	let showEditInfo = false;
+	let initiatingReview = false;
+	let newReviewForm = {
+		reviewer: '',
+		summary: '',
+		layoutScore: 75,
+		zhuBaiScore: 75,
+		borderScore: 75,
+		densityScore: 75,
+		knifeScore: 75
+	};
 	
 	let editDraft: Partial<SealDraft> = {};
 	let editVersion: {
@@ -223,7 +234,20 @@
 		if (!draft || !currentVersion) return;
 		
 		const nextVersionNumber = draftVersions.length + 1;
-		const chars = currentVersion.characters.map(c => c.character);
+		let chars = currentVersion.characters.map(c => c.character);
+		let newCharacters = currentVersion.characters;
+		
+		if (!chars || chars.length === 0 || chars.every(c => !c)) {
+			const fallbackChars = draft.title.split('').filter(c => c.trim());
+			chars = fallbackChars.length > 0 ? fallbackChars : ['印', '稿'];
+			newCharacters = generateCharacterPositions({
+				shape: draft.shape,
+				scriptType: currentVersion.zhuBai.type,
+				borderType: currentVersion.border.type,
+				characters: chars,
+				size: 200
+			});
+		}
 		
 		const newImageData = generateSealSvg({
 			shape: draft.shape,
@@ -240,7 +264,7 @@
 			label: `V${nextVersionNumber}`,
 			description: newVersionSummary || `基于${currentVersion.label}创建的新版本`,
 			imageData: newImageData,
-			characters: JSON.parse(JSON.stringify(currentVersion.characters)),
+			characters: JSON.parse(JSON.stringify(newCharacters)),
 			border: generateBorderAssessment(currentVersion.border.type),
 			zhuBai: generateZhuBaiAnalysis(currentVersion.zhuBai.type, chars.length),
 			density: generateDensityAssessment(chars.length),
@@ -279,7 +303,62 @@
 	}
 	
 	function startReview() {
+		if (isEditing) {
+			if (!confirm('当前有未保存的更改，发起评审前请先保存。是否保存并继续？')) {
+				return;
+			}
+			saveEdit();
+		}
+		if (!draft || !currentVersion) return;
+		initiatingReview = true;
+		newReviewForm = {
+			reviewer: draft.creator,
+			summary: '',
+			layoutScore: 75,
+			zhuBaiScore: 75,
+			borderScore: 75,
+			densityScore: 75,
+			knifeScore: 75
+		};
 		activeTab = 'review';
+	}
+	
+	$: newReviewOverall = Math.round(
+		(newReviewForm.layoutScore + 
+		 newReviewForm.zhuBaiScore + 
+		 newReviewForm.borderScore + 
+		 newReviewForm.densityScore + 
+		 newReviewForm.knifeScore) / 5
+	);
+	
+	function submitInitiatedReview() {
+		if (!draft || !currentVersion) return;
+		if (!newReviewForm.reviewer.trim() || !newReviewForm.summary.trim()) {
+			alert('请填写评审人和评审意见');
+			return;
+		}
+		
+		const now = Date.now();
+		const review: Review = {
+			id: generateId(),
+			draftId: draft.id,
+			versionId: currentVersion.id,
+			reviewer: newReviewForm.reviewer.trim(),
+			status: 'reviewing',
+			overallScore: newReviewOverall,
+			layoutScore: newReviewForm.layoutScore,
+			zhuBaiScore: newReviewForm.zhuBaiScore,
+			borderScore: newReviewForm.borderScore,
+			densityScore: newReviewForm.densityScore,
+			knifeScore: newReviewForm.knifeScore,
+			summary: newReviewForm.summary.trim(),
+			comments: [],
+			createdAt: now,
+			updatedAt: now
+		};
+		
+		handleAddReview(review);
+		initiatingReview = false;
 	}
 	
 	function handleExport(format: 'json' | 'txt') {
@@ -590,6 +669,120 @@
 								onChange={updateKnife}
 							/>
 						{:else if activeTab === 'review'}
+							{#if initiatingReview}
+								<div class="initiate-review-card">
+									<h3 class="card-title">
+										<span>🚀</span>
+										发起评审
+										<span class="version-badge">版本 {currentVersion.label}</span>
+									</h3>
+									<p class="review-desc">
+										印稿将提交进入评审流程，状态变更为"评审中"
+									</p>
+									
+									<div class="form-row">
+										<div class="form-group">
+											<label class="form-label">评审人 <span class="required">*</span></label>
+											<input 
+												type="text" 
+												class="form-control" 
+												bind:value={newReviewForm.reviewer}
+												placeholder="请输入评审人姓名"
+											/>
+										</div>
+										<div class="form-group">
+											<label class="form-label">综合评分</label>
+											<div class="score-display">
+												<span class="score-value">{newReviewOverall}</span>
+												<span class="score-label">分</span>
+											</div>
+										</div>
+									</div>
+									
+									<div class="form-group">
+										<label class="form-label">分项评分</label>
+										<div class="score-grid">
+											<div class="score-item">
+												<span class="score-label">布局设计</span>
+												<input 
+													type="range" 
+													min="0" 
+													max="100" 
+													bind:value={newReviewForm.layoutScore}
+												/>
+												<span class="score-value">{newReviewForm.layoutScore}</span>
+											</div>
+											<div class="score-item">
+												<span class="score-label">朱白文</span>
+												<input 
+													type="range" 
+													min="0" 
+													max="100" 
+													bind:value={newReviewForm.zhuBaiScore}
+												/>
+												<span class="score-value">{newReviewForm.zhuBaiScore}</span>
+											</div>
+											<div class="score-item">
+												<span class="score-label">边栏处理</span>
+												<input 
+													type="range" 
+													min="0" 
+													max="100" 
+													bind:value={newReviewForm.borderScore}
+												/>
+												<span class="score-value">{newReviewForm.borderScore}</span>
+											</div>
+											<div class="score-item">
+												<span class="score-label">疏密布局</span>
+												<input 
+													type="range" 
+													min="0" 
+													max="100" 
+													bind:value={newReviewForm.densityScore}
+												/>
+												<span class="score-value">{newReviewForm.densityScore}</span>
+											</div>
+											<div class="score-item">
+												<span class="score-label">刀法适配</span>
+												<input 
+													type="range" 
+													min="0" 
+													max="100" 
+													bind:value={newReviewForm.knifeScore}
+												/>
+												<span class="score-value">{newReviewForm.knifeScore}</span>
+											</div>
+										</div>
+									</div>
+									
+									<div class="form-group">
+										<label class="form-label">评审意见 <span class="required">*</span></label>
+										<textarea 
+											class="form-control form-textarea" 
+											rows="5" 
+											bind:value={newReviewForm.summary}
+											placeholder="请详细描述评审意见，包括优点、待改进项等..."
+										></textarea>
+									</div>
+									
+									<div class="review-actions">
+										<button 
+											class="btn btn-outline" 
+											on:click={() => initiatingReview = false}
+										>
+											取消
+										</button>
+										<button 
+											class="btn btn-primary" 
+											on:click={submitInitiatedReview}
+											disabled={!newReviewForm.reviewer.trim() || !newReviewForm.summary.trim()}
+										>
+											<span>✓</span>
+											提交评审
+										</button>
+									</div>
+								</div>
+							{/if}
 							<ReviewPanel 
 								reviews={draftReviews}
 								draftId={draft.id}
@@ -610,6 +803,7 @@
 					versions={draftVersions}
 					currentVersionId={currentVersion.id}
 					onSelect={selectVersion}
+					onCreateNew={openNewVersionModal}
 				/>
 				
 				<div class="info-card">
@@ -1145,5 +1339,111 @@
 		display: flex;
 		gap: 10px;
 		justify-content: flex-end;
+	}
+	
+	.initiate-review-card {
+		background: linear-gradient(135deg, var(--color-primary-bg), rgba(59, 130, 246, 0.05));
+		border: 2px solid var(--color-primary);
+		border-radius: var(--radius-md);
+		padding: 24px;
+		margin-bottom: 20px;
+	}
+	
+	.initiate-review-card .card-title {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 18px;
+		font-weight: 600;
+		color: var(--color-text);
+		margin: 0 0 8px 0;
+	}
+	
+	.version-badge {
+		font-size: 12px;
+		font-weight: 500;
+		padding: 3px 10px;
+		background-color: var(--color-primary);
+		color: white;
+		border-radius: 20px;
+		margin-left: auto;
+	}
+	
+	.review-desc {
+		font-size: 14px;
+		color: var(--color-text-secondary);
+		margin: 0 0 20px 0;
+	}
+	
+	.form-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+		margin-bottom: 16px;
+	}
+	
+	.required {
+		color: var(--color-danger);
+	}
+	
+	.score-display {
+		display: flex;
+		align-items: baseline;
+		gap: 4px;
+		padding: 8px 16px;
+		background-color: var(--color-bg);
+		border: 1px solid var(--color-border-light);
+		border-radius: var(--radius-sm);
+	}
+	
+	.score-display .score-value {
+		font-size: 28px;
+		font-weight: 700;
+		color: var(--color-primary);
+	}
+	
+	.score-display .score-label {
+		font-size: 14px;
+		color: var(--color-text-secondary);
+	}
+	
+	.score-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 12px;
+	}
+	
+	.score-item {
+		display: grid;
+		grid-template-columns: 80px 1fr 40px;
+		align-items: center;
+		gap: 10px;
+		padding: 10px 12px;
+		background-color: var(--color-bg);
+		border-radius: var(--radius-sm);
+	}
+	
+	.score-item .score-label {
+		font-size: 12px;
+		color: var(--color-text-secondary);
+	}
+	
+	.score-item .score-value {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--color-text);
+		text-align: right;
+	}
+	
+	.score-item input[type="range"] {
+		width: 100%;
+		cursor: pointer;
+	}
+	
+	.review-actions {
+		display: flex;
+		gap: 10px;
+		justify-content: flex-end;
+		margin-top: 20px;
 	}
 </style>
