@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>琉璃温室节拍修复场</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="theme-emerald">
+  <div id="app">
+    <header class="app-header">
+      <h1 class="game-title">
+        <span class="title-icon">🏛️</span>
+        琉璃温室节拍修复场
+        <span class="title-icon">🌿</span>
+      </h1>
+      <div class="session-info">
+        <span id="currentGame">未选择游戏</span>
+        <span class="step-counter">步数: <span id="stepCount">0</span>/<span id="maxSteps">-</span></span>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <aside class="sidebar-left">
+        <div class="panel game-selector">
+          <h2 class="panel-title">选择战局</h2>
+          <div id="gameList" class="game-list"></div>
+        </div>
+
+        <div class="panel settlement-book" id="settlementBook">
+          <h2 class="panel-title">📜 结算簿</h2>
+          <div class="settlement-content">
+            <div class="empty-state">完成游戏后查看结算</div>
+          </div>
+          <button class="btn-settle" id="btnSettle" disabled>请求后端结算</button>
+        </div>
+      </aside>
+
+      <section class="center-area">
+        <div class="panel game-board">
+          <h2 class="panel-title">🃏 局面盘</h2>
+          <div class="board-content">
+            <div class="inverted-value-display">
+              <div class="value-label">琉璃温室倒排值</div>
+              <div class="value-number" id="invertedValue">-</div>
+              <div class="value-delta" id="invertedDelta"></div>
+            </div>
+
+            <div class="balance-slots" id="balanceSlots"></div>
+
+            <div class="measure-traces">
+              <div class="traces-label">琉璃温室量测痕</div>
+              <div class="traces-chart" id="tracesChart"></div>
+            </div>
+
+            <div class="status-factors">
+              <div class="factor risk-c">
+                <div class="factor-label">丙号风险</div>
+                <div class="factor-value" id="riskC">-</div>
+                <div class="factor-delta" id="riskCDelta"></div>
+              </div>
+              <div class="factor reward-m">
+                <div class="factor-label">卯号奖励</div>
+                <div class="factor-value" id="rewardM">-</div>
+                <div class="factor-delta" id="rewardMDelta"></div>
+              </div>
+              <div class="factor failure-y">
+                <div class="factor-label">酉号失败因子</div>
+                <div class="factor-value" id="failureY">-</div>
+                <div class="factor-delta" id="failureYDelta"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel event-box">
+          <h2 class="panel-title">📦 事件匣</h2>
+          <div class="events-grid" id="eventsGrid">
+            <div class="empty-state">选择游戏后加载事件</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar-right">
+        <div class="panel replay-axis">
+          <h2 class="panel-title">⏱️ 回放轴</h2>
+          <div class="replay-controls">
+            <button class="replay-btn" id="btnReplayPrev" title="上一步">◀</button>
+            <button class="replay-btn" id="btnReplayPlay" title="播放/暂停">▶</button>
+            <button class="replay-btn" id="btnReplayNext" title="下一步">▶</button>
+            <button class="replay-btn" id="btnReplayLatest" title="最新状态">⏭</button>
+          </div>
+          <div class="replay-timeline" id="replayTimeline">
+            <div class="empty-state">暂无历史记录</div>
+          </div>
+          <div class="replay-detail" id="replayDetail">
+            <div class="empty-state">选择步骤查看详情</div>
+          </div>
+        </div>
+
+        <div class="panel game-info">
+          <h2 class="panel-title">📋 游戏信息</h2>
+          <div class="game-meta" id="gameMeta">
+            <div class="empty-state">选择游戏查看详情</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <div id="toastContainer" class="toast-container"></div>
+    <div id="resultModal" class="modal hidden">
+      <div class="modal-content">
+        <h2 id="resultTitle">游戏结果</h2>
+        <p id="resultMessage"></p>
+        <div class="modal-actions">
+          <button class="btn-primary" id="btnNewGame">新游戏</button>
+          <button class="btn-secondary" id="btnCloseModal">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

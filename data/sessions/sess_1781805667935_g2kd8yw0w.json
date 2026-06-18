@@ -1,0 +1,427 @@
+{
+  "sessionId": "sess_1781805667935_g2kd8yw0w",
+  "gameId": "bing",
+  "currentState": {
+    "invertedValue": 57,
+    "balanceSlots": [
+      20,
+      15,
+      40
+    ],
+    "measureTraces": [
+      {
+        "time": 0,
+        "value": 50,
+        "stable": true
+      },
+      {
+        "time": 1,
+        "value": 48,
+        "stable": false
+      },
+      {
+        "time": 2,
+        "value": 52,
+        "stable": false
+      },
+      {
+        "time": 1781805667952,
+        "value": 55,
+        "stable": false
+      },
+      {
+        "time": 1781805667957,
+        "value": 55,
+        "stable": true
+      },
+      {
+        "time": 1781805667960,
+        "value": 60,
+        "stable": false
+      },
+      {
+        "time": 1781805667961,
+        "value": 60,
+        "stable": true
+      },
+      {
+        "time": 1781805667962,
+        "value": 57,
+        "stable": true
+      }
+    ],
+    "riskC": 2,
+    "rewardM": 4,
+    "failureY": 0
+  },
+  "replayHistory": [
+    {
+      "step": 0,
+      "timestamp": 1781805667936,
+      "type": "init",
+      "eventId": null,
+      "eventName": "游戏开始",
+      "state": {
+        "invertedValue": 50,
+        "balanceSlots": [
+          0,
+          0,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 50,
+            "stable": true
+          },
+          {
+            "time": 1,
+            "value": 48,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 52,
+            "stable": false
+          }
+        ],
+        "riskC": 3,
+        "rewardM": 2,
+        "failureY": 0
+      },
+      "delta": null
+    },
+    {
+      "step": 1,
+      "timestamp": 1781805667952,
+      "type": "action",
+      "eventId": "e1",
+      "eventName": "晨露校准",
+      "eventDescription": "倒排值+5，配平槽0+10",
+      "cost": {
+        "riskC": 0
+      },
+      "state": {
+        "invertedValue": 55,
+        "balanceSlots": [
+          10,
+          0,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 50,
+            "stable": true
+          },
+          {
+            "time": 1,
+            "value": 48,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 52,
+            "stable": false
+          },
+          {
+            "time": 1781805667952,
+            "value": 55,
+            "stable": false
+          }
+        ],
+        "riskC": 3,
+        "rewardM": 2,
+        "failureY": 0
+      },
+      "delta": {
+        "invertedValue": 5,
+        "balanceSlots": [
+          10,
+          0,
+          0
+        ],
+        "riskC": 0,
+        "rewardM": 0,
+        "failureY": 0
+      }
+    },
+    {
+      "step": 2,
+      "timestamp": 1781805667957,
+      "type": "action",
+      "eventId": "e3",
+      "eventName": "温室调和",
+      "eventDescription": "配平槽2+20，卯号+1",
+      "cost": {
+        "riskC": 0,
+        "rewardM": 0
+      },
+      "state": {
+        "invertedValue": 55,
+        "balanceSlots": [
+          10,
+          0,
+          20
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 50,
+            "stable": true
+          },
+          {
+            "time": 1,
+            "value": 48,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 52,
+            "stable": false
+          },
+          {
+            "time": 1781805667952,
+            "value": 55,
+            "stable": false
+          },
+          {
+            "time": 1781805667957,
+            "value": 55,
+            "stable": true
+          }
+        ],
+        "riskC": 3,
+        "rewardM": 3,
+        "failureY": 0
+      },
+      "delta": {
+        "invertedValue": 0,
+        "balanceSlots": [
+          0,
+          0,
+          20
+        ],
+        "riskC": 0,
+        "rewardM": 1,
+        "failureY": 0
+      }
+    },
+    {
+      "step": 3,
+      "timestamp": 1781805667960,
+      "type": "action",
+      "eventId": "e1",
+      "eventName": "晨露校准",
+      "eventDescription": "倒排值+5，配平槽0+10",
+      "cost": {
+        "riskC": 0
+      },
+      "state": {
+        "invertedValue": 60,
+        "balanceSlots": [
+          20,
+          0,
+          20
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 50,
+            "stable": true
+          },
+          {
+            "time": 1,
+            "value": 48,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 52,
+            "stable": false
+          },
+          {
+            "time": 1781805667952,
+            "value": 55,
+            "stable": false
+          },
+          {
+            "time": 1781805667957,
+            "value": 55,
+            "stable": true
+          },
+          {
+            "time": 1781805667960,
+            "value": 60,
+            "stable": false
+          }
+        ],
+        "riskC": 3,
+        "rewardM": 3,
+        "failureY": 0
+      },
+      "delta": {
+        "invertedValue": 5,
+        "balanceSlots": [
+          10,
+          0,
+          0
+        ],
+        "riskC": 0,
+        "rewardM": 0,
+        "failureY": 0
+      }
+    },
+    {
+      "step": 4,
+      "timestamp": 1781805667961,
+      "type": "action",
+      "eventId": "e3",
+      "eventName": "温室调和",
+      "eventDescription": "配平槽2+20，卯号+1",
+      "cost": {
+        "riskC": 0,
+        "rewardM": 0
+      },
+      "state": {
+        "invertedValue": 60,
+        "balanceSlots": [
+          20,
+          0,
+          40
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 50,
+            "stable": true
+          },
+          {
+            "time": 1,
+            "value": 48,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 52,
+            "stable": false
+          },
+          {
+            "time": 1781805667952,
+            "value": 55,
+            "stable": false
+          },
+          {
+            "time": 1781805667957,
+            "value": 55,
+            "stable": true
+          },
+          {
+            "time": 1781805667960,
+            "value": 60,
+            "stable": false
+          },
+          {
+            "time": 1781805667961,
+            "value": 60,
+            "stable": true
+          }
+        ],
+        "riskC": 3,
+        "rewardM": 4,
+        "failureY": 0
+      },
+      "delta": {
+        "invertedValue": 0,
+        "balanceSlots": [
+          0,
+          0,
+          20
+        ],
+        "riskC": 0,
+        "rewardM": 1,
+        "failureY": 0
+      }
+    },
+    {
+      "step": 5,
+      "timestamp": 1781805667962,
+      "type": "action",
+      "eventId": "e2",
+      "eventName": "琉璃共振",
+      "eventDescription": "倒排值-3，配平槽1+15，量测痕标记",
+      "cost": {
+        "riskC": 1
+      },
+      "state": {
+        "invertedValue": 57,
+        "balanceSlots": [
+          20,
+          15,
+          40
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 50,
+            "stable": true
+          },
+          {
+            "time": 1,
+            "value": 48,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 52,
+            "stable": false
+          },
+          {
+            "time": 1781805667952,
+            "value": 55,
+            "stable": false
+          },
+          {
+            "time": 1781805667957,
+            "value": 55,
+            "stable": true
+          },
+          {
+            "time": 1781805667960,
+            "value": 60,
+            "stable": false
+          },
+          {
+            "time": 1781805667961,
+            "value": 60,
+            "stable": true
+          },
+          {
+            "time": 1781805667962,
+            "value": 57,
+            "stable": true
+          }
+        ],
+        "riskC": 2,
+        "rewardM": 4,
+        "failureY": 0
+      },
+      "delta": {
+        "invertedValue": -3,
+        "balanceSlots": [
+          0,
+          15,
+          0
+        ],
+        "riskC": -1,
+        "rewardM": 0,
+        "failureY": 0
+      }
+    }
+  ],
+  "currentStep": 5,
+  "isFinished": false,
+  "result": null,
+  "createdAt": 1781805667936,
+  "updatedAt": 1781805667962
+}

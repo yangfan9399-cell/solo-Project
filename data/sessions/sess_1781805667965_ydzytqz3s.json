@@ -1,0 +1,167 @@
+{
+  "sessionId": "sess_1781805667965_ydzytqz3s",
+  "gameId": "you",
+  "currentState": {
+    "invertedValue": 90,
+    "balanceSlots": [
+      45,
+      50,
+      50,
+      0
+    ],
+    "measureTraces": [
+      {
+        "time": 0,
+        "value": 100,
+        "stable": true
+      },
+      {
+        "time": 1,
+        "value": 95,
+        "stable": false
+      },
+      {
+        "time": 2,
+        "value": 105,
+        "stable": false
+      },
+      {
+        "time": 3,
+        "value": 90,
+        "stable": false
+      },
+      {
+        "time": 1781805667966,
+        "value": 90,
+        "stable": false
+      }
+    ],
+    "riskC": 4,
+    "rewardM": 3,
+    "failureY": 0,
+    "hiddenTrigger": 1,
+    "secretUnlocked": false
+  },
+  "replayHistory": [
+    {
+      "step": 0,
+      "timestamp": 1781805667965,
+      "type": "init",
+      "eventId": null,
+      "eventName": "游戏开始",
+      "state": {
+        "invertedValue": 100,
+        "balanceSlots": [
+          50,
+          50,
+          50,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 100,
+            "stable": true
+          },
+          {
+            "time": 1,
+            "value": 95,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 105,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 90,
+            "stable": false
+          }
+        ],
+        "riskC": 5,
+        "rewardM": 3,
+        "failureY": 0,
+        "hiddenTrigger": 0,
+        "secretUnlocked": false
+      },
+      "delta": null
+    },
+    {
+      "step": 1,
+      "timestamp": 1781805667966,
+      "type": "action",
+      "eventId": "e1",
+      "eventName": "琉璃震颤",
+      "eventDescription": "倒排值-10，配平槽0-5，丙号-1",
+      "cost": {
+        "riskC": 1
+      },
+      "state": {
+        "invertedValue": 90,
+        "balanceSlots": [
+          45,
+          50,
+          50,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 100,
+            "stable": true
+          },
+          {
+            "time": 1,
+            "value": 95,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 105,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 90,
+            "stable": false
+          },
+          {
+            "time": 1781805667966,
+            "value": 90,
+            "stable": false
+          }
+        ],
+        "riskC": 4,
+        "rewardM": 3,
+        "failureY": 0,
+        "hiddenTrigger": 1,
+        "secretUnlocked": false
+      },
+      "delta": {
+        "invertedValue": -10,
+        "balanceSlots": [
+          -5,
+          0,
+          0,
+          0
+        ],
+        "riskC": -1,
+        "rewardM": 0,
+        "failureY": 0
+      },
+      "result": {
+        "type": "win",
+        "message": "时序修复成功！温室恢复稳定。"
+      }
+    }
+  ],
+  "currentStep": 1,
+  "isFinished": true,
+  "result": {
+    "type": "win",
+    "message": "时序修复成功！温室恢复稳定。"
+  },
+  "createdAt": 1781805667965,
+  "updatedAt": 1781805667966
+}
