@@ -438,7 +438,7 @@ app.post('/api/sessions/:sessionId/action', (req, res) => {
     timestamp: Date.now()
   });
   
-  res.json({ state: newState });
+  res.json({ state: newState, randomOutcomes: randomOutcomes || null });
 });
 
 app.get('/api/sessions/:sessionId/replay', (req, res) => {
@@ -544,6 +544,8 @@ app.post('/api/sessions/:sessionId/settlement', (req, res) => {
         turn: turnsPlayed,
         maxTurns: state.maxTurns,
         currentNode: state.currentNode,
+        visitedNodes: state.visitedNodes,
+        eventLog: state.eventLog,
         status: state.status
       },
       statistics: {

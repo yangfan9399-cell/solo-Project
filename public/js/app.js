@@ -276,6 +276,8 @@ class NightVoyageGame {
       this.replayData.push({
         turn: this.gameState.turn,
         action: 'end_turn',
+        payload: null,
+        randomOutcomes: data.randomOutcomes || null,
         state: JSON.parse(JSON.stringify(this.gameState)),
         timestamp: Date.now()
       });
@@ -328,6 +330,7 @@ class NightVoyageGame {
         turn: this.gameState.turn,
         action: 'move',
         payload: { nodeId },
+        randomOutcomes: data.randomOutcomes || null,
         state: JSON.parse(JSON.stringify(this.gameState)),
         timestamp: Date.now()
       });
@@ -380,6 +383,7 @@ class NightVoyageGame {
         turn: this.gameState.turn,
         action: 'use_slot',
         payload: { type: slotType },
+        randomOutcomes: data.randomOutcomes || null,
         state: JSON.parse(JSON.stringify(this.gameState)),
         timestamp: Date.now()
       });
