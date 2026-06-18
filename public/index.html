@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>陨铁工坊节拍修复场</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">⚙</span>
+      <h1>陨铁工坊 · 节拍修复场</h1>
+    </div>
+    <div class="scenario-switcher" id="scenarioSwitcher"></div>
+    <div class="session-info">
+      <span id="sessionTag" class="session-tag">未连接</span>
+      <button id="btnNewSession" class="btn btn-ghost" title="新开局">↻ 重置</button>
+    </div>
+  </header>
+
+  <main class="workshop">
+    <section class="panel panel-board" id="panelBoard">
+      <div class="panel-header">
+        <h2><span class="panel-icon">◉</span>局面盘</h2>
+        <span class="scenario-subtitle" id="scenarioSubtitle">—</span>
+      </div>
+
+      <div class="tutorial-box" id="tutorialBox" style="display:none;"></div>
+
+      <div class="board-grid">
+        <div class="stat-card stat-main">
+          <div class="stat-label">节拍相位 Beat Phase</div>
+          <div class="phase-gauge-wrap">
+            <div class="phase-gauge">
+              <div class="phase-zone zone-target" title="目标区间 [0.48, 0.52]"></div>
+              <div class="phase-pointer" id="phasePointer" style="left:50%"></div>
+            </div>
+            <div class="phase-value"><span id="beatPhaseVal">0.5000</span></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">陨铁工坊复写值</div>
+          <div class="stat-value" id="rewriteValueVal">0</div>
+          <div class="stat-bar"><div class="stat-bar-fill fill-rewrite" id="barRewrite"></div></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">陨铁工坊折算槽 <span class="cost-tag">◆</span></div>
+          <div class="stat-value" id="convertSlotsVal">0</div>
+          <div class="slots-dots" id="slotsDots"></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">陨铁工坊剥离痕</div>
+          <div class="stat-value danger" id="peelMarksVal">0</div>
+          <div class="peel-scratches" id="peelScratches"></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">辛号风险 <span class="risk-xin">辛</span></div>
+          <div class="stat-value" id="xinRiskVal">0</div>
+          <div class="stat-bar"><div class="stat-bar-fill fill-xin" id="barXin"></div></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">申号奖励 <span class="reward-shen">申</span></div>
+          <div class="stat-value" id="shenRewardVal">0</div>
+          <div class="stat-bar"><div class="stat-bar-fill fill-shen" id="barShen"></div></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">戊号失败因子 <span class="fail-wu">戊</span></div>
+          <div class="stat-value danger" id="wuFailFactorVal">0</div>
+          <div class="stat-bar"><div class="stat-bar-fill fill-wu" id="barWu"></div></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">工件完整度</div>
+          <div class="stat-value" id="integrityVal">0</div>
+          <div class="stat-bar"><div class="stat-bar-fill fill-integrity" id="barIntegrity"></div></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">晶格张力</div>
+          <div class="stat-value" id="tensionVal">0</div>
+          <div class="stat-bar"><div class="stat-bar-fill fill-tension" id="barTension"></div></div>
+        </div>
+
+        <div class="stat-card stat-step">
+          <div class="stat-label">步数 / 上限</div>
+          <div class="stat-value"><span id="stepsVal">0</span> / <span id="maxStepsVal">0</span></div>
+          <div class="win-fail-box">
+            <div class="wf-item win"><span class="wf-label">胜：</span><span id="winDesc">—</span></div>
+            <div class="wf-item fail"><span class="wf-label">败：</span><span id="failDesc">—</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel-events" id="panelEvents">
+      <div class="panel-header">
+        <h2><span class="panel-icon">❖</span>事件匣</h2>
+        <span class="events-hint">点击事件执行一步</span>
+      </div>
+      <div class="event-list" id="eventList"></div>
+    </section>
+
+    <section class="panel panel-replay">
+      <div class="panel-header">
+        <h2><span class="panel-icon">⟐</span>回放轴</h2>
+        <div class="replay-actions">
+          <button id="btnAutoSave" class="btn btn-ghost" title="每步自动保存">◉ 自动保存</button>
+          <button id="btnRecalc" class="btn btn-secondary" title="后端按复写值重算结算">⌘ 结算重算</button>
+          <button id="btnSaveNow" class="btn btn-primary" title="立即保存当前局">↓ 保存到轴</button>
+        </div>
+      </div>
+      <div class="replay-axis" id="replayAxis">
+        <div class="axis-track" id="axisTrack"></div>
+        <div class="axis-timeline" id="axisTimeline"></div>
+      </div>
+      <div class="replay-list-wrap">
+        <div class="replay-list" id="replayList">
+          <div class="empty-hint">尚未执行任何步骤。操作将在此记录。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel-settle">
+      <div class="panel-header">
+        <h2><span class="panel-icon">❈</span>结算簿</h2>
+        <button id="btnSettle" class="btn btn-accent">◈ 提交结算</button>
+      </div>
+      <div class="settle-content" id="settleContent">
+        <div class="settle-empty">
+          <div class="settle-icon">✧</div>
+          <p>完成操作后提交结算<br>后端将根据陨铁工坊复写值及时序修复步骤重算</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
