@@ -1,0 +1,8 @@
+node_modules
+build
+data/vinyl_cleaning.db
+data/vinyl_cleaning.db-wal
+data/vinyl_cleaning.db-shm
+.env
+.cache
+*.log
