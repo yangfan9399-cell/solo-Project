@@ -1,0 +1,337 @@
+{
+  "id": "save_1781809994970_6569",
+  "levelId": "chen",
+  "gameState": {
+    "boardSize": 5,
+    "cells": [
+      {
+        "x": 0,
+        "y": 0,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": true
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "lit": true,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "lit": false,
+        "blocked": false,
+        "sensor": true,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 4,
+        "y": 0,
+        "lit": false,
+        "blocked": false,
+        "sensor": true,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 3,
+        "y": 1,
+        "lit": false,
+        "blocked": true,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 4,
+        "y": 1,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": true,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": true,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": true,
+        "start": false
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": true,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 0,
+        "y": 3,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 1,
+        "y": 3,
+        "lit": false,
+        "blocked": true,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": true,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 3,
+        "y": 3,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 4,
+        "y": 3,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 0,
+        "y": 4,
+        "lit": false,
+        "blocked": false,
+        "sensor": true,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 1,
+        "y": 4,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 3,
+        "y": 4,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": false
+      },
+      {
+        "x": 4,
+        "y": 4,
+        "lit": false,
+        "blocked": false,
+        "sensor": false,
+        "reward": false,
+        "hazard": false,
+        "goal": false,
+        "start": true
+      }
+    ],
+    "xunran": 10,
+    "xunce": [],
+    "dianliang": [
+      "1,0"
+    ],
+    "chenRisk": 0,
+    "maoReward": 18,
+    "xinFailure": 0,
+    "currentPlayer": 2,
+    "turn": 1,
+    "phase": "play",
+    "players": [
+      {
+        "id": 1,
+        "name": "玩家甲",
+        "x": 1,
+        "y": 0,
+        "energy": 2,
+        "color": "#4f46e5"
+      },
+      {
+        "id": 2,
+        "name": "玩家乙",
+        "x": 4,
+        "y": 4,
+        "energy": 4,
+        "color": "#dc2626"
+      }
+    ],
+    "eventsTriggered": [],
+    "sensorsActivated": [],
+    "stepCount": 2
+  },
+  "replay": [
+    {
+      "action": {
+        "type": "move"
+      },
+      "message": "move",
+      "timestamp": 1781809994969
+    },
+    {
+      "action": {
+        "type": "light"
+      },
+      "message": "light",
+      "timestamp": 1781809994969
+    }
+  ],
+  "metadata": {
+    "levelName": "辰局测试"
+  },
+  "createdAt": 1781809994970,
+  "updatedAt": 1781809994970
+}

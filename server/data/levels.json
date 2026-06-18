@@ -1,0 +1,320 @@
+[
+  {
+    "id": "chen",
+    "name": "星尘棋盘双人机关局·辰局",
+    "subtitle": "教学局·循循善诱",
+    "description": "新手教学关卡，节奏缓慢，引导双人协作基础操作。巡测槽分布稀疏，卯号奖励充足。",
+    "difficulty": "简单",
+    "boardSize": 5,
+    "playerEnergy": 4,
+    "energyPerTurn": 3,
+    "initialXunran": 0,
+    "initialChenRisk": 0,
+    "initialMaoReward": 10,
+    "initialXinFailure": 0,
+    "sensorPenalty": 8,
+    "hazardPenalty": 10,
+    "rewardValue": 8,
+    "xunranPerLight": 10,
+    "coopBonus": 25,
+    "coopRewardBonus": 12,
+    "start1": { "x": 0, "y": 0 },
+    "start2": { "x": 4, "y": 4 },
+    "presetCells": [
+      { "x": 0, "y": 0, "start": true },
+      { "x": 4, "y": 4, "start": true },
+      { "x": 2, "y": 2, "goal": true },
+      { "x": 1, "y": 0, "reward": true },
+      { "x": 0, "y": 2, "reward": true },
+      { "x": 4, "y": 1, "reward": true },
+      { "x": 2, "y": 0, "sensor": true },
+      { "x": 0, "y": 4, "sensor": true },
+      { "x": 4, "y": 0, "sensor": true },
+      { "x": 2, "y": 3, "hazard": true },
+      { "x": 3, "y": 2, "hazard": true },
+      { "x": 1, "y": 3, "blocked": true },
+      { "x": 3, "y": 1, "blocked": true }
+    ],
+    "events": [
+      {
+        "id": "chen_tutorial_move",
+        "name": "辰·移动指引",
+        "description": "教学提示：玩家甲可尝试向右移动一格。每次移动消耗1点能量。",
+        "type": "tutorial",
+        "condition": { "turn": 1 },
+        "effect": { "maoReward": 5 },
+        "trigger": "auto"
+      },
+      {
+        "id": "chen_tutorial_light",
+        "name": "辰·点亮指引",
+        "description": "教学提示：站在格子上可执行「点亮」操作，提升熏染值。",
+        "type": "tutorial",
+        "condition": { "turn": 2 },
+        "effect": { "xunran": 5, "energy": 2 },
+        "trigger": "auto"
+      },
+      {
+        "id": "chen_tutorial_coop",
+        "name": "辰·协作指引",
+        "description": "双人距离≤2时可发动协作，大范围点亮并获得大量奖励。",
+        "type": "tutorial",
+        "condition": { "turn": 3, "litCells": 3 },
+        "effect": { "maoReward": 10 },
+        "trigger": "auto"
+      },
+      {
+        "id": "chen_rand_gift",
+        "name": "辰·星尘馈赠",
+        "description": "星尘散落，全员获得额外能量！",
+        "type": "buff",
+        "random": true,
+        "effect": { "energy": 2 },
+        "trigger": "random"
+      },
+      {
+        "id": "chen_rand_wind",
+        "name": "辰·星云流转",
+        "description": "星云流转，部分区域自动点亮。",
+        "type": "buff",
+        "random": true,
+        "effect": { "litArea": { "x": 2, "y": 2, "r": 1 } },
+        "trigger": "random"
+      }
+    ],
+    "winCondition": {
+      "xunran": 70,
+      "goalReached": true
+    },
+    "loseCondition": {
+      "chenRisk": 80,
+      "xinFailure": 60,
+      "turn": 15
+    }
+  },
+  {
+    "id": "mao",
+    "name": "星尘棋盘双人机关局·卯局",
+    "subtitle": "资源匮乏·分秒必争",
+    "description": "资源短缺关！玩家能量不足，卯号奖励稀缺，巡测槽密布。必须精打细算每一步，寻找关键奖励节点。",
+    "difficulty": "中等",
+    "boardSize": 6,
+    "playerEnergy": 2,
+    "energyPerTurn": 1,
+    "initialXunran": 0,
+    "initialChenRisk": 10,
+    "initialMaoReward": 2,
+    "initialXinFailure": 0,
+    "sensorPenalty": 12,
+    "hazardPenalty": 12,
+    "rewardValue": 6,
+    "xunranPerLight": 7,
+    "coopBonus": 30,
+    "coopRewardBonus": 8,
+    "start1": { "x": 0, "y": 0 },
+    "start2": { "x": 5, "y": 5 },
+    "presetCells": [
+      { "x": 0, "y": 0, "start": true },
+      { "x": 5, "y": 5, "start": true },
+      { "x": 2, "y": 3, "goal": true },
+      { "x": 3, "y": 1, "reward": true },
+      { "x": 1, "y": 4, "reward": true },
+      { "x": 5, "y": 0, "reward": true },
+      { "x": 1, "y": 1, "sensor": true },
+      { "x": 2, "y": 2, "sensor": true },
+      { "x": 3, "y": 3, "sensor": true },
+      { "x": 4, "y": 4, "sensor": true },
+      { "x": 0, "y": 3, "sensor": true },
+      { "x": 4, "y": 0, "sensor": true },
+      { "x": 2, "y": 5, "sensor": true },
+      { "x": 3, "y": 0, "hazard": true },
+      { "x": 0, "y": 5, "hazard": true },
+      { "x": 5, "y": 2, "hazard": true },
+      { "x": 2, "y": 1, "blocked": true },
+      { "x": 4, "y": 2, "blocked": true },
+      { "x": 1, "y": 3, "blocked": true },
+      { "x": 3, "y": 5, "blocked": true }
+    ],
+    "events": [
+      {
+        "id": "mao_survival_boost",
+        "name": "卯·生存补给",
+        "description": "消耗卯号奖励换取能量。选择：1. 花费5点奖励换3能量  2. 不换",
+        "type": "choice",
+        "choices": true,
+        "choiceIdx": 0,
+        "condition": { "minMaoReward": 5 },
+        "choices": [
+          { "name": "兑换补给", "effect": { "maoReward": -5, "energy": 3, "playerId": 1 } },
+          { "name": "放弃补给", "effect": {} }
+        ],
+        "trigger": "manual"
+      },
+      {
+        "id": "mao_risk_barrier",
+        "name": "卯·巡测屏障",
+        "description": "消耗卯号奖励清除最近的巡测槽。花费8点奖励。",
+        "type": "buff",
+        "cost": { "mao": 8 },
+        "condition": { "minMaoReward": 8 },
+        "effect": { "chenRisk": -20 },
+        "trigger": "manual"
+      },
+      {
+        "id": "mao_rand_drain",
+        "name": "卯·能量波动",
+        "description": "资源波动，双方各损失1点能量。",
+        "type": "debuff",
+        "random": true,
+        "effect": { "energy": -1 },
+        "trigger": "random"
+      },
+      {
+        "id": "mao_rand_bonus",
+        "name": "卯·隐秘宝箱",
+        "description": "发现隐秘宝箱，获得卯号奖励。",
+        "type": "buff",
+        "random": true,
+        "effect": { "maoReward": 10 },
+        "trigger": "random"
+      },
+      {
+        "id": "mao_hidden_light",
+        "name": "卯·区域净化",
+        "description": "消耗8点奖励与1能量，点亮指定3x3区域。",
+        "type": "buff",
+        "cost": { "mao": 8, "energy": 1, "player": 1 },
+        "condition": { "minMaoReward": 8, "minXunran": 20 },
+        "effect": { "litArea": { "x": 2, "y": 3, "r": 1 } },
+        "trigger": "manual"
+      }
+    ],
+    "winCondition": {
+      "xunran": 80,
+      "litRatio": 0.7,
+      "turn": 25
+    },
+    "loseCondition": {
+      "chenRisk": 75,
+      "xinFailure": 50,
+      "turn": 25
+    }
+  },
+  {
+    "id": "xin",
+    "name": "星尘棋盘双人机关局·辛局",
+    "subtitle": "隐藏秘境·慎之又慎",
+    "description": "隐藏条件触发关！地图上布满辛号失败因子格，隐藏条件：全程辛号失败因子保持为0即可触发额外胜利条件。",
+    "difficulty": "困难",
+    "boardSize": 6,
+    "playerEnergy": 3,
+    "energyPerTurn": 2,
+    "initialXunran": 0,
+    "initialChenRisk": 20,
+    "initialMaoReward": 5,
+    "initialXinFailure": 0,
+    "sensorPenalty": 15,
+    "hazardPenalty": 25,
+    "rewardValue": 10,
+    "xunranPerLight": 9,
+    "coopBonus": 35,
+    "coopRewardBonus": 15,
+    "start1": { "x": 0, "y": 0 },
+    "start2": { "x": 5, "y": 0 },
+    "presetCells": [
+      { "x": 0, "y": 0, "start": true },
+      { "x": 5, "y": 0, "start": true },
+      { "x": 2, "y": 5, "goal": true },
+      { "x": 3, "y": 5, "goal": true },
+      { "x": 0, "y": 3, "reward": true },
+      { "x": 5, "y": 3, "reward": true },
+      { "x": 2, "y": 2, "reward": true },
+      { "x": 3, "y": 2, "reward": true },
+      { "x": 1, "y": 5, "reward": true },
+      { "x": 4, "y": 5, "reward": true },
+      { "x": 1, "y": 1, "hazard": true },
+      { "x": 2, "y": 1, "hazard": true },
+      { "x": 3, "y": 1, "hazard": true },
+      { "x": 4, "y": 1, "hazard": true },
+      { "x": 0, "y": 2, "hazard": true },
+      { "x": 5, "y": 2, "hazard": true },
+      { "x": 1, "y": 3, "hazard": true },
+      { "x": 4, "y": 3, "hazard": true },
+      { "x": 0, "y": 4, "hazard": true },
+      { "x": 1, "y": 4, "hazard": true },
+      { "x": 4, "y": 4, "hazard": true },
+      { "x": 5, "y": 4, "hazard": true },
+      { "x": 2, "y": 0, "sensor": true },
+      { "x": 3, "y": 0, "sensor": true },
+      { "x": 2, "y": 3, "sensor": true },
+      { "x": 3, "y": 3, "sensor": true },
+      { "x": 0, "y": 5, "sensor": true },
+      { "x": 5, "y": 5, "sensor": true },
+      { "x": 2, "y": 4, "blocked": true },
+      { "x": 3, "y": 4, "blocked": true }
+    ],
+    "events": [
+      {
+        "id": "xin_safe_path",
+        "name": "辛·安全路径",
+        "description": "消耗5点奖励，清除上下方各一个辛号因子格。",
+        "type": "buff",
+        "cost": { "mao": 5 },
+        "condition": { "minMaoReward": 5 },
+        "effect": { "xinFailure": 0 },
+        "trigger": "manual"
+      },
+      {
+        "id": "xin_reinforce",
+        "name": "辛·防护结界",
+        "description": "消耗10点奖励，降低辰号风险。",
+        "type": "buff",
+        "cost": { "mao": 10 },
+        "condition": { "minMaoReward": 10 },
+        "effect": { "chenRisk": -30 },
+        "trigger": "manual"
+      },
+      {
+        "id": "xin_super_coop",
+        "name": "辛·极限协作",
+        "description": "消耗20点奖励+双方各2能量，点亮半个棋盘！",
+        "type": "buff",
+        "cost": { "mao": 20 },
+        "condition": { "minMaoReward": 20, "minXunran": 40 },
+        "effect": { "litAll": true, "xunran": 30 },
+        "trigger": "manual"
+      },
+      {
+        "id": "xin_rand_trap",
+        "name": "辛·陷阱松动",
+        "description": "机关松动！周围一个辛号因子格失效。",
+        "type": "buff",
+        "random": true,
+        "effect": { "xunran": 5, "maoReward": 3 },
+        "trigger": "random"
+      },
+      {
+        "id": "xin_rand_storm",
+        "name": "辛·星尘风暴",
+        "description": "星尘风暴！全员能量+2，但辰号风险上升。",
+        "type": "buff",
+        "random": true,
+        "effect": { "energy": 2, "chenRisk": 10 },
+        "trigger": "random"
+      }
+    ],
+    "winCondition": {
+      "xunran": 85,
+      "goalReached": true,
+      "turn": 30,
+      "hiddenCondition": {
+        "type": "xinZero"
+      }
+    },
+    "loseCondition": {
+      "chenRisk": 70,
+      "xinFailure": 40,
+      "turn": 30
+    }
+  }
+]

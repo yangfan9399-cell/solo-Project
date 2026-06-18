@@ -1,0 +1,14 @@
+{
+  "name": "stardust-chessboard",
+  "version": "1.0.0",
+  "description": "星尘棋盘双人机关局 - 轻量全栈协作闯关游戏",
+  "main": "server/app.js",
+  "scripts": {
+    "start": "node server/app.js",
+    "dev": "node server/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}
