@@ -8,12 +8,18 @@
     "shared"
   ],
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c magenta,cyan \"npm --workspace backend run dev\" \"npm --workspace frontend run dev\"",
+    "build:frontend": "node scripts/build-frontend.mjs",
+    "build:frontend:watch": "node scripts/build-frontend.mjs --watch --dev",
+    "build:shared": "npm --workspace shared run build",
+    "build:backend": "npm --workspace backend run build",
+    "dev": "npm run build:shared && npm run build:frontend && concurrently -k -n watch,backend -c cyan,magenta \"npm run build:frontend:watch\" \"npm --workspace backend run dev\"",
     "seed": "npm --workspace backend run seed",
-    "build": "npm --workspace shared run build && npm --workspace backend run build && npm --workspace frontend run build",
-    "start": "npm --workspace backend run start"
+    "build": "npm run build:shared && npm run build:frontend && npm run build:backend",
+    "start": "npm run build && npm --workspace backend run start"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "esbuild": "^0.24.0",
+    "jsdom": "^24.1.3"
   }
 }
