@@ -77,6 +77,16 @@ export interface ReplayStep {
   timestamp: number;
 }
 
+export interface ScoreBreakdown {
+  lineValue: { value: number; weight: number; contribution: number; label: string };
+  balanceMark: { value: number; weight: number; contribution: number; label: string };
+  dingReward: { value: number; weight: number; contribution: number; label: string };
+  wuRisk: { value: number; weight: number; contribution: number; label: string };
+  weiFailFactor: { value: number; weight: number; contribution: number; label: string };
+  steps: { value: number; weight: number; contribution: number; label: string };
+  hiddenBonus: { value: number; weight: number; contribution: number; label: string };
+}
+
 export interface GameResult {
   levelId: GameLevelId;
   won: boolean;
@@ -89,4 +99,6 @@ export interface GameResult {
   cooperationScore: number;
   hiddenTriggered: boolean;
   details: string;
+  formula: string;
+  breakdown: ScoreBreakdown;
 }

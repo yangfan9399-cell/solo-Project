@@ -139,14 +139,36 @@ function isAtGoal(state: GameState, pos: Position): boolean {
 
 export function calculateResult(state: GameState, totalSteps: number): GameResult {
   const won = state.status === 'win';
+
+  const lineValueContrib = state.lineValue * 2;
+  const balanceMarkContrib = state.balanceMark * 3;
+  const dingRewardContrib = state.dingReward * 5;
+  const wuRiskContrib = -state.wuRisk * 2;
+  const weiFailContrib = -state.weiFailFactor * 4;
+  const stepsContrib = Math.max(0, 30 - totalSteps);
+  const hiddenBonus = state.hiddenTriggered ? 50 : 0;
+
   const cooperationScore = Math.floor(
-    state.lineValue * 2 +
-    state.balanceMark * 3 +
-    state.dingReward * 5 -
-    state.wuRisk * 2 -
-    state.weiFailFactor * 4 +
-    (state.hiddenTriggered ? 50 : 0)
+    lineValueContrib +
+    balanceMarkContrib +
+    dingRewardContrib +
+    wuRiskContrib +
+    weiFailContrib +
+    stepsContrib +
+    hiddenBonus
   );
+
+  const formula = '协作评分 = 描线值×2 + 配平痕×3 + 丁号奖励×5 - 戊号风险×2 - 未号因子×4 + (30-步数) + 隐藏奖励50';
+
+  const breakdown = {
+    lineValue: { value: state.lineValue, weight: 2, contribution: lineValueContrib, label: '琉璃温室描线值' },
+    balanceMark: { value: state.balanceMark, weight: 3, contribution: balanceMarkContrib, label: '琉璃温室配平痕' },
+    dingReward: { value: state.dingReward, weight: 5, contribution: dingRewardContrib, label: '丁号奖励' },
+    wuRisk: { value: state.wuRisk, weight: -2, contribution: wuRiskContrib, label: '戊号风险' },
+    weiFailFactor: { value: state.weiFailFactor, weight: -4, contribution: weiFailContrib, label: '未号失败因子' },
+    steps: { value: totalSteps, weight: -1, contribution: stepsContrib, label: '协作步数(30-步数)' },
+    hiddenBonus: { value: state.hiddenTriggered ? 1 : 0, weight: 50, contribution: hiddenBonus, label: '隐藏条件奖励' }
+  };
 
   let details = '';
   if (won) {
@@ -176,6 +198,8 @@ export function calculateResult(state: GameState, totalSteps: number): GameResul
     totalSteps,
     cooperationScore: Math.max(0, cooperationScore),
     hiddenTriggered: state.hiddenTriggered,
-    details
+    details,
+    formula,
+    breakdown
   };
 }
