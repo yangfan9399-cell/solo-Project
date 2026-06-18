@@ -103,7 +103,7 @@
         { id: 'ren_moss_warn', trigger: 'first_moss', title: '苔藓消耗', desc: '壬局中苔藓消耗3点定标槽，请权衡收益。', type: 'warning' }
       ],
       hidden: {
-        description: '若经过全部3个苔藓格，到达终点时额外+15折算值。'
+        description: '若踏遍全部5个苔藓格，到达终点时额外+15折算值。'
       }
     },
 
@@ -327,45 +327,21 @@
   }
 
   function checkGameEnd(tile) {
-    const level = getLevel();
+    var needSettle = false;
 
     if (gameState.fail > 0) {
-      gameState.isFinished = true;
-      gameState.isWin = false;
-      gameState.failReason = '触发庚号失败因子！';
-      addSettlementEvent('fail');
-      return;
+      needSettle = true;
+    } else if (gameState.risk >= getRiskThreshold()) {
+      needSettle = true;
+    } else if (gameState.slot <= 0 && tile !== 'end') {
+      needSettle = true;
+    } else if (tile === 'end') {
+      needSettle = true;
     }
 
-    if (gameState.risk >= getRiskThreshold()) {
+    if (needSettle) {
       gameState.isFinished = true;
-      gameState.isWin = false;
-      gameState.failReason = '己号风险已达临界值！';
-      addSettlementEvent('fail');
-      return;
-    }
-
-    if (gameState.slot <= 0 && tile !== 'end') {
-      gameState.isFinished = true;
-      gameState.isWin = false;
-      gameState.failReason = '定标槽耗尽，无法继续前行！';
-      addSettlementEvent('fail');
-      return;
-    }
-
-    if (tile === 'end') {
-      const finalConvert = calculateFinalConvert();
-      gameState.convert = finalConvert;
-      if (finalConvert >= level.winConvert) {
-        gameState.isFinished = true;
-        gameState.isWin = true;
-        addSettlementEvent('win');
-      } else {
-        gameState.isFinished = true;
-        gameState.isWin = false;
-        gameState.failReason = '折算值未达到通关标准！';
-        addSettlementEvent('fail');
-      }
+      requestSettle();
     }
   }
 
@@ -382,12 +358,12 @@
     let base = gameState.convert;
 
     if (level.id === 'ren') {
-      if (gameState.mossCount >= 3) {
+      if (gameState.mossCount >= 5) {
         base += 15;
         addEvent({
           id: 'ren_hidden_bonus',
           title: '隐藏奖励',
-          desc: '踏遍全部苔藓格！额外获得+15折算值。',
+          desc: '踏遍全部5个苔藓格！额外获得+15折算值。',
           type: 'good'
         });
       }
@@ -406,6 +382,88 @@
     }
 
     return base;
+  }
+
+  function requestSettle() {
+    var levelId = gameState.levelId;
+    var pathData = gameState.path.map(function (p) { return { row: p.row, col: p.col }; });
+
+    fetch('/api/settle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ levelId: levelId, path: pathData })
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (!data.success) {
+        console.warn('后端结算失败:', data.error);
+        applyLocalSettle();
+        return;
+      }
+      applyBackendSettle(data.result);
+    })
+    .catch(function (err) {
+      console.warn('后端请求异常，回退本地结算:', err);
+      applyLocalSettle();
+    });
+  }
+
+  function applyBackendSettle(result) {
+    gameState.convert = result.convert;
+    gameState.slot = result.slot;
+    gameState.trace = result.trace;
+    gameState.risk = result.risk;
+    gameState.reward = result.reward;
+    gameState.fail = result.fail;
+    gameState.mossCount = result.mossCount;
+    gameState.rewardCount = result.rewardCount;
+    gameState.isFinished = result.isFinished;
+    gameState.isWin = result.isWin;
+    gameState.failReason = result.failReason;
+
+    if (result.settleEvents && result.settleEvents.length > 0) {
+      result.settleEvents.forEach(function (evt) {
+        addEvent({
+          id: 'backend_' + Date.now() + '_' + Math.random(),
+          title: evt.title,
+          desc: evt.desc,
+          type: evt.type
+        });
+      });
+    }
+
+    saveState();
+    render();
+  }
+
+  function applyLocalSettle() {
+    var level = getLevel();
+    var finalConvert = calculateFinalConvert();
+    gameState.convert = finalConvert;
+
+    if (gameState.fail > 0) {
+      gameState.isFinished = true;
+      gameState.isWin = false;
+      gameState.failReason = '触发庚号失败因子！';
+      addSettlementEvent('fail');
+    } else if (gameState.risk >= getRiskThreshold()) {
+      gameState.isFinished = true;
+      gameState.isWin = false;
+      gameState.failReason = '己号风险已达临界值！';
+      addSettlementEvent('fail');
+    } else if (finalConvert >= level.winConvert) {
+      gameState.isFinished = true;
+      gameState.isWin = true;
+      addSettlementEvent('win');
+    } else {
+      gameState.isFinished = true;
+      gameState.isWin = false;
+      gameState.failReason = '折算值未达到通关标准！';
+      addSettlementEvent('fail');
+    }
+
+    saveState();
+    render();
   }
 
   function addSettlementEvent(type) {
@@ -621,8 +679,8 @@
   }
 
   function renderSettlement() {
-    const status = document.getElementById('settle-status');
-    const verdict = document.getElementById('settle-verdict');
+    var status = document.getElementById('settle-status');
+    var verdict = document.getElementById('settle-verdict');
 
     setText('settle-convert', gameState.isFinished ? gameState.convert : '—');
     setText('settle-steps', gameState.path.length - 1);
@@ -638,7 +696,7 @@
     } else if (gameState.isWin) {
       status.textContent = '✓ 成功';
       status.className = 'settle-status status-win';
-      verdict.innerHTML = '🎉 <strong>通关成功</strong><br><small>邮差顺利完成了本次投递任务！</small>';
+      verdict.innerHTML = '🎉 <strong>通关成功</strong><br><small>后端已按折算值与路径步骤重算确认</small>';
       verdict.className = 'settle-verdict verdict-win';
     } else {
       status.textContent = '✗ 失败';
