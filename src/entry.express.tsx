@@ -6,7 +6,7 @@ import qwikCityPlan from '@qwik-city-plan';
 import { manifest } from '@qwik-client-manifest';
 import render from './entry.ssr';
 
-const distDir = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
+const distDir = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'server');
 const app = express();
 
 const { router, notFound, staticFile } = createQwikCity({
@@ -14,7 +14,7 @@ const { router, notFound, staticFile } = createQwikCity({
   qwikCityPlan,
   manifest,
   static: {
-    root: join(distDir, 'client'),
+    root: distDir,
   },
 });
 

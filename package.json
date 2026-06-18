@@ -15,7 +15,7 @@
     "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
     "init": "tsx src/server/init-db.ts",
     "preview": "qwik build preview && vite preview --open",
-    "start": "node server/entry.express.mjs",
+    "start": "node start.mjs",
     "start.dev": "tsx src/server/init-db.ts && vite --mode ssr",
     "typecheck": "tsc --noEmit"
   },
@@ -25,6 +25,7 @@
     "@types/express": "^5.0.6",
     "csv-stringify": "^6.5.0",
     "express": "^5.2.1",
+    "ignore": "^7.0.5",
     "marked": "^12.0.2",
     "sql.js": "^1.14.1"
   },

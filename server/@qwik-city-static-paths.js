@@ -1,4 +1,4 @@
-const staticPaths = new Set([]);
+const staticPaths = new Set(["/sitemap.xml"]);
 function isStaticPath(method, url) {
   if (method.toUpperCase() !== 'GET') {
     return false;
