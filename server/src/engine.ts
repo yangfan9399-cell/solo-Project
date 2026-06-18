@@ -46,13 +46,13 @@ export function listLevels() {
 
 export function applyStep(sessionId: string, eventId: string): { state: GameState; step: GameStep } | { error: string } {
   const session = sessions.get(sessionId);
-  if (!session) return { error: '会话不存在，请重新开始' };
-  if (session.state.isFinished) return { error: '本局已结束，请重新开始' };
+  if (!session) return { error: '协作会话不存在，请重新开始本局' };
+  if (session.state.isFinished) return { error: '本局已结束，无法继续提交，请重开新局' };
 
   const level = LEVELS[session.state.levelId];
   const event = level.availableEvents.find((e) => e.id === eventId);
-  if (!event) return { error: '无效事件' };
-  if (session.state.steps.length >= level.maxSteps) return { error: '已达到最大步数' };
+  if (!event) return { error: '事件不存在，请从可用事件中选择' };
+  if (session.state.steps.length >= level.maxSteps) return { error: '已达到最大协作步数，无法继续' };
 
   const newField = applyEvent(session.state.currentField, event);
   const step: GameStep = {
@@ -94,8 +94,8 @@ export function applyStep(sessionId: string, eventId: string): { state: GameStat
 
 export function rollbackToStep(sessionId: string, stepIndex: number): GameState | { error: string } {
   const session = sessions.get(sessionId);
-  if (!session) return { error: '会话不存在' };
-  if (stepIndex < 0 || stepIndex >= session.state.steps.length) return { error: '无效步数索引' };
+  if (!session) return { error: '协作会话不存在，无法回滚' };
+  if (stepIndex < 0 || stepIndex >= session.state.steps.length) return { error: '回滚目标步数无效，请选择有效历史步骤' };
 
   const level = LEVELS[session.state.levelId];
   session.state.steps = session.state.steps.slice(0, stepIndex);
@@ -112,7 +112,7 @@ export function rollbackToStep(sessionId: string, stepIndex: number): GameState 
 
 export function computeSettlement(sessionId: string): Settlement | { error: string } {
   const session = sessions.get(sessionId);
-  if (!session) return { error: '会话不存在' };
+  if (!session) return { error: '协作会话不存在，无法结算' };
 
   const level = LEVELS[session.state.levelId];
   const { currentField, steps, hiddenTriggered } = session.state;

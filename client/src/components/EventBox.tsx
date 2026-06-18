@@ -43,6 +43,15 @@ function EffectBadge({ delta, field }: { delta: number; field: string }) {
 
 export const EventBox: React.FC<Props> = ({ level, state, onExecute, loading }) => {
   const disabled = state.isFinished || loading;
+  const events = level.availableEvents || [];
+
+  const getCostStyle = (cost: number) => {
+    if (cost <= 1) return { bg: '#dcfce7', color: '#166534', border: '#bbf7d0' };
+    if (cost <= 2) return { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
+    if (cost <= 3) return { bg: '#fef3c7', color: '#92400e', border: '#fde68a' };
+    return { bg: '#fee2e2', color: '#991b1b', border: '#fecaca' };
+  };
+
   return (
     <div style={{
       background: '#ffffff',
@@ -56,76 +65,119 @@ export const EventBox: React.FC<Props> = ({ level, state, onExecute, loading }) 
         <div style={{
           fontSize: 12, color: '#6b7280'
         }}>
-          可选操作 {level.availableEvents.length} 项
+          可选操作 {events.length} 项
         </div>
       </div>
 
-      <div style={{
-        padding: '8px 12px',
-        background: '#fef3c7',
-        borderRadius: 8,
-        fontSize: 12,
-        color: '#92400e',
-        border: '1px solid #fde68a',
-        marginBottom: 14,
-      }}>
-        💡 提示：每选择一个事件，会消耗相应成本并修改局面字段。请谨慎选择协作步骤！
-      </div>
+      {state.isFinished ? (
+        <div style={{
+          padding: '10px 14px',
+          background: state.isWin ? '#dcfce7' : '#fee2e2',
+          borderRadius: 8,
+          fontSize: 12,
+          color: state.isWin ? '#166534' : '#991b1b',
+          border: `1px solid ${state.isWin ? '#bbf7d0' : '#fecaca'}`,
+          marginBottom: 14,
+          fontWeight: 600,
+        }}>
+          {state.isWin ? '🏁 本局已完成，协作挑战成功！' : '🏁 本局已结束，可重开再次挑战。'}
+        </div>
+      ) : loading ? (
+        <div style={{
+          padding: '10px 14px',
+          background: '#f3f4f6',
+          borderRadius: 8,
+          fontSize: 12,
+          color: '#4b5563',
+          border: '1px solid #d1d5db',
+          marginBottom: 14,
+        }}>
+          ⏳ 正在提交协作申请，请稍候...
+        </div>
+      ) : (
+        <div style={{
+          padding: '8px 12px',
+          background: '#fef3c7',
+          borderRadius: 8,
+          fontSize: 12,
+          color: '#92400e',
+          border: '1px solid #fde68a',
+          marginBottom: 14,
+        }}>
+          💡 提示：每选择一个事件，会消耗相应协作成本并修改局面字段。请谨慎选择协作步骤！
+        </div>
+      )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', rowGap: 10 }}>
-        {level.availableEvents.map(ev => {
-          const meta = CATEGORY_META[ev.category];
-          return (
-            <div
-              key={ev.id}
-              onClick={() => !disabled && onExecute(ev.id)}
-              style={{
-                padding: 14,
-                borderRadius: 12,
-                border: `1.5px solid ${disabled ? '#e5e7eb' : '#e5e7eb'}`,
-                background: disabled ? '#f9fafb' : '#ffffff',
-                cursor: disabled ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                opacity: disabled ? 0.6 : 1,
-              }}
-              onMouseEnter={e => {
-                if (!disabled) e.currentTarget.style.borderColor = meta.color;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = '#e5e7eb';
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{
-                    display: 'inline-flex', width: 26, height: 26, borderRadius: 6,
-                    alignItems: 'center', justifyContent: 'center',
-                    background: `${meta.color}20`, fontSize: 14,
-                  }}>{meta.icon}</span>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: '#1f2937' }}>{ev.name}</div>
-                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{meta.label}</div>
-                  </div>
-                </div>
-                <div style={{
-                  padding: '3px 10px',
+      {events.length === 0 ? (
+        <div style={{
+          padding: 40,
+          textAlign: 'center',
+          color: '#9ca3af',
+          fontSize: 13,
+          border: '2px dashed #e5e7eb',
+          borderRadius: 12,
+        }}>
+          暂无可用协作事件
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', rowGap: 10 }}>
+          {events.map(ev => {
+            const meta = CATEGORY_META[ev.category];
+            const costStyle = getCostStyle(ev.cost);
+            return (
+              <div
+                key={ev.id}
+                onClick={() => !disabled && onExecute(ev.id)}
+                style={{
+                  padding: 14,
                   borderRadius: 12,
-                  background: '#eff6ff', color: '#1d4ed8',
-                  fontSize: 11, fontWeight: 600,
-                }}>成本 {ev.cost}</div>
+                  border: `1.5px solid ${disabled ? '#e5e7eb' : '#e5e7eb'}`,
+                  background: disabled ? '#f9fafb' : '#ffffff',
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  opacity: disabled ? 0.6 : 1,
+                }}
+                onMouseEnter={e => {
+                  if (!disabled) e.currentTarget.style.borderColor = meta.color;
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = '#e5e7eb';
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{
+                      display: 'inline-flex', width: 26, height: 26, borderRadius: 6,
+                      alignItems: 'center', justifyContent: 'center',
+                      background: `${meta.color}20`, fontSize: 14,
+                    }}>{meta.icon}</span>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: '#1f2937' }}>{ev.name}</div>
+                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{meta.label}</div>
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '3px 10px',
+                    borderRadius: 12,
+                    background: costStyle.bg,
+                    color: costStyle.color,
+                    border: `1px solid ${costStyle.border}`,
+                    fontSize: 11, fontWeight: 700,
+                  }}>成本 {ev.cost}</div>
+                </div>
+                <div style={{ fontSize: 12, color: '#4b5563', marginBottom: 8, lineHeight: 1.5 }}>
+                  {ev.description}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                  {Object.entries(ev.effect).map(([k, v]) => (
+                    <EffectBadge key={k} field={k} delta={v as number} />
+                  ))}
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: '#4b5563', marginBottom: 8, lineHeight: 1.5 }}>
-                {ev.description}
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                {Object.entries(ev.effect).map(([k, v]) => (
-                  <EffectBadge key={k} field={k} delta={v as number} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

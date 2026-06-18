@@ -28,7 +28,7 @@ app.get('/api/levels', (_req, res) => {
 app.post('/api/game/start', (req, res) => {
   const { levelId, sessionId } = req.body as { levelId?: LevelId; sessionId?: string };
   if (!levelId || !['wu', 'ding', 'wei'].includes(levelId)) {
-    return res.status(400).json({ error: '无效的关卡ID' });
+    return res.status(400).json({ error: '无效的关卡标识，请选择戊局、丁局或未局' });
   }
   const sid = sessionId || `sess_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const state = createSession(levelId, sid);
@@ -42,7 +42,7 @@ app.post('/api/game/resume', (req, res) => {
     levelId?: LevelId;
   };
   if (!sessionId || !replay || !levelId) {
-    return res.status(400).json({ error: '参数缺失' });
+    return res.status(400).json({ error: '恢复回放失败：缺少必要参数' });
   }
   const state = resumeFromReplay(sessionId, replay, levelId);
   res.json({ sessionId, state });
@@ -50,13 +50,13 @@ app.post('/api/game/resume', (req, res) => {
 
 app.get('/api/game/state/:sessionId', (req, res) => {
   const state = getSession(req.params.sessionId);
-  if (!state) return res.status(404).json({ error: '会话不存在' });
+  if (!state) return res.status(404).json({ error: '协作会话不存在，请重新开始' });
   res.json({ state });
 });
 
 app.post('/api/game/step', (req, res) => {
   const { sessionId, eventId } = req.body as { sessionId?: string; eventId?: string };
-  if (!sessionId || !eventId) return res.status(400).json({ error: '参数缺失' });
+  if (!sessionId || !eventId) return res.status(400).json({ error: '提交失败：缺少会话或事件标识' });
   const result = applyStep(sessionId, eventId);
   if ('error' in result) return res.status(400).json({ error: result.error });
   res.json(result);
@@ -64,7 +64,7 @@ app.post('/api/game/step', (req, res) => {
 
 app.post('/api/game/rollback', (req, res) => {
   const { sessionId, stepIndex } = req.body as { sessionId?: string; stepIndex?: number };
-  if (!sessionId || stepIndex == null) return res.status(400).json({ error: '参数缺失' });
+  if (!sessionId || stepIndex == null) return res.status(400).json({ error: '回滚失败：缺少必要参数' });
   const result = rollbackToStep(sessionId, stepIndex);
   if ('error' in result) return res.status(400).json({ error: result.error });
   res.json({ state: result });

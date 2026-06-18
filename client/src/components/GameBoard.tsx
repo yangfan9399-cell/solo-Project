@@ -41,53 +41,80 @@ function ProgressBar({ value, meta }: { value: number; meta: typeof FIELD_META[k
   );
 }
 
-function GameMap({ nodes, paths, stepCount, maxSteps, isFinished }: {
+function GameMap({ nodes, paths, stepCount, maxSteps, isFinished, hiddenTriggered }: {
   nodes: MapNode[];
   paths: [string, string][];
   stepCount: number;
   maxSteps: number;
   isFinished: boolean;
+  hiddenTriggered?: boolean;
 }) {
   const progressRatio = Math.min(1, stepCount / Math.max(1, maxSteps - 1));
   return (
     <div style={{
       border: '1px solid #e5e7eb',
       borderRadius: 12,
-      background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+      background: hiddenTriggered
+        ? 'linear-gradient(135deg, #f5f3ff 0%, #fae8ff 100%)'
+        : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
       padding: 16,
       position: 'relative',
       height: 180,
       overflow: 'hidden',
+      transition: 'all 0.3s ease',
     }}>
-      <div style={{ fontSize: 12, color: '#92400e', fontWeight: 600, marginBottom: 4 }}>🗺️ 矿脉地图</div>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: 4,
+      }}>
+        <div style={{ fontSize: 12, color: hiddenTriggered ? '#6d28d9' : '#92400e', fontWeight: 600 }}>
+          🗺️ 矿脉地图
+        </div>
+        {hiddenTriggered && (
+          <div style={{
+            fontSize: 10, fontWeight: 700,
+            background: '#c084fc', color: '#ffffff',
+            padding: '2px 8px', borderRadius: 999,
+          }}>✨ 隐藏路径激活</div>
+        )}
+      </div>
       <svg width="100%" height="140" viewBox="0 0 100 100" preserveAspectRatio="none">
         {paths.map((p, i) => {
           const a = nodes.find(n => n.id === p[0])!;
           const b = nodes.find(n => n.id === p[1])!;
+          const hasHiddenNode = a.type === 'hidden' || b.type === 'hidden';
           const activated = i / paths.length < progressRatio + 0.01;
+          const hiddenActive = hasHiddenNode && hiddenTriggered;
           return (
             <line
               key={i}
               x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-              stroke={activated ? '#b45309' : '#d6d3d1'}
-              strokeWidth="0.8"
+              stroke={activated ? (hiddenActive ? '#a855f7' : '#b45309') : hasHiddenNode ? '#e9d5ff' : '#d6d3d1'}
+              strokeWidth={hiddenActive ? '1.2' : '0.8'}
               strokeDasharray={activated ? 'none' : '1.5,1.5'}
+              opacity={hasHiddenNode && !hiddenTriggered ? 0.4 : 1}
             />
           );
         })}
         {nodes.map(n => {
-          const isCurrent = Math.floor(progressRatio * nodes.length) >= nodes.indexOf(n) - 0;
+          const nodeIndex = nodes.findIndex(nd => nd.id === n.id);
+          const isCurrent = Math.floor(progressRatio * nodes.length) >= nodeIndex;
           const fillMap: Record<MapNode['type'], string> = {
             start: '#10b981', mid: '#3b82f6', end: '#8b5cf6', hidden: '#ec4899',
           };
+          const isHidden = n.type === 'hidden';
+          const showHidden = isHidden && hiddenTriggered;
           return (
-            <g key={n.id}>
+            <g key={n.id} style={{ opacity: isHidden && !hiddenTriggered ? 0.4 : 1 }}>
               <circle
-                cx={n.x} cy={n.y} r="3.5"
+                cx={n.x} cy={n.y} r={showHidden ? '4.5' : '3.5'}
                 fill={isCurrent ? fillMap[n.type] : '#e7e5e4'}
-                stroke="#ffffff" strokeWidth="0.8"
+                stroke="#ffffff" strokeWidth={showHidden ? '1.2' : '0.8'}
               />
-              <text x={n.x} y={n.y - 5} textAnchor="middle" fontSize="3.2" fill="#78350f" fontWeight="600">
+              {showHidden && (
+                <circle cx={n.x} cy={n.y} r="6" fill="none" stroke="#a855f7" strokeWidth="0.5" opacity="0.6" />
+              )}
+              <text x={n.x} y={n.y - 5} textAnchor="middle" fontSize="3.2" fill={isHidden ? '#6d28d9' : '#78350f'} fontWeight="600">
                 {n.label}
               </text>
             </g>
@@ -100,13 +127,55 @@ function GameMap({ nodes, paths, stepCount, maxSteps, isFinished }: {
 
 export const GameBoard: React.FC<Props> = ({ level, state }) => {
   const keys = Object.keys(FIELD_META) as (keyof GameField)[];
+
+  const getMessageStyle = () => {
+    if (state.isWin && state.hiddenTriggered) {
+      return {
+        background: 'linear-gradient(90deg, #ddd6fe, #f0abfc)',
+        borderColor: '#a78bfa',
+        color: '#4c1d95',
+      };
+    }
+    if (state.isWin) {
+      return {
+        background: 'linear-gradient(90deg, #d1fae5, #6ee7b7)',
+        borderColor: '#34d399',
+        color: '#064e3b',
+      };
+    }
+    if (state.isFinished) {
+      return {
+        background: 'linear-gradient(90deg, #fee2e2, #fca5a5)',
+        borderColor: '#f87171',
+        color: '#7f1d1d',
+      };
+    }
+    return {
+      background: '#f0f9ff',
+      borderColor: '#bae6fd',
+      color: '#0c4a6e',
+    };
+  };
+
+  const msgStyle = getMessageStyle();
+  const stepsLeft = level.maxSteps - state.steps.length;
+
   return (
     <div style={{
       background: '#ffffff',
       borderRadius: 16,
       padding: 20,
-      border: '1px solid #e5e7eb',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+      border: state.isWin && state.hiddenTriggered
+        ? '2px solid #a78bfa'
+        : state.isWin
+        ? '2px solid #34d399'
+        : state.isFinished
+        ? '2px solid #f87171'
+        : '1px solid #e5e7eb',
+      boxShadow: state.isFinished
+        ? '0 4px 16px rgba(0,0,0,0.08)'
+        : '0 2px 8px rgba(0,0,0,0.04)',
+      transition: 'all 0.3s ease',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div>
@@ -121,20 +190,26 @@ export const GameBoard: React.FC<Props> = ({ level, state }) => {
             fontSize: 20, fontWeight: 700,
             color: state.steps.length >= level.maxSteps ? '#dc2626' : '#111827',
           }}>{state.steps.length} / {level.maxSteps}</div>
+          <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+            剩余 {stepsLeft} 步
+          </div>
         </div>
       </div>
 
       <div style={{
         padding: '10px 14px',
         borderRadius: 8,
-        background: state.isFinished
-          ? (state.isWin ? 'linear-gradient(90deg, #d1fae5, #6ee7b7)' : 'linear-gradient(90deg, #fee2e2, #fca5a5)')
-          : '#f0f9ff',
-        border: `1px solid ${state.isFinished ? (state.isWin ? '#6ee7b7' : '#fca5a5') : '#bae6fd'}`,
-        fontSize: 13, color: '#1f2937', marginBottom: 16, fontWeight: 500,
+        background: msgStyle.background,
+        border: `1px solid ${msgStyle.borderColor}`,
+        color: msgStyle.color,
+        fontSize: 13,
+        marginBottom: 16,
+        fontWeight: 500,
+        lineHeight: 1.6,
       }}>
-        {state.isWin && state.hiddenTriggered ? '🌟 ' : state.isWin ? '✅ ' : state.isFinished ? '⚠️ ' : '💡 '}
-        {state.message}
+        {state.isWin && state.hiddenTriggered ? '🌟 隐藏结局触发！' : state.isWin ? '✅ 挑战胜利！' : state.isFinished ? '⚠️ 挑战结束' : '💡 当前局势'}
+        <br />
+        <span style={{ fontSize: 12, opacity: 0.9 }}>{state.message}</span>
       </div>
 
       <GameMap
@@ -143,6 +218,7 @@ export const GameBoard: React.FC<Props> = ({ level, state }) => {
         stepCount={state.steps.length}
         maxSteps={level.maxSteps}
         isFinished={state.isFinished}
+        hiddenTriggered={state.hiddenTriggered}
       />
 
       <div style={{ height: 16 }} />
@@ -163,13 +239,20 @@ export const GameBoard: React.FC<Props> = ({ level, state }) => {
       </div>
 
       <div style={{
-        marginTop: 12, padding: '10px 14px', background: '#f9fafb', borderRadius: 8,
-        border: '1px dashed #d1d5db', fontSize: 12, color: '#4b5563',
+        marginTop: 12, padding: '12px 14px', background: '#fafafa', borderRadius: 8,
+        border: '1px solid #e5e7eb', fontSize: 12, color: '#4b5563',
+        lineHeight: 1.7,
       }}>
         <div><strong style={{ color: '#065f46' }}>🎯 胜利条件：</strong>{level.targetText}</div>
         <div style={{ marginTop: 4 }}><strong style={{ color: '#991b1b' }}>💥 失败条件：</strong>{level.failText}</div>
         {level.hiddenText && (
-          <div style={{ marginTop: 4 }}><strong style={{ color: '#7c3aed' }}>🔮 隐藏条件：</strong>{level.hiddenText}</div>
+          <div style={{
+            marginTop: 6, paddingTop: 6,
+            borderTop: '1px dashed #e5e7eb',
+          }}>
+            <strong style={{ color: '#7c3aed' }}>🔮 隐藏条件：</strong>
+            <span style={{ color: '#6d28d9' }}>{level.hiddenText}</span>
+          </div>
         )}
       </div>
     </div>

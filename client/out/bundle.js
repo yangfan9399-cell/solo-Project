@@ -24537,7 +24537,16 @@
         }, children: "\u4E91\u6BCD\u77FF\u706F\u534F\u4F5C\u95EF\u5173\u6E38\u620F" }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 14, color: "#6b7280", maxWidth: 560, margin: "0 auto", lineHeight: 1.6 }, children: "\u5728\u4E91\u6BCD\u77FF\u8109\u6DF1\u5904\uFF0C\u4F60\u4E0E\u4F19\u4F34\u624B\u6301\u77FF\u706F\u534F\u4F5C\u95EF\u5173\u3002\u901A\u8FC7\u7CBE\u5FC3\u9009\u62E9\u4E8B\u4EF6\uFF0C \u5E73\u8861\u300C\u63CF\u7EBF\u503C\u3001\u91CF\u6D4B\u69FD\u3001\u914D\u5E73\u75D5\u300D\u4E09\u5927\u6838\u5FC3\u5C5E\u6027\uFF0C \u76D1\u63A7\u300C\u620A\u53F7\u98CE\u9669\u3001\u4E01\u53F7\u5956\u52B1\u3001\u672A\u53F7\u5931\u8D25\u56E0\u5B50\u300D\uFF0C\u6311\u6218\u901A\u5173\uFF01" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }, children: levels.map((lv, idx) => {
+      levels.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: {
+        padding: 60,
+        textAlign: "center",
+        border: "2px dashed #e5e7eb",
+        borderRadius: 16,
+        background: "#fafafa"
+      }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 36, marginBottom: 12 }, children: "\u23F3" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 14, color: "#6b7280", fontWeight: 500 }, children: "\u6B63\u5728\u52A0\u8F7D\u5173\u5361\u914D\u7F6E..." })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }, children: levels.map((lv, idx) => {
         const colors = [
           { bg: "#eff6ff", border: "#93c5fd", badge: "#2563eb", glow: "rgba(37,99,235,0.15)" },
           { bg: "#fff7ed", border: "#fdba74", badge: "#ea580c", glow: "rgba(234,88,12,0.15)" },
@@ -24605,8 +24614,8 @@
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 11, color: "#6b7280", marginBottom: 4 }, children: "\u{1F3AF} \u80DC\u5229\u6761\u4EF6" }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 11, color: "#1f2937", fontWeight: 500, marginBottom: 6 }, children: lv.targetText }),
                 lv.hiddenText && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 11, color: "#6b7280", marginBottom: 4, marginTop: 6 }, children: "\u{1F52E} \u9690\u85CF\u5F69\u86CB" }),
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 11, color: "#7c3aed", fontWeight: 600 }, children: "\u5B58\u5728\u9690\u85CF\u6761\u4EF6\uFF0C\u63A2\u7D22\u89E3\u9501\uFF01" })
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 11, color: "#6b7280", marginBottom: 4, marginTop: 6 }, children: "\u{1F52E} \u9690\u85CF\u6761\u4EF6" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 11, color: "#7c3aed", fontWeight: 600 }, children: "\u5B58\u5728\u9690\u85CF\u7ED3\u5C40\uFF0C\u63A2\u7D22\u89E3\u9501" })
                 ] })
               ] }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: {
@@ -24716,23 +24725,41 @@
       ) })
     ] });
   }
-  function GameMap({ nodes, paths, stepCount, maxSteps, isFinished }) {
+  function GameMap({ nodes, paths, stepCount, maxSteps, isFinished, hiddenTriggered }) {
     const progressRatio = Math.min(1, stepCount / Math.max(1, maxSteps - 1));
     return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: {
       border: "1px solid #e5e7eb",
       borderRadius: 12,
-      background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+      background: hiddenTriggered ? "linear-gradient(135deg, #f5f3ff 0%, #fae8ff 100%)" : "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
       padding: 16,
       position: "relative",
       height: 180,
-      overflow: "hidden"
+      overflow: "hidden",
+      transition: "all 0.3s ease"
     }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: 12, color: "#92400e", fontWeight: 600, marginBottom: 4 }, children: "\u{1F5FA}\uFE0F \u77FF\u8109\u5730\u56FE" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 4
+      }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: 12, color: hiddenTriggered ? "#6d28d9" : "#92400e", fontWeight: 600 }, children: "\u{1F5FA}\uFE0F \u77FF\u8109\u5730\u56FE" }),
+        hiddenTriggered && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: {
+          fontSize: 10,
+          fontWeight: 700,
+          background: "#c084fc",
+          color: "#ffffff",
+          padding: "2px 8px",
+          borderRadius: 999
+        }, children: "\u2728 \u9690\u85CF\u8DEF\u5F84\u6FC0\u6D3B" })
+      ] }),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { width: "100%", height: "140", viewBox: "0 0 100 100", preserveAspectRatio: "none", children: [
         paths.map((p, i) => {
           const a = nodes.find((n) => n.id === p[0]);
           const b = nodes.find((n) => n.id === p[1]);
+          const hasHiddenNode = a.type === "hidden" || b.type === "hidden";
           const activated = i / paths.length < progressRatio + 0.01;
+          const hiddenActive = hasHiddenNode && hiddenTriggered;
           return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
             "line",
             {
@@ -24740,34 +24767,39 @@
               y1: a.y,
               x2: b.x,
               y2: b.y,
-              stroke: activated ? "#b45309" : "#d6d3d1",
-              strokeWidth: "0.8",
-              strokeDasharray: activated ? "none" : "1.5,1.5"
+              stroke: activated ? hiddenActive ? "#a855f7" : "#b45309" : hasHiddenNode ? "#e9d5ff" : "#d6d3d1",
+              strokeWidth: hiddenActive ? "1.2" : "0.8",
+              strokeDasharray: activated ? "none" : "1.5,1.5",
+              opacity: hasHiddenNode && !hiddenTriggered ? 0.4 : 1
             },
             i
           );
         }),
         nodes.map((n) => {
-          const isCurrent = Math.floor(progressRatio * nodes.length) >= nodes.indexOf(n) - 0;
+          const nodeIndex = nodes.findIndex((nd) => nd.id === n.id);
+          const isCurrent = Math.floor(progressRatio * nodes.length) >= nodeIndex;
           const fillMap = {
             start: "#10b981",
             mid: "#3b82f6",
             end: "#8b5cf6",
             hidden: "#ec4899"
           };
-          return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("g", { children: [
+          const isHidden = n.type === "hidden";
+          const showHidden = isHidden && hiddenTriggered;
+          return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("g", { style: { opacity: isHidden && !hiddenTriggered ? 0.4 : 1 }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
               "circle",
               {
                 cx: n.x,
                 cy: n.y,
-                r: "3.5",
+                r: showHidden ? "4.5" : "3.5",
                 fill: isCurrent ? fillMap[n.type] : "#e7e5e4",
                 stroke: "#ffffff",
-                strokeWidth: "0.8"
+                strokeWidth: showHidden ? "1.2" : "0.8"
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { x: n.x, y: n.y - 5, textAnchor: "middle", fontSize: "3.2", fill: "#78350f", fontWeight: "600", children: n.label })
+            showHidden && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: n.x, cy: n.y, r: "6", fill: "none", stroke: "#a855f7", strokeWidth: "0.5", opacity: "0.6" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { x: n.x, y: n.y - 5, textAnchor: "middle", fontSize: "3.2", fill: isHidden ? "#6d28d9" : "#78350f", fontWeight: "600", children: n.label })
           ] }, n.id);
         })
       ] })
@@ -24775,12 +24807,43 @@
   }
   var GameBoard = ({ level, state }) => {
     const keys = Object.keys(FIELD_META);
+    const getMessageStyle = () => {
+      if (state.isWin && state.hiddenTriggered) {
+        return {
+          background: "linear-gradient(90deg, #ddd6fe, #f0abfc)",
+          borderColor: "#a78bfa",
+          color: "#4c1d95"
+        };
+      }
+      if (state.isWin) {
+        return {
+          background: "linear-gradient(90deg, #d1fae5, #6ee7b7)",
+          borderColor: "#34d399",
+          color: "#064e3b"
+        };
+      }
+      if (state.isFinished) {
+        return {
+          background: "linear-gradient(90deg, #fee2e2, #fca5a5)",
+          borderColor: "#f87171",
+          color: "#7f1d1d"
+        };
+      }
+      return {
+        background: "#f0f9ff",
+        borderColor: "#bae6fd",
+        color: "#0c4a6e"
+      };
+    };
+    const msgStyle = getMessageStyle();
+    const stepsLeft = level.maxSteps - state.steps.length;
     return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: {
       background: "#ffffff",
       borderRadius: 16,
       padding: 20,
-      border: "1px solid #e5e7eb",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+      border: state.isWin && state.hiddenTriggered ? "2px solid #a78bfa" : state.isWin ? "2px solid #34d399" : state.isFinished ? "2px solid #f87171" : "1px solid #e5e7eb",
+      boxShadow: state.isFinished ? "0 4px 16px rgba(0,0,0,0.08)" : "0 2px 8px rgba(0,0,0,0.04)",
+      transition: "all 0.3s ease"
     }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
@@ -24804,21 +24867,28 @@
             state.steps.length,
             " / ",
             level.maxSteps
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontSize: 11, color: "#9ca3af", marginTop: 2 }, children: [
+            "\u5269\u4F59 ",
+            stepsLeft,
+            " \u6B65"
           ] })
         ] })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: {
         padding: "10px 14px",
         borderRadius: 8,
-        background: state.isFinished ? state.isWin ? "linear-gradient(90deg, #d1fae5, #6ee7b7)" : "linear-gradient(90deg, #fee2e2, #fca5a5)" : "#f0f9ff",
-        border: `1px solid ${state.isFinished ? state.isWin ? "#6ee7b7" : "#fca5a5" : "#bae6fd"}`,
+        background: msgStyle.background,
+        border: `1px solid ${msgStyle.borderColor}`,
+        color: msgStyle.color,
         fontSize: 13,
-        color: "#1f2937",
         marginBottom: 16,
-        fontWeight: 500
+        fontWeight: 500,
+        lineHeight: 1.6
       }, children: [
-        state.isWin && state.hiddenTriggered ? "\u{1F31F} " : state.isWin ? "\u2705 " : state.isFinished ? "\u26A0\uFE0F " : "\u{1F4A1} ",
-        state.message
+        state.isWin && state.hiddenTriggered ? "\u{1F31F} \u9690\u85CF\u7ED3\u5C40\u89E6\u53D1\uFF01" : state.isWin ? "\u2705 \u6311\u6218\u80DC\u5229\uFF01" : state.isFinished ? "\u26A0\uFE0F \u6311\u6218\u7ED3\u675F" : "\u{1F4A1} \u5F53\u524D\u5C40\u52BF",
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontSize: 12, opacity: 0.9 }, children: state.message })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
         GameMap,
@@ -24827,7 +24897,8 @@
           paths: level.mapPaths,
           stepCount: state.steps.length,
           maxSteps: level.maxSteps,
-          isFinished: state.isFinished
+          isFinished: state.isFinished,
+          hiddenTriggered: state.hiddenTriggered
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { height: 16 } }),
@@ -24843,12 +24914,13 @@
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: {
         marginTop: 12,
-        padding: "10px 14px",
-        background: "#f9fafb",
+        padding: "12px 14px",
+        background: "#fafafa",
         borderRadius: 8,
-        border: "1px dashed #d1d5db",
+        border: "1px solid #e5e7eb",
         fontSize: 12,
-        color: "#4b5563"
+        color: "#4b5563",
+        lineHeight: 1.7
       }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("strong", { style: { color: "#065f46" }, children: "\u{1F3AF} \u80DC\u5229\u6761\u4EF6\uFF1A" }),
@@ -24858,9 +24930,13 @@
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("strong", { style: { color: "#991b1b" }, children: "\u{1F4A5} \u5931\u8D25\u6761\u4EF6\uFF1A" }),
           level.failText
         ] }),
-        level.hiddenText && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { marginTop: 4 }, children: [
+        level.hiddenText && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: {
+          marginTop: 6,
+          paddingTop: 6,
+          borderTop: "1px dashed #e5e7eb"
+        }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("strong", { style: { color: "#7c3aed" }, children: "\u{1F52E} \u9690\u85CF\u6761\u4EF6\uFF1A" }),
-          level.hiddenText
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { color: "#6d28d9" }, children: level.hiddenText })
         ] })
       ] })
     ] });
@@ -24907,6 +24983,13 @@
   }
   var EventBox = ({ level, state, onExecute, loading }) => {
     const disabled = state.isFinished || loading;
+    const events = level.availableEvents || [];
+    const getCostStyle = (cost) => {
+      if (cost <= 1) return { bg: "#dcfce7", color: "#166534", border: "#bbf7d0" };
+      if (cost <= 2) return { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" };
+      if (cost <= 3) return { bg: "#fef3c7", color: "#92400e", border: "#fde68a" };
+      return { bg: "#fee2e2", color: "#991b1b", border: "#fecaca" };
+    };
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: {
       background: "#ffffff",
       borderRadius: 16,
@@ -24921,11 +25004,28 @@
           color: "#6b7280"
         }, children: [
           "\u53EF\u9009\u64CD\u4F5C ",
-          level.availableEvents.length,
+          events.length,
           " \u9879"
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: {
+      state.isFinished ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: {
+        padding: "10px 14px",
+        background: state.isWin ? "#dcfce7" : "#fee2e2",
+        borderRadius: 8,
+        fontSize: 12,
+        color: state.isWin ? "#166534" : "#991b1b",
+        border: `1px solid ${state.isWin ? "#bbf7d0" : "#fecaca"}`,
+        marginBottom: 14,
+        fontWeight: 600
+      }, children: state.isWin ? "\u{1F3C1} \u672C\u5C40\u5DF2\u5B8C\u6210\uFF0C\u534F\u4F5C\u6311\u6218\u6210\u529F\uFF01" : "\u{1F3C1} \u672C\u5C40\u5DF2\u7ED3\u675F\uFF0C\u53EF\u91CD\u5F00\u518D\u6B21\u6311\u6218\u3002" }) : loading ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: {
+        padding: "10px 14px",
+        background: "#f3f4f6",
+        borderRadius: 8,
+        fontSize: 12,
+        color: "#4b5563",
+        border: "1px solid #d1d5db",
+        marginBottom: 14
+      }, children: "\u23F3 \u6B63\u5728\u63D0\u4EA4\u534F\u4F5C\u7533\u8BF7\uFF0C\u8BF7\u7A0D\u5019..." }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: {
         padding: "8px 12px",
         background: "#fef3c7",
         borderRadius: 8,
@@ -24933,9 +25033,17 @@
         color: "#92400e",
         border: "1px solid #fde68a",
         marginBottom: 14
-      }, children: "\u{1F4A1} \u63D0\u793A\uFF1A\u6BCF\u9009\u62E9\u4E00\u4E2A\u4E8B\u4EF6\uFF0C\u4F1A\u6D88\u8017\u76F8\u5E94\u6210\u672C\u5E76\u4FEE\u6539\u5C40\u9762\u5B57\u6BB5\u3002\u8BF7\u8C28\u614E\u9009\u62E9\u534F\u4F5C\u6B65\u9AA4\uFF01" }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "grid", gridTemplateColumns: "1fr", rowGap: 10 }, children: level.availableEvents.map((ev) => {
+      }, children: "\u{1F4A1} \u63D0\u793A\uFF1A\u6BCF\u9009\u62E9\u4E00\u4E2A\u4E8B\u4EF6\uFF0C\u4F1A\u6D88\u8017\u76F8\u5E94\u534F\u4F5C\u6210\u672C\u5E76\u4FEE\u6539\u5C40\u9762\u5B57\u6BB5\u3002\u8BF7\u8C28\u614E\u9009\u62E9\u534F\u4F5C\u6B65\u9AA4\uFF01" }),
+      events.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: {
+        padding: 40,
+        textAlign: "center",
+        color: "#9ca3af",
+        fontSize: 13,
+        border: "2px dashed #e5e7eb",
+        borderRadius: 12
+      }, children: "\u6682\u65E0\u53EF\u7528\u534F\u4F5C\u4E8B\u4EF6" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "grid", gridTemplateColumns: "1fr", rowGap: 10 }, children: events.map((ev) => {
         const meta = CATEGORY_META[ev.category];
+        const costStyle = getCostStyle(ev.cost);
         return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           "div",
           {
@@ -24976,10 +25084,11 @@
                 /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: {
                   padding: "3px 10px",
                   borderRadius: 12,
-                  background: "#eff6ff",
-                  color: "#1d4ed8",
+                  background: costStyle.bg,
+                  color: costStyle.color,
+                  border: `1px solid ${costStyle.border}`,
                   fontSize: 11,
-                  fontWeight: 600
+                  fontWeight: 700
                 }, children: [
                   "\u6210\u672C ",
                   ev.cost
@@ -25000,6 +25109,10 @@
   var ReplayTimeline = ({ level, state, onRollback, rollingBack }) => {
     const eventMap = /* @__PURE__ */ new Map();
     level.availableEvents.forEach((e) => eventMap.set(e.id, e));
+    const formatTime = (ts) => {
+      const d = new Date(ts);
+      return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;
+    };
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: {
       background: "#ffffff",
       borderRadius: 16,
@@ -25015,10 +25128,19 @@
         }, children: [
           "\u5171 ",
           state.steps.length,
-          " \u6B65 \xB7 \u6BCF\u6B65\u81EA\u52A8\u4FDD\u5B58"
+          " \u6B65 \xB7 \u6BCF\u6B65\u81EA\u52A8\u5B58\u6863"
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: {
+      rollingBack ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: {
+        padding: "8px 12px",
+        background: "#fef3c7",
+        borderRadius: 8,
+        fontSize: 12,
+        color: "#92400e",
+        border: "1px solid #fde68a",
+        marginBottom: 14,
+        fontWeight: 600
+      }, children: "\u{1F504} \u6B63\u5728\u56DE\u6EDA\u7248\u672C\uFF0C\u8BF7\u7A0D\u5019..." }) : state.steps.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: {
         padding: "8px 12px",
         background: "#dbeafe",
         borderRadius: 8,
@@ -25026,15 +25148,19 @@
         color: "#1e40af",
         border: "1px solid #93c5fd",
         marginBottom: 14
-      }, children: "\u{1F504} \u5237\u65B0\u9875\u9762\u540E\u81EA\u52A8\u4ECE\u56DE\u653E\u8F74\u6062\u590D\uFF1B\u70B9\u51FB\u4EFB\u610F\u6B65\u9AA4\u53EF\u56DE\u6EDA\u81F3\u8BE5\u6B65\u4E4B\u524D\u3002" }),
-      state.steps.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: {
+      }, children: "\u{1F504} \u5237\u65B0\u9875\u9762\u540E\u81EA\u52A8\u4ECE\u56DE\u653E\u8F74\u6062\u590D\uFF1B\u70B9\u51FB\u5386\u53F2\u6B65\u9AA4\u53EF\u56DE\u9000\u81F3\u8BE5\u6B65\u4E4B\u524D\u7684\u7248\u672C\u3002" }) : null,
+      state.steps.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: {
         padding: 40,
         textAlign: "center",
         color: "#9ca3af",
         fontSize: 13,
         border: "2px dashed #e5e7eb",
         borderRadius: 12
-      }, children: "\u5C1A\u672A\u5F00\u59CB\u534F\u4F5C\uFF0C\u8BF7\u4ECE\u4E8B\u4EF6\u5323\u9009\u62E9\u7B2C\u4E00\u6B65\u64CD\u4F5C\u3002" }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { position: "relative", paddingLeft: 20 }, children: [
+      }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontSize: 28, marginBottom: 8 }, children: "\u{1F4DC}" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { marginBottom: 4, fontWeight: 500 }, children: "\u6682\u65E0\u534F\u4F5C\u8BB0\u5F55" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontSize: 12, color: "#9ca3af" }, children: "\u8BF7\u4ECE\u4E8B\u4EF6\u5323\u9009\u62E9\u7B2C\u4E00\u6B65\u64CD\u4F5C\uFF0C\u6BCF\u4E00\u6B65\u90FD\u4F1A\u81EA\u52A8\u5B58\u5165\u56DE\u653E\u8F74\u3002" })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { position: "relative", paddingLeft: 20 }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: {
           position: "absolute",
           left: 8,
@@ -25046,6 +25172,7 @@
         /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: state.steps.map((s, idx) => {
           const ev = eventMap.get(s.eventId);
           const isLast = idx === state.steps.length - 1;
+          const isFirst = idx === 0;
           return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
             "div",
             {
@@ -25053,9 +25180,10 @@
                 position: "relative",
                 padding: "10px 14px",
                 borderRadius: 10,
-                border: `1px solid ${isLast ? "#60a5fa" : "#e5e7eb"}`,
+                border: `1px solid ${isLast ? "#3b82f6" : "#e5e7eb"}`,
                 background: isLast ? "#eff6ff" : "#ffffff",
-                cursor: rollingBack ? "progress" : "pointer"
+                cursor: rollingBack || isLast ? "default" : "pointer",
+                opacity: rollingBack ? 0.7 : 1
               },
               onClick: () => !rollingBack && !isLast && onRollback(idx),
               children: [
@@ -25075,8 +25203,8 @@
                     /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: {
                       fontSize: 11,
                       fontWeight: 700,
-                      color: "#1f2937",
-                      background: "#f3f4f6",
+                      background: isLast ? "#dbeafe" : "#f3f4f6",
+                      color: isLast ? "#1e40af" : "#1f2937",
                       padding: "2px 8px",
                       borderRadius: 8
                     }, children: [
@@ -25086,54 +25214,70 @@
                     ] }),
                     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { style: { fontSize: 13, fontWeight: 600, color: "#111827" }, children: ev?.name || s.eventId }),
                     ev && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { fontSize: 11, color: "#6b7280" }, children: [
-                      "\uFF08\u8017",
+                      "\uFF08\u6210\u672C",
                       ev.cost,
                       "\uFF09"
                     ] })
                   ] }),
-                  !isLast && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { style: {
+                  !isLast ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { style: {
                     fontSize: 11,
                     color: "#2563eb",
                     fontWeight: 600
-                  }, children: "\u21A9 \u56DE\u6EDA\u5230\u6B64" }),
-                  isLast && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { style: {
+                  }, children: "\u21A9 \u56DE\u9000\u5230\u6B64\u6B65\u524D" }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { style: {
                     fontSize: 11,
-                    color: "#3b82f6",
-                    fontWeight: 700
-                  }, children: "\u5F53\u524D" })
+                    color: "#2563eb",
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    background: "#dbeafe",
+                    borderRadius: 8
+                  }, children: "\u5F53\u524D\u7248\u672C" })
                 ] }),
                 /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: {
                   marginTop: 6,
                   display: "flex",
-                  flexWrap: "wrap",
-                  gap: 4,
-                  fontSize: 10
+                  justifyContent: "space-between",
+                  alignItems: "center"
                 }, children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#eff6ff", color: "#1d4ed8", borderRadius: 6 }, children: [
-                    "\u63CF",
-                    s.fieldAfter.traceValue
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: {
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 4,
+                    fontSize: 10
+                  }, children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#eff6ff", color: "#1d4ed8", borderRadius: 6 }, children: [
+                      "\u63CF",
+                      s.fieldAfter.traceValue
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#dcfce7", color: "#166534", borderRadius: 6 }, children: [
+                      "\u91CF",
+                      s.fieldAfter.measureSlot
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#ede9fe", color: "#6d28d9", borderRadius: 6 }, children: [
+                      "\u914D",
+                      s.fieldAfter.balanceMark
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#fee2e2", color: "#991b1b", borderRadius: 6 }, children: [
+                      "\u620A",
+                      s.fieldAfter.wuRisk
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#fef3c7", color: "#92400e", borderRadius: 6 }, children: [
+                      "\u4E01",
+                      s.fieldAfter.dingReward
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#fce7f3", color: "#9d174d", borderRadius: 6 }, children: [
+                      "\u672A",
+                      s.fieldAfter.weiFailFactor
+                    ] })
                   ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#dcfce7", color: "#166534", borderRadius: 6 }, children: [
-                    "\u91CF",
-                    s.fieldAfter.measureSlot
-                  ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#ede9fe", color: "#6d28d9", borderRadius: 6 }, children: [
-                    "\u914D",
-                    s.fieldAfter.balanceMark
-                  ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#fee2e2", color: "#991b1b", borderRadius: 6 }, children: [
-                    "\u620A",
-                    s.fieldAfter.wuRisk
-                  ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#fef3c7", color: "#92400e", borderRadius: 6 }, children: [
-                    "\u4E01",
-                    s.fieldAfter.dingReward
-                  ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { padding: "1px 6px", background: "#fce7f3", color: "#9d174d", borderRadius: 6 }, children: [
-                    "\u672A",
-                    s.fieldAfter.weiFailFactor
-                  ] })
-                ] })
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { style: { fontSize: 10, color: "#9ca3af" }, children: formatTime(s.timestamp) })
+                ] }),
+                isFirst && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: {
+                  marginTop: 6,
+                  paddingTop: 6,
+                  borderTop: "1px dashed #f3f4f6",
+                  fontSize: 11,
+                  color: "#9ca3af"
+                }, children: "\u2190 \u56DE\u9000\u5230\u7B2C 1 \u6B65\u524D\u5C06\u56DE\u5230\u521D\u59CB\u5C40\u9762" })
               ]
             },
             s.stepIndex
@@ -25164,12 +25308,18 @@
   var SettlementBook = ({ settlement, loading, level, onRequest }) => {
     const eventMap = /* @__PURE__ */ new Map();
     level.availableEvents.forEach((e) => eventMap.set(e.id, e));
+    const getResultBorder = () => {
+      if (settlement?.hiddenTriggered && settlement?.isWin) return "#a78bfa";
+      if (settlement?.isWin) return "#34d399";
+      return "#f87171";
+    };
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: {
       background: "#ffffff",
       borderRadius: 16,
       padding: 20,
-      border: "1px solid #e5e7eb",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+      border: settlement ? `2px solid ${getResultBorder()}` : "1px solid #e5e7eb",
+      boxShadow: settlement ? "0 4px 16px rgba(0,0,0,0.06)" : "0 2px 8px rgba(0,0,0,0.04)",
+      transition: "all 0.3s ease"
     }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h3", { style: { margin: 0, fontSize: 16, color: "#111827", fontWeight: 700 }, children: "\u{1F4D2} \u4E91\u6BCD\u77FF\u706F\u534F\u4F5C\u95EF\u5173\u6E38\u620F\xB7\u7ED3\u7B97\u7C3F" }),
@@ -25182,35 +25332,48 @@
               padding: "6px 14px",
               borderRadius: 8,
               border: "none",
-              background: loading ? "#9ca3af" : "#111827",
+              background: loading ? "#9ca3af" : "#4c1d95",
               color: "#ffffff",
               fontSize: 12,
               fontWeight: 600,
-              cursor: loading ? "progress" : "pointer"
+              cursor: loading ? "progress" : "pointer",
+              transition: "background 0.2s"
             },
-            children: loading ? "\u91CD\u7B97\u4E2D..." : "\u{1F504} \u540E\u7AEF\u91CD\u7B97\u7ED3\u7B97"
+            onMouseEnter: (e) => {
+              if (!loading) e.currentTarget.style.background = "#5b21b6";
+            },
+            onMouseLeave: (e) => {
+              e.currentTarget.style.background = loading ? "#9ca3af" : "#4c1d95";
+            },
+            children: loading ? "\u23F3 \u540E\u7AEF\u91CD\u7B97\u4E2D..." : settlement ? "\u{1F504} \u518D\u6B21\u91CD\u7B97" : "\u{1F504} \u8BF7\u6C42\u91CD\u7B97\u7ED3\u7B97"
           }
         )
       ] }),
-      !settlement ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: {
+      !settlement ? /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: {
         padding: 40,
         textAlign: "center",
         color: "#6b7280",
         fontSize: 13,
         border: "2px dashed #e5e7eb",
-        borderRadius: 12
-      }, children: "\u70B9\u51FB\u53F3\u4E0A\u89D2\u6309\u94AE\uFF0C\u7531\u540E\u7AEF\u6839\u636E\u300C\u63CF\u7EBF\u503C\u300D\u4E0E\u300C\u534F\u4F5C\u95EF\u5173\u6B65\u9AA4\u300D\u91CD\u7B97\u5B8C\u6574\u7ED3\u7B97\u3002" }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
+        borderRadius: 12,
+        background: "#fafafa"
+      }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { fontSize: 32, marginBottom: 10 }, children: "\u{1F9EE}" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { fontWeight: 600, color: "#374151", marginBottom: 6 }, children: "\u5C1A\u672A\u751F\u6210\u7ED3\u7B97" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { fontSize: 12, lineHeight: 1.7 }, children: [
+          "\u70B9\u51FB\u53F3\u4E0A\u89D2\u6309\u94AE\uFF0C\u7531\u540E\u7AEF\u6839\u636E\u5F53\u524D\u300C\u63CF\u7EBF\u503C\u300D",
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("br", {}),
+          "\u4E0E\u300C\u534F\u4F5C\u95EF\u5173\u6B65\u9AA4\u300D\u91CD\u7B97\u5B8C\u6574\u7ED3\u7B97\u660E\u7EC6\u3002"
+        ] })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: {
           padding: 16,
           borderRadius: 12,
           marginBottom: 16,
-          background: settlement.hiddenTriggered && settlement.isWin ? "linear-gradient(135deg, #c4b5fd, #f0abfc)" : settlement.isWin ? "linear-gradient(135deg, #a7f3d0, #6ee7b7)" : "linear-gradient(135deg, #fecaca, #fca5a5)",
-          border: `1px solid ${settlement.isWin ? "#6ee7b7" : "#fca5a5"}`
+          background: settlement.hiddenTriggered && settlement.isWin ? "linear-gradient(135deg, #ddd6fe, #f0abfc)" : settlement.isWin ? "linear-gradient(135deg, #d1fae5, #6ee7b7)" : "linear-gradient(135deg, #fee2e2, #fca5a5)",
+          border: `1px solid ${getResultBorder()}`
         }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { fontSize: 13, color: "#111827", marginBottom: 6 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("strong", { children: "\u7ED3\u7B97\u7ED3\u679C\uFF1A" }),
-            settlement.hiddenTriggered && settlement.isWin ? "\u{1F31F} \u9690\u85CF\u80DC\u5229" : settlement.isWin ? "\u2705 \u5E38\u89C4\u80DC\u5229" : "\u274C \u6311\u6218\u5931\u8D25"
-          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { fontSize: 13, fontWeight: 600, marginBottom: 6 }, children: settlement.hiddenTriggered && settlement.isWin ? "\u{1F31F} \u7ED3\u7B97\u7ED3\u679C\uFF1A\u9690\u85CF\u80DC\u5229" : settlement.isWin ? "\u2705 \u7ED3\u7B97\u7ED3\u679C\uFF1A\u6311\u6218\u80DC\u5229" : "\u274C \u7ED3\u7B97\u7ED3\u679C\uFF1A\u6311\u6218\u5931\u8D25" }),
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { fontSize: 12, color: "#1f2937", lineHeight: 1.6 }, children: settlement.detailText })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { marginBottom: 14 }, children: [
@@ -25240,15 +25403,23 @@
           maxHeight: 180,
           overflowY: "auto",
           border: "1px solid #f3f4f6",
-          borderRadius: 8
-        }, children: settlement.stepReview.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { padding: 20, textAlign: "center", color: "#9ca3af", fontSize: 12 }, children: "\u5C1A\u672A\u6267\u884C\u4EFB\u4F55\u6B65\u9AA4" }) : settlement.stepReview.map((sr) => {
+          borderRadius: 8,
+          background: "#fafafa"
+        }, children: settlement.stepReview.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: {
+          padding: 24,
+          textAlign: "center",
+          color: "#9ca3af",
+          fontSize: 12
+        }, children: "\u6682\u65E0\u6B65\u9AA4\u8BB0\u5F55\uFF0C\u7ED3\u7B97\u57FA\u4E8E\u521D\u59CB\u5C40\u9762" }) : settlement.stepReview.map((sr, idx) => {
           const ev = eventMap.get(sr.eventId);
+          const isLast = idx === settlement.stepReview.length - 1;
           return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: {
             display: "flex",
             justifyContent: "space-between",
             padding: "8px 12px",
             fontSize: 12,
-            borderBottom: "1px solid #f9fafb"
+            borderBottom: isLast ? "none" : "1px solid #f3f4f6",
+            background: "#ffffff"
           }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { style: { color: "#4b5563" }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { style: { fontWeight: 700, color: "#1f2937" }, children: [
@@ -25266,7 +25437,13 @@
               sr.contribution
             ] })
           ] }, sr.step);
-        }) })
+        }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: {
+          marginTop: 10,
+          fontSize: 11,
+          color: "#9ca3af",
+          textAlign: "right"
+        }, children: "\u7ED3\u7B97\u7531\u540E\u7AEF\u57FA\u4E8E\u63CF\u7EBF\u503C\u4E0E\u534F\u4F5C\u6B65\u9AA4\u5B9E\u65F6\u91CD\u7B97" })
       ] })
     ] });
   };
