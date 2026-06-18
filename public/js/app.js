@@ -624,6 +624,20 @@ function renderGameInfo() {
       <span class="meta-value" style="color: #a78bfa;">✓ 已触发</span>
     </div>
     ` : ''}
+    ${state.currentGame === 'you' && s && !s.secretUnlocked ? `
+    <div class="meta-row">
+      <span class="meta-label">隐藏触发值</span>
+      <span class="meta-value" style="color: ${s.hiddenTrigger >= 5 ? '#a78bfa' : (s.hiddenTrigger >= 3 ? '#fbbf24' : '#94a3b8')};">
+        ${s.hiddenTrigger} / 5
+      </span>
+    </div>
+    <div class="meta-row">
+      <span class="meta-label">前置门槛</span>
+      <span class="meta-value" style="color: ${(s.stepCount >= 6 || s.hiddenTrigger >= 3) ? '#4ade80' : '#f87171'};">
+        步${s.stepCount || 0}/6 触发${s.hiddenTrigger || 0}/3
+      </span>
+    </div>
+    ` : ''}
     <div class="formula-box win">
       <div style="color: #4ade80; margin-bottom: 0.25rem;">胜利条件:</div>
       ${g.winFormula}

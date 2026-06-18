@@ -175,26 +175,69 @@ test('卯局失败条件更严格', () => {
 
 console.log('\n--- 酉局（隐藏条件）逻辑校验 ---\n');
 
-test('酉局隐藏槽初始状态', () => {
+test('酉局初始状态 - 故意不稳定', () => {
   const g = games.you;
   const s = deepClone(g.initialState);
   assert(s.balanceSlots.length === 4, '应有 4 个配平槽');
   assert(s.balanceSlots[3] === 0, '第四槽初始为 0（隐藏）');
   assert(s.hiddenTrigger === 0, '隐藏触发计数初始为 0');
   assert(s.secretUnlocked === false, '隐藏未解锁');
+  assert(s.stepCount === 0, '步数计数初始为 0');
+  assert(s.invertedValue === 35, '倒排值初始 35（不在胜利范围50-120）');
+  assert(s.balanceSlots[0] === 25, '槽0=25（不在40-80）');
+  assert(s.balanceSlots[1] === 15, '槽1=15（不在40-80）');
+  assert(s.balanceSlots[2] === 35, '槽2=35（不在40-80）');
+  assert(s.failureY === 2, '酉号=2（增加初始压力）');
+  assert(!g.winCondition(s), '初始状态绝对不能满足胜利条件！');
+  assert(!g.loseCondition(s), '初始状态也不能满足失败条件');
 });
 
-test('酉局普通胜利条件', () => {
+test('酉局普通胜利前置门槛 - stepCount或hiddenTrigger', () => {
   const g = games.you;
-  const normalWin = {
+  const valuesReady = {
     invertedValue: 80,
     balanceSlots: [50, 50, 50, 0],
     riskC: 2,
     rewardM: 1,
     failureY: 1,
+    secretUnlocked: false,
+    stepCount: 3,
+    hiddenTrigger: 1
+  };
+  assert(!g.winCondition(valuesReady), '数值达标但stepCount<6且hiddenTrigger<3，不应胜利');
+  
+  const stepReady = { ...valuesReady, stepCount: 6 };
+  assert(g.winCondition(stepReady), 'stepCount≥6且数值达标应胜利');
+  
+  const triggerReady = { ...valuesReady, stepCount: 3, hiddenTrigger: 3 };
+  assert(g.winCondition(triggerReady), 'hiddenTrigger≥3且数值达标应胜利');
+  
+  const bothReady = { ...valuesReady, stepCount: 8, hiddenTrigger: 5 };
+  assert(g.winCondition(bothReady), '两者都达标应胜利');
+});
+
+test('酉局普通胜利条件 - 数值范围', () => {
+  const g = games.you;
+  const baseOk = {
+    stepCount: 8,
+    hiddenTrigger: 0,
     secretUnlocked: false
   };
-  assert(g.winCondition(normalWin), '普通条件满足应胜利');
+  
+  const invertedLow = { ...baseOk, invertedValue: 49, balanceSlots: [50,50,50,0], failureY: 1, riskC: 1, rewardM: 1 };
+  assert(!g.winCondition(invertedLow), '倒排值<50不应胜利');
+  
+  const invertedHigh = { ...baseOk, invertedValue: 121, balanceSlots: [50,50,50,0], failureY: 1, riskC: 1, rewardM: 1 };
+  assert(!g.winCondition(invertedHigh), '倒排值>120不应胜利');
+  
+  const slotBad = { ...baseOk, invertedValue: 80, balanceSlots: [39, 50, 50, 0], failureY: 1, riskC: 1, rewardM: 1 };
+  assert(!g.winCondition(slotBad), '任一配平槽<40不应胜利');
+  
+  const failureBad = { ...baseOk, invertedValue: 80, balanceSlots: [50,50,50,0], failureY: 3, riskC: 1, rewardM: 1 };
+  assert(!g.winCondition(failureBad), '酉号≥3不应胜利');
+  
+  const allGood = { ...baseOk, invertedValue: 80, balanceSlots: [50,50,50,0], failureY: 2, riskC: 1, rewardM: 1 };
+  assert(g.winCondition(allGood), '全部达标应胜利');
 });
 
 test('酉局隐藏胜利条件', () => {
@@ -205,12 +248,20 @@ test('酉局隐藏胜利条件', () => {
     riskC: 1,
     rewardM: 0,
     failureY: 0,
-    secretUnlocked: true
+    secretUnlocked: true,
+    stepCount: 0,
+    hiddenTrigger: 5
   };
   assert(g.winCondition(secretWin), '隐藏条件满足应胜利（完美值）');
   
   const almostWin = { ...secretWin, invertedValue: 87 };
   assert(!g.winCondition(almostWin), '倒排值不是 88 不应触发隐藏胜利');
+  
+  const slotWrong = { ...secretWin, balanceSlots: [66, 66, 67, 66] };
+  assert(!g.winCondition(slotWrong), '配平槽不全=66不应触发隐藏胜利');
+  
+  const failureNotZero = { ...secretWin, failureY: 1 };
+  assert(!g.winCondition(failureNotZero), '酉号≠0不应触发隐藏胜利');
 });
 
 test('酉局隐藏解锁机制', () => {
@@ -218,6 +269,8 @@ test('酉局隐藏解锁机制', () => {
   const state = deepClone(g.initialState);
   
   state.hiddenTrigger = 4;
+  state.riskC = 10;
+  state.rewardM = 10;
   g.events[4].effect(state);
   assert(state.secretUnlocked === false, '触发值不足不应解锁');
   
@@ -225,6 +278,33 @@ test('酉局隐藏解锁机制', () => {
   g.events[4].effect(state);
   assert(state.secretUnlocked === true, '触发值≥5 应解锁隐藏');
   assert(state.balanceSlots[3] === 66, '第四槽应设为 66');
+});
+
+test('酉局前5步 - 即使数值达标也不触发普通胜利', () => {
+  const g = games.you;
+  let state = deepClone(g.initialState);
+  
+  assert(!g.winCondition(state), '初始：不应胜利');
+  
+  g.events[1].effect(state);
+  state.stepCount = 1;
+  assert(!g.winCondition(state), '步1：不应胜利');
+  
+  g.events[0].effect(state);
+  state.stepCount = 2;
+  assert(!g.winCondition(state), '步2：不应胜利');
+  
+  g.events[1].effect(state);
+  state.stepCount = 3;
+  assert(!g.winCondition(state), '步3：不应胜利');
+  
+  g.events[0].effect(state);
+  state.stepCount = 4;
+  assert(!g.winCondition(state), '步4：不应胜利');
+  
+  g.events[1].effect(state);
+  state.stepCount = 5;
+  assert(!g.winCondition(state), '步5：即使可能数值接近也不应胜利');
 });
 
 console.log('\n--- 事件消耗校验 ---\n');
@@ -307,35 +387,102 @@ test('丙局完整教学流程模拟', () => {
   assert(state.balanceSlots.every(s => s > 0), '配平槽应有增长');
 });
 
-test('酉局隐藏路径模拟', () => {
+test('酉局隐藏路径完整模拟 - 真实消耗可执行', () => {
   const g = games.you;
   let state = deepClone(g.initialState);
+  let step = 0;
   
-  state.riskC = 10;
-  state.rewardM = 10;
+  assert(state.riskC === 10, '初始丙号=10');
+  assert(state.rewardM === 8, '初始卯号=8');
+  assert(!g.winCondition(state), '初始不应胜利');
+  assert(!g.loseCondition(state), '初始不应失败');
   
-  for (let i = 0; i < 3; i++) {
-    g.events[0].effect(state);
+  function execute(eventIndex) {
+    const event = g.events[eventIndex];
+    if (event.cost) {
+      if (event.cost.riskC) state.riskC -= event.cost.riskC;
+      if (event.cost.rewardM) state.rewardM -= event.cost.rewardM;
+    }
+    event.effect(state);
+    step++;
+    state.stepCount = step;
+    state.measureTraces.push({ time: Date.now(), value: state.invertedValue, stable: true });
+    assert(!g.loseCondition(state), `步${step}(${event.name}): 不应失败, 丙号=${state.riskC}, 卯号=${state.rewardM}, 酉号=${state.failureY}`);
   }
-  g.events[2].effect(state);
   
-  assert(state.hiddenTrigger >= 5, '隐藏触发值应累计足够');
+  execute(1);
+  assert(state.rewardM >= 8, '步1 e2: 卯号应增加 (时序涟漪+卯号)');
+  assert(state.stepCount === 1);
+  assert(!g.winCondition(state), '步1: 不应胜利(步<6)');
   
-  g.events[4].effect(state);
-  assert(state.secretUnlocked === true, '应解锁隐藏条件');
+  execute(0);
+  execute(2);
+  execute(2);
+  execute(3);
+  execute(1);
   
-  g.events[6].effect(state);
-  g.events[5].effect(state);
-  g.events[7].effect(state);
+  assert(state.hiddenTrigger >= 5, `步6: 隐藏触发值应≥5, 当前=${state.hiddenTrigger}`);
+  assert(state.riskC >= 2, `步6: 丙号应≥2(解锁需要), 当前=${state.riskC}`);
+  assert(state.rewardM >= 3, `步6: 卯号应≥3(解锁需要), 当前=${state.rewardM}`);
   
-  assert(state.balanceSlots[0] === 66, '配平槽0应=66');
-  assert(state.balanceSlots[1] === 66, '配平槽1应=66');
-  assert(state.balanceSlots[2] === 66, '配平槽2应=66');
-  assert(state.balanceSlots[3] === 66, '配平槽3应=66');
-  assert(state.invertedValue === 88, '倒排值应=88');
-  assert(state.failureY === 0, '酉号因子应=0');
+  execute(4);
+  assert(state.secretUnlocked === true, '步7 e5: 应成功解锁隐藏槽！');
+  assert(state.balanceSlots[3] === 66, '第四槽应设为66');
+  assert(!g.winCondition(state), '步7: 刚解锁但其他值未完美，不应立即胜利');
   
-  assert(g.winCondition(state), '应满足隐藏胜利条件');
+  execute(6);
+  assert(state.balanceSlots[0] === 66, '步8 e7(完美调和): 槽0应=66');
+  assert(state.balanceSlots[1] === 66, '步8 e7(完美调和): 槽1应=66');
+  assert(state.balanceSlots[2] === 66, '步8 e7(完美调和): 槽2应=66');
+  
+  execute(5);
+  assert(state.invertedValue === 88, '步9 e6(精准校准): 倒排值应=88');
+  
+  execute(7);
+  assert(state.failureY === 0, '步10 e8(净化仪式): 酉号应=0');
+  
+  assert(state.balanceSlots[0] === 66, '最终槽0=66');
+  assert(state.balanceSlots[1] === 66, '最终槽1=66');
+  assert(state.balanceSlots[2] === 66, '最终槽2=66');
+  assert(state.balanceSlots[3] === 66, '最终槽3=66');
+  assert(state.invertedValue === 88, '最终倒排值=88');
+  assert(state.failureY === 0, '最终酉号=0');
+  assert(state.secretUnlocked === true, '隐藏已解锁');
+  
+  assert(g.winCondition(state), '✓ 完美隐藏胜利条件满足！');
+  assert(step <= g.maxSteps, `步数${step}未超过最大步数${g.maxSteps}`);
+});
+
+test('酉局普通胜利路径 - 走非隐藏路线也可', () => {
+  const g = games.you;
+  let state = deepClone(g.initialState);
+  let step = 0;
+  
+  function execute(eventIndex) {
+    const event = g.events[eventIndex];
+    if (event.cost) {
+      if (event.cost.riskC) state.riskC -= event.cost.riskC;
+      if (event.cost.rewardM) state.rewardM -= event.cost.rewardM;
+    }
+    event.effect(state);
+    step++;
+    state.stepCount = step;
+    assert(state.riskC >= 0, `步${step} 丙号不应<0`);
+    assert(state.rewardM >= 0, `步${step} 卯号不应<0`);
+  }
+  
+  for (let i = 0; i < 4; i++) execute(1);
+  for (let i = 0; i < 3; i++) execute(0);
+  execute(2);
+  execute(3);
+  
+  assert(step >= 6, `步数应≥6才能触发普通胜利检查, 当前=${step}`);
+  assert(state.secretUnlocked === false, '未走隐藏路线(secretUnlocked=false)');
+  assert(state.invertedValue >= 50 && state.invertedValue <= 120, `倒排值应在范围内[50,120], 当前=${state.invertedValue}`);
+  const slots = state.balanceSlots.slice(0, 3);
+  assert(slots.every(s => s >= 40 && s <= 80), `配平槽应在[40,80]范围内, 当前=${slots}`);
+  assert(state.failureY < 3, `酉号应<3, 当前=${state.failureY}`);
+  assert(g.winCondition(state), '普通胜利条件应满足！');
 });
 
 console.log('\n--- 胜负公式一致性校验 ---\n');

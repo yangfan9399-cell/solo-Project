@@ -144,6 +144,7 @@ function executeEvent(session, eventId) {
   }
 
   session.currentStep += 1;
+  newState.stepCount = session.currentStep;
   session.currentState = newState;
   session.updatedAt = Date.now();
 
@@ -206,6 +207,7 @@ function recalculateSettlement(session) {
     }
     
     event.effect(recalcState);
+    recalcState.stepCount = i;
     
     if (recalcState.measureTraces.length === prevState.measureTraces.length) {
       recalcState.measureTraces.push({
