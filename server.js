@@ -45,33 +45,42 @@ var SESSIONS = {
 
 var EVENTS = {
     ren: [
-        { id: 'ren_e1', cost: { unlockSlot: 0 }, effect: { unlockValue: 5, renRisk: 1 } },
-        { id: 'ren_e2', cost: { unlockSlot: 1 }, effect: { traceMark: 2, unlockValue: 2 } },
-        { id: 'ren_e3', cost: { dingReward: 1 }, effect: { renRisk: -3 } },
-        { id: 'ren_e4', cost: { unlockValue: 3 }, effect: { dingReward: 2, unlockSlot: 1 } },
-        { id: 'ren_e5', cost: { traceMark: 1, unlockSlot: 1 }, effect: { maoFailure: -2, unlockValue: 1 } },
-        { id: 'ren_e6', cost: { traceMark: 2, renRisk: 2 }, effect: { unlockValue: 10, dingReward: 1 } }
+        { id: 'ren_e1', name: '采掘陨铁原矿', cost: { unlockSlot: 0 }, effect: { unlockValue: 5, renRisk: 1 } },
+        { id: 'ren_e2', name: '溯源刻纹', cost: { unlockSlot: 1 }, effect: { traceMark: 2, unlockValue: 2 } },
+        { id: 'ren_e3', name: '壬号质检', cost: { dingReward: 1 }, effect: { renRisk: -3 } },
+        { id: 'ren_e4', name: '丁号激励', cost: { unlockValue: 3 }, effect: { dingReward: 2, unlockSlot: 1 } },
+        { id: 'ren_e5', name: '卯号压制', cost: { traceMark: 1, unlockSlot: 1 }, effect: { maoFailure: -2, unlockValue: 1 } },
+        { id: 'ren_e6', name: '熔铸精品', cost: { traceMark: 2, renRisk: 2 }, effect: { unlockValue: 10, dingReward: 1 } }
     ],
     ding: [
-        { id: 'ding_e1', cost: {}, effect: { unlockValue: 2, maoFailure: 1 } },
-        { id: 'ding_e2', cost: { dingReward: 1, unlockSlot: 1 }, effect: { traceMark: 2 } },
-        { id: 'ding_e3', cost: { unlockValue: 1 }, effect: { unlockSlot: 1, renRisk: 1 } },
-        { id: 'ding_e4', cost: { unlockValue: 5, renRisk: 2 }, effect: { dingReward: 2 } },
-        { id: 'ding_e5', cost: { maoFailure: 2 }, effect: { unlockValue: 6, traceMark: 1 } },
-        { id: 'ding_e6', cost: { unlockSlot: 1, dingReward: 1, renRisk: 3 }, effect: { unlockValue: 8, traceMark: 2 } }
+        { id: 'ding_e1', name: '残料回炉', cost: {}, effect: { unlockValue: 2, maoFailure: 1 } },
+        { id: 'ding_e2', name: '匠师手刻', cost: { dingReward: 1, unlockSlot: 1 }, effect: { traceMark: 2 } },
+        { id: 'ding_e3', name: '节流降耗', cost: { unlockValue: 1 }, effect: { unlockSlot: 1, renRisk: 1 } },
+        { id: 'ding_e4', name: '丁号补给', cost: { unlockValue: 5, renRisk: 2 }, effect: { dingReward: 2 } },
+        { id: 'ding_e5', name: '卯号冒险', cost: { maoFailure: 2 }, effect: { unlockValue: 6, traceMark: 1 } },
+        { id: 'ding_e6', name: '孤注一掷', cost: { unlockSlot: 1, dingReward: 1, renRisk: 3 }, effect: { unlockValue: 8, traceMark: 2 } }
     ],
     mao: [
-        { id: 'mao_e1', cost: { unlockSlot: 1 }, effect: { unlockValue: 5, maoFailure: 2 } },
-        { id: 'mao_e2', cost: { unlockSlot: 1, maoFailure: 1 }, effect: { traceMark: 3 } },
-        { id: 'mao_e3', cost: { renRisk: 2 }, effect: { maoFailure: 3, unlockValue: 3 } },
-        { id: 'mao_e4', cost: { traceMark: 2 }, effect: { dingReward: 3, maoFailure: 1 } },
-        { id: 'mao_e5', cost: { unlockValue: 1, renRisk: 1 }, effect: { maoFailure: 2, traceMark: 2 } },
-        { id: 'mao_e6', cost: { traceMark: 2, maoFailure: 2, unlockSlot: 1 }, effect: { unlockValue: 12, dingReward: 2 } },
-        { id: 'mao_e7', cost: { maoFailure: 1, renRisk: 1, dingReward: 1 }, effect: { traceMark: 4, unlockValue: 5 } },
-        { id: 'mao_e8', cost: { maoFailure: 1 }, effect: { unlockValue: 4 } },
-        { id: 'mao_e9', cost: { dingReward: 1 }, effect: { unlockSlot: 1, maoFailure: 1 } }
+        { id: 'mao_e1', name: '幽邃采掘', cost: { unlockSlot: 1 }, effect: { unlockValue: 5, maoFailure: 2 } },
+        { id: 'mao_e2', name: '星纹溯源', cost: { unlockSlot: 1, maoFailure: 1 }, effect: { traceMark: 3 } },
+        { id: 'mao_e3', name: '壬号献祭', cost: { renRisk: 2 }, effect: { maoFailure: 3, unlockValue: 3 } },
+        { id: 'mao_e4', name: '丁号秘赏', cost: { traceMark: 2 }, effect: { dingReward: 3, maoFailure: 1 } },
+        { id: 'mao_e5', name: '卯号共鸣', cost: { unlockValue: 1, renRisk: 1 }, effect: { maoFailure: 2, traceMark: 2 } },
+        { id: 'mao_e6', name: '陨核萃炼', cost: { traceMark: 2, maoFailure: 2, unlockSlot: 1 }, effect: { unlockValue: 12, dingReward: 2 } },
+        { id: 'mao_e7', name: '隐匿之触', cost: { maoFailure: 1, renRisk: 1, dingReward: 1 }, effect: { traceMark: 4, unlockValue: 5 } },
+        { id: 'mao_e8', name: '基础锻造', cost: { maoFailure: 1 }, effect: { unlockValue: 4 } },
+        { id: 'mao_e9', name: '陨铁回炉', cost: { dingReward: 1 }, effect: { unlockSlot: 1, maoFailure: 1 } }
     ]
 };
+
+function buildEventIndex(sessionId) {
+    var idx = {};
+    var list = EVENTS[sessionId] || [];
+    for (var i = 0; i < list.length; i++) {
+        idx[list[i].id] = list[i];
+    }
+    return idx;
+}
 
 function checkWin(sessionId, state, steps) {
     if (sessionId === 'ren') {
@@ -119,14 +128,26 @@ function recalculate(sessionId, history) {
         return { error: '未知的局: ' + sessionId };
     }
 
+    var eventIndex = buildEventIndex(sessionId);
+
     var state = Object.assign({}, session.initialState);
     var steps = 0;
     var eventSequence = [];
+    var invalidEventIds = [];
 
     for (var i = 1; i < history.length; i++) {
         var entry = history[i];
-        var cost = entry.cost || {};
-        var effect = entry.effect || {};
+        var eventId = entry.eventId;
+
+        var ev = eventId ? eventIndex[eventId] : null;
+
+        if (!ev) {
+            invalidEventIds.push({ step: i, eventId: eventId || null });
+            continue;
+        }
+
+        var cost = ev.cost || {};
+        var effect = ev.effect || {};
 
         for (var ck in cost) {
             if (cost.hasOwnProperty(ck)) {
@@ -143,8 +164,8 @@ function recalculate(sessionId, history) {
         steps = i;
         eventSequence.push({
             step: i,
-            eventId: entry.eventId || null,
-            eventName: entry.eventName || '未知事件'
+            eventId: ev.id,
+            eventName: ev.name
         });
     }
 
@@ -157,7 +178,7 @@ function recalculate(sessionId, history) {
 
     var score = calculateScore(state, steps, finalStatus);
 
-    return {
+    var result = {
         state: state,
         steps: steps,
         status: finalStatus,
@@ -165,8 +186,14 @@ function recalculate(sessionId, history) {
         score: score,
         sessionId: sessionId,
         sessionName: session.name,
-        serverTimestamp: new Date().toISOString()
+        serverTimestamp: new Date().toISOString(),
+        calculatedBy: 'server_authoritative',
+        eventLookups: eventSequence.length
     };
+    if (invalidEventIds.length > 0) {
+        result.invalidEventIds = invalidEventIds;
+    }
+    return result;
 }
 
 var MIME_TYPES = {
