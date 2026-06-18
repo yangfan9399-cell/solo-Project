@@ -214,7 +214,7 @@ export default component$(() => {
             <Link href={`/project/${projectId}`} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               ← 返回项目
             </Link>
-          </div> as any
+          </div>
         }
       />
 
