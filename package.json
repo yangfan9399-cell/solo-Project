@@ -1,0 +1,14 @@
+{
+  "name": "night-voyage-paper-boat",
+  "version": "1.0.0",
+  "description": "夜航纸船资源配给盘 - 资源调度挑战游戏",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}

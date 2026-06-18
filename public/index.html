@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>夜航纸船资源配给盘</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="title-area">
+        <h1 class="main-title">🌙 夜航纸船资源配给盘</h1>
+        <p class="subtitle">Night Voyage Paper Boat Resource Allocation</p>
+      </div>
+      <div class="game-selector">
+        <button class="game-tab active" data-game="chou">丑局 · 教学</button>
+        <button class="game-tab" data-game="shen">申局 · 短缺</button>
+        <button class="game-tab" data-game="jia">甲局 · 隐藏</button>
+      </div>
+    </header>
+
+    <main class="game-layout">
+      <aside class="left-panel">
+        <div class="panel game-board-panel">
+          <h2 class="panel-title">📍 局面盘</h2>
+          <div id="gameMap" class="game-map"></div>
+        </div>
+      </aside>
+
+      <section class="center-panel">
+        <div class="panel status-panel">
+          <div class="status-grid">
+            <div class="status-card stripping">
+              <div class="status-label">夜航纸船剥离值</div>
+              <div class="status-value"><span id="strippingValue">100</span><span class="status-max">/<span id="maxStrippingValue">120</span></span></div>
+              <div class="status-bar"><div id="strippingBar" class="status-bar-fill"></div></div>
+            </div>
+            <div class="status-card calibration">
+              <div class="status-label">夜航纸船定标痕</div>
+              <div class="status-value"><span id="calibrationMarks">0</span><span class="status-max">/<span id="targetCalibration">5</span></span></div>
+              <div class="status-bar"><div id="calibrationBar" class="status-bar-fill"></div></div>
+            </div>
+            <div class="status-card risk">
+              <div class="status-label">丑号风险</div>
+              <div class="status-value"><span id="chouRisk">15</span>%</div>
+            </div>
+            <div class="status-card reward">
+              <div class="status-label">申号奖励</div>
+              <div class="status-value"><span id="shenReward">0</span>%</div>
+            </div>
+            <div class="status-card failure">
+              <div class="status-label">甲号失败因子</div>
+              <div class="status-value"><span id="jiaFailureFactor">0</span>%</div>
+            </div>
+            <div class="status-card turn">
+              <div class="status-label">回合</div>
+              <div class="status-value"><span id="currentTurn">0</span><span class="status-max">/<span id="maxTurns">10</span></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel resources-panel">
+          <h3 class="panel-subtitle">资源储备</h3>
+          <div class="resources-grid">
+            <div class="resource-item">
+              <span class="resource-icon">📜</span>
+              <span class="resource-name">纸料</span>
+              <span class="resource-value" id="paperValue">50</span>
+            </div>
+            <div class="resource-item">
+              <span class="resource-icon">🖋️</span>
+              <span class="resource-name">墨水</span>
+              <span class="resource-value" id="inkValue">40</span>
+            </div>
+            <div class="resource-item">
+              <span class="resource-icon">💡</span>
+              <span class="resource-name">光源</span>
+              <span class="resource-value" id="lightValue">30</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel slots-panel">
+          <h3 class="panel-subtitle">夜航纸船排演槽</h3>
+          <div class="slots-display">
+            <div id="slotsContainer" class="slots-container"></div>
+            <div class="slots-count"><span id="usedSlots">0</span> / <span id="rehearsalSlots">3</span> 已用</div>
+          </div>
+          <div class="slot-actions">
+            <button class="slot-btn" data-slot="repair">🔧 修补 (+15剥离值)</button>
+            <button class="slot-btn" data-slot="calibrate">🎯 校准 (+1定标痕)</button>
+            <button class="slot-btn" data-slot="resupply">📦 补给 (+资源)</button>
+          </div>
+        </div>
+
+        <div class="panel actions-panel">
+          <button id="endTurnBtn" class="action-btn primary">⏭️ 结束回合</button>
+          <button id="restartBtn" class="action-btn secondary">🔄 重新开始</button>
+        </div>
+      </section>
+
+      <aside class="right-panel">
+        <div class="panel event-box-panel">
+          <h2 class="panel-title">🎴 事件匣</h2>
+          <div id="eventBox" class="event-box">
+            <div class="event-placeholder">事件将在各回合触发...</div>
+          </div>
+          <div id="eventLog" class="event-log"></div>
+        </div>
+      </aside>
+    </main>
+
+    <section class="replay-section">
+      <div class="panel replay-panel">
+        <h2 class="panel-title">⏪ 回放轴</h2>
+        <div class="replay-timeline" id="replayTimeline"></div>
+        <div class="replay-controls">
+          <button id="replayPrev" class="replay-btn">◀ 上一步</button>
+          <button id="replayPlay" class="replay-btn">▶ 播放</button>
+          <button id="replayNext" class="replay-btn">下一步 ▶</button>
+          <button id="replayResume" class="replay-btn primary">返回游戏</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="settlement-section" id="settlementSection" style="display:none;">
+      <div class="panel settlement-panel">
+        <h2 class="panel-title">📖 结算簿</h2>
+        <div id="settlementContent" class="settlement-content"></div>
+        <div class="settlement-actions">
+          <button id="closeSettlementBtn" class="action-btn secondary">关闭</button>
+          <button id="replayFromSettlementBtn" class="action-btn">查看回放</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="game-status-overlay" id="gameStatusOverlay" style="display:none;">
+      <div class="status-modal">
+        <div id="statusIcon" class="status-icon">🎉</div>
+        <h3 id="statusTitle" class="status-title">胜利！</h3>
+        <p id="statusDesc" class="status-desc">恭喜通关！</p>
+        <div class="status-actions">
+          <button id="viewSettlementBtn" class="action-btn primary">查看结算</button>
+          <button id="playAgainBtn" class="action-btn">再来一局</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+      <div class="loading-spinner"></div>
+      <p>加载中...</p>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
