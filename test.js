@@ -137,14 +137,23 @@ async function runTests() {
       mapErrorCaught = true;
       console.log('   ✓ 已正确阻止重复访问节点:', e.message);
     }
-    if (!mapErrorCaught) console.log('   ✗ 未检测到重复访问');
+    if (!mapErrorCaught) {
+      console.error('   ✗ 负向测试失败：重复访问节点被错误放行！');
+      process.exit(1);
+    }
+    let invalidNodeCaught = false;
     try {
       await apiRequest(`/api/games/${gameId}/actions`, 'POST', {
         actionType: 'visit_node',
         actionData: { nodeId: 'INVALID_NODE' }
       });
     } catch (e) {
+      invalidNodeCaught = true;
       console.log('   ✓ 已正确阻止非法节点:', e.message);
+    }
+    if (!invalidNodeCaught) {
+      console.error('   ✗ 负向测试失败：非法节点被错误放行！');
+      process.exit(1);
     }
     console.log('   ✓ 地图合法性检查成功\n');
 
