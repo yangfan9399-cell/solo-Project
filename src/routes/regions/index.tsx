@@ -1,5 +1,5 @@
 import { component$, useVisibleTask$, useSignal, useStore, $ } from '@builder.io/qwik';
-import { Link } from '@builder.io/qwik-city';
+import { Link, useLocation } from '@builder.io/qwik-city';
 import type { Project, Sample, RegionStat } from '~/types';
 import { getAllProjects, getAllSamples, getRegionStats } from '~/utils/storage';
 import { PageHeader } from '~/components/header/header';
@@ -8,6 +8,7 @@ import { ToneChart } from '~/components/tone-chart/tone-chart';
 const DEFAULT_COLORS = ['#4a6cf7', '#34d399', '#fbbf24', '#f87171', '#a78bfa', '#fb923c', '#2dd4bf'];
 
 export default component$(() => {
+  const loc = useLocation();
   const search = useSignal('');
   const dialectFilter = useSignal('');
   const selectedRegions = useSignal<Set<string>>(new Set());
@@ -22,14 +23,11 @@ export default component$(() => {
     regionStats: [],
   });
 
-  const loadData = $(() => {
+  useVisibleTask$(({ track }) => {
+    track(() => loc.url.pathname);
     state.projects = getAllProjects();
     state.samples = getAllSamples();
     state.regionStats = getRegionStats();
-  });
-
-  useVisibleTask$(() => {
-    loadData();
   });
 
   const dialects = useSignal<string[]>([]);

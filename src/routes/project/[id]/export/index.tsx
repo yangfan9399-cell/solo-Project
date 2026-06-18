@@ -120,6 +120,8 @@ export default component$(() => {
   const viewExportId = useSignal<string | null>(null);
   const viewContent = useSignal('');
   const copied = useSignal(false);
+  const exportGenerated = useSignal(false);
+  const exportError = useSignal('');
 
   const loadData = $(() => {
     state.project = getProject(projectId);
@@ -128,8 +130,12 @@ export default component$(() => {
     state.anomalies = getAllAnomalies(projectId);
   });
 
-  useVisibleTask$(() => {
-    loadData();
+  useVisibleTask$(({ track }) => {
+    track(() => location.url.pathname);
+    state.project = getProject(projectId);
+    state.samples = getAllSamples(projectId);
+    state.exports = getAllExports(projectId);
+    state.anomalies = getAllAnomalies(projectId);
   });
 
   const statusBreakdown = useSignal<{ status: string; label: string; count: number }[]>([]);
@@ -140,7 +146,9 @@ export default component$(() => {
   const toneChartCategories = useSignal<{ category: string; value: string; color: string }[]>([]);
 
   useVisibleTask$(({ track }) => {
+    track(() => state.samples);
     track(() => state.samples.length);
+    track(() => state.anomalies);
     track(() => state.anomalies.length);
 
     const statusMap = new Map<Sample['status'], number>();
@@ -197,7 +205,15 @@ export default component$(() => {
   }
 
   const handleExport = $(() => {
-    if (!state.project) return;
+    exportError.value = '';
+    if (!state.project) {
+      exportError.value = '项目数据未加载，请刷新页面';
+      return;
+    }
+    if (state.samples.length === 0 && scope.value !== 'summary') {
+      exportError.value = '没有可导出的样本数据';
+      return;
+    }
     let content: string;
     if (scope.value === 'summary') {
       content = generateSummaryReport(state.project, state.samples, state.anomalies);
@@ -215,18 +231,24 @@ export default component$(() => {
     };
     saveExport(record);
     exportContent.value = content;
-    loadData();
+    viewExportId.value = null;
+    viewContent.value = '';
+    exportGenerated.value = true;
+    setTimeout(() => { exportGenerated.value = false; }, 3000);
+    state.exports = getAllExports(projectId);
   });
 
   const handleCopy = $(() => {
-    const text = viewExportId.value ? viewContent.value : exportContent.value;
+    const text = exportContent.value || viewContent.value;
+    if (text.length === 0) return;
     navigator.clipboard.writeText(text);
     copied.value = true;
     setTimeout(() => { copied.value = false; }, 2000);
   });
 
   const handleDownload = $(() => {
-    const text = viewExportId.value ? viewContent.value : exportContent.value;
+    const text = exportContent.value || viewContent.value;
+    if (text.length === 0) return;
     const isSummary = scope.value === 'summary';
     const ext = isSummary ? 'json' : (format.value === 'json' ? 'json' : 'csv');
     const mimeType = ext === 'json' ? 'application/json' : 'text/csv';
@@ -237,8 +259,10 @@ export default component$(() => {
     a.download = `export_${projectId}_${Date.now()}.${ext}`;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
   });
 
   const handleViewExport = $((record: ExportRecord) => {
@@ -248,6 +272,7 @@ export default component$(() => {
     } else {
       viewExportId.value = record.id;
       viewContent.value = record.content;
+      exportContent.value = '';
     }
   });
 
@@ -408,12 +433,14 @@ export default component$(() => {
             </div>
           </div>
         </div>
-        <div style={{ marginTop: '16px' }}>
+        <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button class="btn-primary" onClick$={handleExport}>生成导出</button>
+          {exportGenerated.value && <span class="text-success text-sm" style={{ fontWeight: 500 }}>✓ 导出已生成</span>}
+          {exportError.value !== '' && <span style={{ color: 'var(--danger)', fontSize: '13px' }}>{exportError.value}</span>}
         </div>
       </div>
 
-      {(exportContent.value || viewExportId.value) && (
+      {exportContent.value.length > 0 && (
         <div class="card mt-24">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 600 }}>导出内容</h3>
@@ -421,7 +448,7 @@ export default component$(() => {
               <button class="btn-secondary btn-sm" onClick$={handleCopy}>
                 {copied.value ? '已复制 ✓' : '复制到剪贴板'}
               </button>
-              <button class="btn-secondary btn-sm" onClick$={handleDownload}>
+              <button class="btn-primary btn-sm" onClick$={handleDownload}>
                 下载文件
               </button>
             </div>
@@ -436,8 +463,36 @@ export default component$(() => {
             fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
             lineHeight: '1.5',
             border: '1px solid var(--border)',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
           }}>
-            <code>{viewExportId.value ? viewContent.value : exportContent.value}</code>
+            <code>{exportContent.value}</code>
+          </pre>
+        </div>
+      )}
+
+      {viewExportId.value !== null && viewContent.value.length > 0 && (
+        <div class="card mt-24">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 600 }}>历史导出内容</h3>
+            <button class="btn-secondary btn-sm" onClick$={() => { viewExportId.value = null; viewContent.value = ''; }}>
+              关闭
+            </button>
+          </div>
+          <pre style={{
+            background: 'var(--bg)',
+            padding: '16px',
+            borderRadius: '8px',
+            overflow: 'auto',
+            maxHeight: '400px',
+            fontSize: '13px',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+            lineHeight: '1.5',
+            border: '1px solid var(--border)',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
+          }}>
+            <code>{viewContent.value}</code>
           </pre>
         </div>
       )}

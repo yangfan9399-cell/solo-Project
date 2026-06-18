@@ -52,7 +52,8 @@ export default component$(() => {
   const segPoints = useSignal<number[]>([]);
   const pitchValues = useSignal<number[]>([]);
 
-  useVisibleTask$(() => {
+  useVisibleTask$(({ track }) => {
+    track(() => location.url.pathname);
     const s = getSample(sampleId);
     if (s) {
       sample.value = s;
@@ -229,7 +230,7 @@ export default component$(() => {
               width={800}
               height={200}
               interactive={true}
-              onSegmentClick={handleCanvasSegClick}
+              onSegmentClick$={handleCanvasSegClick}
             />
           </div>
 
@@ -254,7 +255,7 @@ export default component$(() => {
                       style={{ width: '100px' }}
                       onInput$={(e) => handleSegPointChange(i, (e.target as HTMLInputElement).value)}
                     />
-                    <span class="text-xs text-muted">({(pt * sample.value.recordingDuration / 1000).toFixed(2)}s)</span>
+                    <span class="text-xs text-muted">({(pt * (sample.value?.recordingDuration ?? 0) / 1000).toFixed(2)}s)</span>
                     <button class="btn-danger btn-sm" onClick$={() => handleRemoveSegPoint(i)}>删除</button>
                   </div>
                 ))}

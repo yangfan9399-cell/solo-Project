@@ -62,8 +62,11 @@ export default component$(() => {
     state.anomalies = getAllAnomalies();
   });
 
-  useVisibleTask$(() => {
-    loadData();
+  useVisibleTask$(({ track }) => {
+    track(() => location.url.pathname);
+    state.projects = getAllProjects();
+    state.samples = getAllSamples();
+    state.anomalies = getAllAnomalies();
   });
 
   useVisibleTask$(({ track }) => {

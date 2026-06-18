@@ -1,4 +1,4 @@
-import { component$, useSignal, useTask$, useVisibleTask$, $ } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, useVisibleTask$, QRL, $ } from '@builder.io/qwik';
 
 interface WaveformDisplayProps {
   waveformData: number[];
@@ -8,7 +8,7 @@ interface WaveformDisplayProps {
   height?: number;
   showPitch?: boolean;
   interactive?: boolean;
-  onSegmentClick?: (position: number) => void;
+  onSegmentClick$?: QRL<(position: number) => void>;
 }
 
 function drawWaveform(
@@ -155,7 +155,7 @@ function drawWaveform(
 }
 
 export const WaveformDisplay = component$<WaveformDisplayProps>(
-  ({ waveformData, segmentationPoints, pitchData, width = 600, height = 200, showPitch = true, interactive = false, onSegmentClick }) => {
+  ({ waveformData, segmentationPoints, pitchData, width = 600, height = 200, showPitch = true, interactive = false, onSegmentClick$ }) => {
     const canvasRef = useSignal<Element>();
     const segSignal = useSignal(segmentationPoints);
     const pitchSignal = useSignal(pitchData);
@@ -186,7 +186,7 @@ export const WaveformDisplay = component$<WaveformDisplayProps>(
     });
 
     const handleClick = $((e: MouseEvent) => {
-      if (!interactive || !onSegmentClick) return;
+      if (!interactive || !onSegmentClick$) return;
       const canvas = canvasRef.value as HTMLCanvasElement | undefined;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
@@ -194,7 +194,7 @@ export const WaveformDisplay = component$<WaveformDisplayProps>(
       const x = (e.clientX - rect.left) * scaleX;
       const position = Math.round((x / width) * 100) / 100;
       if (position >= 0 && position <= 1) {
-        onSegmentClick(position);
+        onSegmentClick$(position);
       }
     });
 

@@ -94,13 +94,26 @@ export default component$(() => {
     }
   });
 
-  useVisibleTask$(() => {
-    loadData();
+  useVisibleTask$(({ track }) => {
+    track(() => location.url.pathname);
+    state.project = getProject(projectId);
+    state.samples = getAllSamples(projectId);
+    state.batches = getAllBatches(projectId);
+    state.anomalies = getAllAnomalies(projectId);
+    if (state.project) {
+      editForm.name = state.project.name;
+      editForm.dialect = state.project.dialect;
+      editForm.region = state.project.region;
+      editForm.investigator = state.project.investigator;
+      editForm.description = state.project.description;
+      editForm.status = state.project.status;
+    }
   });
 
   const unresolvedAnomalies = useSignal<Anomaly[]>([]);
 
   useVisibleTask$(({ track }) => {
+    track(() => state.anomalies);
     track(() => state.anomalies.length);
     unresolvedAnomalies.value = state.anomalies.filter((a) => !a.resolved);
   });
@@ -108,6 +121,7 @@ export default component$(() => {
   const filteredSamples = useSignal<Sample[]>([]);
 
   useVisibleTask$(({ track }) => {
+    track(() => state.samples);
     track(() => state.samples.length);
     track(() => sampleStatusFilter.value);
     track(() => batchFilter.value);
@@ -140,6 +154,7 @@ export default component$(() => {
   const toneCategories = useSignal<{ category: string; value: string; color: string; count: number; examples: string[] }[]>([]);
 
   useVisibleTask$(({ track }) => {
+    track(() => state.samples);
     track(() => state.samples.length);
 
     const catMap = new Map<string, { value: string; count: number; examples: string[] }>();

@@ -37,8 +37,13 @@ export default component$(() => {
     state.samples = getAllSamples(projectId);
   });
 
-  useVisibleTask$(() => {
-    loadData();
+  useVisibleTask$(({ track }) => {
+    track(() => location.url.pathname);
+    const project = getProject(projectId);
+    state.project = project ? { name: project.name } : null;
+    state.versions = getAllVersions(projectId);
+    state.batches = getAllBatches(projectId);
+    state.samples = getAllSamples(projectId);
   });
 
   const handleCreateBatch = $(() => {
