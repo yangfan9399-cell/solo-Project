@@ -1,6 +1,7 @@
 import { createEffect, createSignal, For, Show, Match, Switch } from "solid-js";
 import { createAsync, useNavigate, A } from "@solidjs/router";
 import type { Project, ProjectStatus, FilterOptions, AnomalyReport } from "../types";
+import { apiFetch } from "../utils/fetcher";
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
   draft: "草稿",
@@ -16,13 +17,13 @@ export default function ProjectLedger() {
   const nav = useNavigate();
 
   const stats = createAsync(() =>
-    fetch("/api/stats").then(r => r.json() as Promise<{
+    apiFetch("/api/stats").then(r => r.json() as Promise<{
       totalProjects: number; inReview: number; pending: number; anomalies: number; dynastyCoverage: number;
     }>)
   );
 
   const allAnomalies = createAsync(() =>
-    fetch("/api/anomalies").then(r => r.json() as Promise<AnomalyReport[]>)
+    apiFetch("/api/anomalies").then(r => r.json() as Promise<AnomalyReport[]>)
   );
 
   const [filters, setFilters] = createSignal<FilterOptions>({
@@ -43,7 +44,7 @@ export default function ProjectLedger() {
 
   createEffect(() => {
     const body: any = { op: "filter", ...filters() };
-    fetch("/api/projects", {
+    apiFetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
@@ -108,7 +109,7 @@ export default function ProjectLedger() {
 
   const batchStatusChange = async (status: ProjectStatus) => {
     for (const id of selected()) {
-      await fetch(`/api/projects/${id}`, {
+      await apiFetch(`/api/projects/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -132,7 +133,7 @@ export default function ProjectLedger() {
   const submitNewProject = async () => {
     const f = newForm();
     if (!f.name || !f.originalText) return;
-    await fetch("/api/projects", {
+    await apiFetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

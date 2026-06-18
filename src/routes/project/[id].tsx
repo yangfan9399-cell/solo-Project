@@ -1,6 +1,7 @@
 import { createAsync, useNavigate, useParams, A } from "@solidjs/router";
 import { createEffect, createSignal, For, Show, createMemo } from "solid-js";
 import type { Project, SuspectedReplacement, DynastyRule, ProjectVersion, Annotation, AnomalyReport, ProjectStatus } from "../../types";
+import { apiFetch } from "../../utils/fetcher";
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
   draft: "草稿", in_review: "审读中", reviewed: "已审毕", exported: "已导出", archived: "已归档"
@@ -13,22 +14,22 @@ export default function ProjectDetail() {
   const nav = useNavigate();
 
   const project = createAsync<Project | undefined>(() =>
-    fetch(`/api/projects/${params.id}`).then(r => r.json())
+    apiFetch(`/api/projects/${params.id}`).then(r => r.json())
   );
   const replacements = createAsync<SuspectedReplacement[]>(() =>
-    fetch(`/api/projects/${params.id}/replacements`).then(r => r.json())
+    apiFetch(`/api/projects/${params.id}/replacements`).then(r => r.json())
   );
   const allRules = createAsync<DynastyRule[]>(() =>
-    fetch("/api/rules").then(r => r.json())
+    apiFetch("/api/rules").then(r => r.json())
   );
   const versions = createAsync<ProjectVersion[]>(() =>
-    fetch(`/api/projects/${params.id}/versions`).then(r => r.json())
+    apiFetch(`/api/projects/${params.id}/versions`).then(r => r.json())
   );
   const annotations = createAsync<Annotation[]>(() =>
-    fetch(`/api/projects/${params.id}/annotations`).then(r => r.json())
+    apiFetch(`/api/projects/${params.id}/annotations`).then(r => r.json())
   );
   const anomalies = createAsync<AnomalyReport[]>(() =>
-    fetch(`/api/anomalies?projectId=${params.id}`).then(r => r.json())
+    apiFetch(`/api/anomalies?projectId=${params.id}`).then(r => r.json())
   );
 
   const [tab, setTab] = createSignal<TabKey>("review");
@@ -82,14 +83,14 @@ export default function ProjectDetail() {
     } else if (repNotes()[repId]) {
       patch.note = repNotes()[repId];
     }
-    const res = await fetch(`/api/replacements/${repId}`, {
+    const res = await apiFetch(`/api/replacements/${repId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(patch)
     });
     const updated = await res.json() as SuspectedReplacement;
     setRepList(repList().map(r => r.id === repId ? updated : r));
-    const upd = await fetch(`/api/projects/${params.id}`).then(r => r.json());
+    const upd = await apiFetch(`/api/projects/${params.id}`).then(r => r.json());
     setProjState(upd);
   };
 
@@ -109,7 +110,7 @@ export default function ProjectDetail() {
     const vers = versions() ?? [];
     const baseNum = parseFloat((vers[0]?.versionNumber ?? "0.0"));
     const nextNum = (baseNum + 0.1).toFixed(1);
-    await fetch(`/api/projects/${params.id}/versions`, {
+    await apiFetch(`/api/projects/${params.id}/versions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -128,7 +129,7 @@ export default function ProjectDetail() {
 
   const submitAnnotation = async () => {
     if (!annForm().content) return;
-    await fetch(`/api/projects/${params.id}/annotations`, {
+    await apiFetch(`/api/projects/${params.id}/annotations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -145,7 +146,7 @@ export default function ProjectDetail() {
   };
 
   const resolveAnnotation = async (id: string) => {
-    await fetch(`/api/projects/${params.id}/annotations`, {
+    await apiFetch(`/api/projects/${params.id}/annotations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ op: "resolve", annotationId: id, resolver: "张校勘" })
@@ -154,7 +155,7 @@ export default function ProjectDetail() {
   };
 
   const resolveAnomaly = async (id: string) => {
-    await fetch("/api/anomalies", {
+    await apiFetch("/api/anomalies", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ op: "resolve", id })
@@ -163,7 +164,7 @@ export default function ProjectDetail() {
   };
 
   const updateProjectStatus = async (status: ProjectStatus) => {
-    const res = await fetch(`/api/projects/${params.id}`, {
+    const res = await apiFetch(`/api/projects/${params.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status })
@@ -886,7 +887,7 @@ ${confirmedReps().length > 30 ? `  …（共 ${confirmedReps().length} 条，仅
   };
 
   const doExport = async () => {
-    await fetch("/api/exports", {
+    await apiFetch("/api/exports", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

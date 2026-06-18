@@ -4,19 +4,26 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node dev-server.mjs",
-    "build": "node build.mjs",
+    "postinstall": "node scripts/patch-rollup-wasm.mjs",
+    "dev": "vinxi dev",
+    "build": "vinxi build",
+    "start": "vinxi start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@rollup/wasm-node": "4.13.0",
     "@solidjs/router": "^0.14.0",
-    "solid-js": "^1.9.0"
+    "@solidjs/start": "1.0.0",
+    "solid-js": "^1.9.0",
+    "vinxi": "0.3.14"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.7",
-    "@babel/preset-typescript": "^7.29.7",
-    "babel-preset-solid": "^1.9.12",
-    "esbuild": "^0.25.0",
+    "@types/node": "^25.9.3",
     "typescript": "^5.5.0"
+  },
+  "overrides": {
+    "vite": "5.2.8",
+    "rollup": "4.13.0",
+    "@rollup/pluginutils": "5.1.4"
   }
 }

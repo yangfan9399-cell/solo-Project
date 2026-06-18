@@ -1,10 +1,11 @@
 import { createAsync, A } from "@solidjs/router";
 import { createSignal, For, Show } from "solid-js";
 import type { ExportSummary } from "../types";
+import { apiFetch } from "../utils/fetcher";
 
 export default function ExportsPage() {
-  const summaries = createAsync<ExportSummary[]>(() => fetch("/api/exports").then(r => r.json()));
-  const projects = createAsync(() => fetch("/api/projects").then(r => r.json() as any));
+  const summaries = createAsync<ExportSummary[]>(() => apiFetch("/api/exports").then(r => r.json()));
+  const projects = createAsync(() => apiFetch("/api/projects").then(r => r.json() as any));
   const [format, setFormat] = createSignal("all");
   const [projectId, setProjectId] = createSignal("all");
 

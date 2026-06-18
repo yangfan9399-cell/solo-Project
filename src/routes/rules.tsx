@@ -1,9 +1,10 @@
 import { createAsync } from "@solidjs/router";
 import { createSignal, For, Show } from "solid-js";
 import type { DynastyRule } from "../types";
+import { apiFetch } from "../utils/fetcher";
 
 export default function RulesPage() {
-  const rules = createAsync<DynastyRule[]>(() => fetch("/api/rules").then(r => r.json()));
+  const rules = createAsync<DynastyRule[]>(() => apiFetch("/api/rules").then(r => r.json()));
   const [dynasty, setDynasty] = createSignal<string>("all");
   const [severity, setSeverity] = createSignal<string>("all");
   const [search, setSearch] = createSignal("");

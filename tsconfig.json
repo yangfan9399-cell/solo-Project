@@ -11,14 +11,14 @@
     "noEmit": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": []
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "./node_modules"]
   },
-  "include": ["src"],
+  "include": ["src", "app.config.ts"],
   "exclude": [
-    "src/entry-server.tsx",
-    "src/root.tsx",
-    "src/routes/api",
     "src/server/api.ts",
-    "app.config.ts"
+    "src/server/entry.ts",
+    "dev-server.mjs",
+    "build.mjs"
   ]
 }
