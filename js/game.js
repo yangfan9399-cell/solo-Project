@@ -340,15 +340,18 @@ var Game = {
     settle: function() {
         if (!this.levelConfig) return;
 
+        var wasAlreadyOver = this.isGameOver;
         this.isGameOver = true;
         Settlement.showSettlement(this.state, this.turn, this.hiddenTriggered);
         this.save();
 
-        var result = this.levelConfig.settlementFormula(this.state, this.hiddenTriggered);
-        if (result.isWin) {
-            this.showModal('🎉 经营成功！', '恭喜你成功经营了苔藓邮站！最终得分：' + result.total);
-        } else {
-            this.showModal('😢 经营失败', '很遗憾，这次经营没有成功。再接再厉！最终得分：' + result.total);
+        if (!wasAlreadyOver) {
+            var result = this.levelConfig.settlementFormula(this.state, this.hiddenTriggered);
+            if (result.isWin) {
+                this.showModal('🎉 经营成功！', '恭喜你成功经营了苔藓邮站！最终得分：' + result.total);
+            } else {
+                this.showModal('😢 经营失败', '很遗憾，这次经营没有成功。再接再厉！最终得分：' + result.total);
+            }
         }
     },
 
@@ -429,7 +432,16 @@ var Game = {
 
         var settleBtn = document.getElementById('btn-settle');
         if (settleBtn) {
-            settleBtn.disabled = !this.currentLevel || this.turn === 0;
+            if (!this.currentLevel || this.turn === 0) {
+                settleBtn.disabled = true;
+                settleBtn.textContent = '📊 结算';
+            } else if (this.isGameOver) {
+                settleBtn.disabled = false;
+                settleBtn.textContent = '📊 查看结算';
+            } else {
+                settleBtn.disabled = false;
+                settleBtn.textContent = '📊 提前结算';
+            }
         }
 
         var undoBtn = document.getElementById('btn-undo');

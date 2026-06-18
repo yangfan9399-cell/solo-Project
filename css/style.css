@@ -219,19 +219,37 @@ body {
     font-family: inherit;
     font-size: 0.95rem;
     color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.event-choice:hover {
+.event-choice:hover:not(:disabled) {
     background: var(--moss-pale);
     border-color: var(--moss-medium);
     transform: translateX(4px);
 }
 
+.event-choice:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    border-color: #ddd;
+}
+
+.event-choice .choice-text {
+    font-weight: bold;
+}
+
 .event-choice .choice-effect {
-    display: block;
     font-size: 0.8rem;
     color: var(--wood-light);
-    margin-top: 4px;
+}
+
+.event-choice .choice-requirement {
+    font-size: 0.75rem;
+    color: var(--warning);
+    font-style: italic;
 }
 
 .replay-timeline {

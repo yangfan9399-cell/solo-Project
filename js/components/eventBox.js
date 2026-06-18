@@ -9,7 +9,7 @@ var EventBox = {
     },
 
     showEmpty: function() {
-        this.container.innerHTML = '<div class="event-empty">等待抽取事件...</div>';
+        this.container.innerHTML = '<div class="event-empty">点击「抽取事件」开启下一回合</div>';
         this.currentEvent = null;
     },
 
@@ -23,24 +23,33 @@ var EventBox = {
         
         for (var i = 0; i < event.choices.length; i++) {
             var choice = event.choices[i];
-            var disabled = '';
+            var canChoose = true;
+            var reqText = '';
             
             if (choice.requires) {
-                var canChoose = true;
                 for (var reqKey in choice.requires) {
                     if (currentState[reqKey] < choice.requires[reqKey]) {
                         canChoose = false;
+                        var label = GameConfig.getStatLabel(reqKey);
+                        reqText = '（需' + label + '达到 ' + choice.requires[reqKey] + '）';
                         break;
                     }
                 }
-                if (!canChoose) {
-                    disabled = 'disabled style="opacity: 0.5; cursor: not-allowed;"';
-                }
             }
             
-            html += '<button class="event-choice" data-choice-index="' + i + '" ' + disabled + '>';
-            html += choice.text;
+            var choiceClass = 'event-choice';
+            var disabledAttr = '';
+            if (!canChoose) {
+                choiceClass += ' choice-locked';
+                disabledAttr = 'disabled';
+            }
+            
+            html += '<button class="' + choiceClass + '" data-choice-index="' + i + '" ' + disabledAttr + '>';
+            html += '<span class="choice-text">' + choice.text + '</span>';
             html += '<span class="choice-effect">' + choice.effectText + '</span>';
+            if (!canChoose) {
+                html += '<span class="choice-requirement">' + reqText + '</span>';
+            }
             html += '</button>';
         }
         
@@ -67,7 +76,7 @@ var EventBox = {
 
     showResult: function(event, choice, state) {
         var html = '<div class="event-card">';
-        html += '<div class="event-title">' + event.title + '</div>';
+        html += '<div class="event-title">' + event.title + ' ✓</div>';
         html += '<div class="event-description">';
         html += '你选择了：<strong>' + choice.text + '</strong><br><br>';
         html += '效果：' + choice.effectText;

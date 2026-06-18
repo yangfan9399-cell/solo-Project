@@ -13,7 +13,7 @@ var Settlement = {
     },
 
     showEmpty: function() {
-        this.container.innerHTML = '<div class="settlement-empty">游戏结束后显示结算</div>';
+        this.container.innerHTML = '<div class="settlement-empty">游戏结束后结算簿将自动归档</div>';
     },
 
     showSettlement: function(state, steps, hiddenTriggered, backendResult) {
@@ -156,7 +156,9 @@ var Settlement = {
     },
 
     showErrorNotice: function(message) {
+        this.clearErrorNotice();
         var notice = document.createElement('div');
+        notice.id = 'settlement-error-notice';
         notice.style.cssText = 'margin-top: 8px; padding: 6px 12px; background: #ffebee; color: #c62828; border-radius: 4px; font-size: 0.8rem; text-align: center;';
         notice.textContent = message;
 
@@ -166,6 +168,13 @@ var Settlement = {
             if (btn && btn.parentNode) {
                 btn.parentNode.appendChild(notice);
             }
+        }
+    },
+
+    clearErrorNotice: function() {
+        var old = document.getElementById('settlement-error-notice');
+        if (old && old.parentNode) {
+            old.parentNode.removeChild(old);
         }
     }
 };

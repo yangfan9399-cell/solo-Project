@@ -12,7 +12,7 @@ var Board = {
 
     render: function(state, turn) {
         if (!this.levelConfig) {
-            this.container.innerHTML = '<div class="board-empty">请选择一局开始游戏</div>';
+            this.container.innerHTML = '<div class="board-empty">请选择一局开始经营</div>';
             return;
         }
 
@@ -55,27 +55,28 @@ var Board = {
             var key = statsToShow[i];
             var value = state[key];
             var label = GameConfig.getStatLabel(key);
-            var className = 'stat-item';
             var valueClass = 'stat-value';
             var barClass = 'stat-bar-fill';
             var barWidth = this.calculateBarWidth(key, value);
 
-            if (key === 'renRisk' && value >= 7) {
+            var thresholds = this.getThresholds(key);
+
+            if (thresholds.danger && value >= thresholds.danger) {
                 valueClass += ' danger';
                 barClass += ' danger';
-            } else if (key === 'maoFailFactor' && value >= 6) {
+            } else if (thresholds.warning && value >= thresholds.warning) {
                 valueClass += ' warning';
                 barClass += ' warning';
-            } else if (key === 'unlockValue' && value >= 50) {
+            } else if (thresholds.success && value >= thresholds.success) {
                 valueClass += ' success';
             }
 
             var displayValue = value;
             if (key === 'dingReward') {
-                displayValue = value.toFixed(1) + 'x';
+                displayValue = (Math.round(value * 10) / 10).toFixed(1) + 'x';
             }
 
-            html += '<div class="' + className + '">';
+            html += '<div class="stat-item">';
             html += '<div class="stat-label">' + label + '</div>';
             html += '<div class="' + valueClass + '">' + displayValue + '</div>';
             html += '<div class="stat-bar"><div class="' + barClass + '" style="width: ' + barWidth + '%"></div></div>';
@@ -85,28 +86,79 @@ var Board = {
         return html;
     },
 
+    getThresholds: function(key) {
+        var thresholds = {
+            danger: null,
+            warning: null,
+            success: null
+        };
+
+        var vicCond = this.levelConfig.victoryCondition;
+        var failCond = this.levelConfig.failCondition;
+
+        if (key === 'unlockValue') {
+            if (vicCond && vicCond.type === 'unlockValue') {
+                thresholds.success = vicCond.threshold * 0.8;
+            } else if (this.levelConfig.id === 'mao') {
+                thresholds.success = 64;
+            } else {
+                thresholds.success = 50;
+            }
+        }
+
+        if (key === 'renRisk' && failCond && failCond.type === 'renRisk') {
+            thresholds.warning = failCond.threshold * 0.6;
+            thresholds.danger = failCond.threshold * 0.8;
+        }
+
+        if (key === 'maoFailFactor' && failCond && failCond.type === 'maoFailFactor') {
+            thresholds.warning = failCond.threshold * 0.6;
+            thresholds.danger = failCond.threshold * 0.8;
+        }
+
+        return thresholds;
+    },
+
     calculateBarWidth: function(key, value) {
         var max = 100;
         
+        var vicCond = this.levelConfig.victoryCondition;
+        var failCond = this.levelConfig.failCondition;
+
         switch (key) {
             case 'unlockValue':
-                max = 100;
+                if (vicCond && vicCond.type === 'unlockValue') {
+                    max = vicCond.threshold * 1.2;
+                } else if (this.levelConfig.id === 'mao') {
+                    max = 100;
+                }
                 break;
             case 'unlockSlots':
-                max = 10;
+                max = Math.max(10, this.levelConfig.initialState.unlockSlots * 2);
                 break;
             case 'traceMarks':
-                max = 15;
+                if (this.levelConfig.hiddenCondition) {
+                    max = this.levelConfig.hiddenCondition.traceMarksRequired * 1.5;
+                } else {
+                    max = 15;
+                }
                 break;
             case 'renRisk':
-                max = 10;
+                if (failCond && failCond.type === 'renRisk') {
+                    max = failCond.threshold;
+                } else {
+                    max = 10;
+                }
                 break;
             case 'dingReward':
                 max = 5;
-                value = value * 20;
-                return Math.min(100, value);
+                return Math.min(100, (value / max) * 100);
             case 'maoFailFactor':
-                max = 10;
+                if (failCond && failCond.type === 'maoFailFactor') {
+                    max = failCond.threshold;
+                } else {
+                    max = 10;
+                }
                 break;
         }
         

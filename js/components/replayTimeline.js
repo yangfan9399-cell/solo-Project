@@ -54,7 +54,7 @@ var ReplayTimeline = {
 
     render: function() {
         if (this.history.length === 0) {
-            this.container.innerHTML = '<div class="replay-empty">暂无记录</div>';
+            this.container.innerHTML = '<div class="replay-empty">苔藓邮站开张，等待第一步经营决策...</div>';
             return;
         }
 
