@@ -224,8 +224,7 @@ async function doMove(targetNode, useTranslation = false) {
 }
 
 function showEventToast(et) {
-  const ev = et.event;
-  showToast(ev.name, ev.description || '事件触发', ev.type || 'mixed', 4200);
+  showToast(et.name, et.description || '事件触发', et.type || 'mixed', 4200);
 }
 
 function renderEvents(reset = false, newEvent = null) {
