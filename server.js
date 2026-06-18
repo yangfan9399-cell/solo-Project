@@ -262,7 +262,7 @@ function settle(levelId, playerPath) {
       steps: ctx.steps,
       isFinished: true,
       isWin: isWin,
-      failReason: failReason,
+      failReason: failReason || null,
       settleEvents: ctx.settleEvents
     }
   };

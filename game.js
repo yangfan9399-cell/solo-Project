@@ -153,6 +153,9 @@
   const STORAGE_KEY = 'moss-post-station-save-v1';
 
   let gameState = null;
+  let isPlaying = false;
+  let replayTimer = null;
+  let modalConfirmCallback = null;
 
   function createInitialState(levelId) {
     const level = LEVELS[levelId];
@@ -233,6 +236,7 @@
 
   function canMoveTo(row, col) {
     if (gameState.isFinished) return false;
+    if (isPlaying) return false;
     const tile = getTile(row, col);
     if (!tile) return false;
     if (tile === 'rock') return false;
@@ -388,6 +392,14 @@
     var levelId = gameState.levelId;
     var pathData = gameState.path.map(function (p) { return { row: p.row, col: p.col }; });
 
+    addEvent({
+      id: 'settle_request_' + Date.now(),
+      title: '后端结算中',
+      desc: '正在向苔藓邮站结算中心提交路径数据…',
+      type: 'info'
+    });
+    render();
+
     fetch('/api/settle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -397,13 +409,31 @@
     .then(function (data) {
       if (!data.success) {
         console.warn('后端结算失败:', data.error);
+        addEvent({
+          id: 'settle_error_' + Date.now(),
+          title: '后端结算异常',
+          desc: data.error || '结算中心返回错误，切换至本地备用结算…',
+          type: 'warning'
+        });
         applyLocalSettle();
         return;
       }
+      addEvent({
+        id: 'settle_success_' + Date.now(),
+        title: '后端结算完成',
+        desc: '结算中心已按折算值与路径步骤重算完毕。',
+        type: 'info'
+      });
       applyBackendSettle(data.result);
     })
     .catch(function (err) {
       console.warn('后端请求异常，回退本地结算:', err);
+      addEvent({
+        id: 'settle_network_' + Date.now(),
+        title: '网络连接异常',
+        desc: '无法连接结算中心，已切换至本地备用结算。',
+        type: 'warning'
+      });
       applyLocalSettle();
     });
   }
@@ -440,6 +470,13 @@
     var level = getLevel();
     var finalConvert = calculateFinalConvert();
     gameState.convert = finalConvert;
+
+    addEvent({
+      id: 'settle_local_' + Date.now(),
+      title: '本地备用结算',
+      desc: '后端不可用，已切换至本地备用结算逻辑。',
+      type: 'warning'
+    });
 
     if (gameState.fail > 0) {
       gameState.isFinished = true;
@@ -486,6 +523,7 @@
   function undoStep() {
     if (gameState.path.length <= 1) return false;
     if (gameState.isFinished) return false;
+    if (isPlaying) return false;
 
     const lastPos = gameState.path.pop();
     const prevPos = gameState.path[gameState.path.length - 1];
@@ -522,6 +560,11 @@
   }
 
   function restartLevel() {
+    if (isPlaying && replayTimer) {
+      clearInterval(replayTimer);
+      replayTimer = null;
+      isPlaying = false;
+    }
     gameState = createInitialState(gameState.levelId);
     triggerStartEvents();
     saveState();
@@ -530,6 +573,11 @@
 
   function switchLevel(levelId) {
     if (!LEVELS[levelId]) return;
+    if (isPlaying && replayTimer) {
+      clearInterval(replayTimer);
+      replayTimer = null;
+      isPlaying = false;
+    }
     gameState = createInitialState(levelId);
     triggerStartEvents();
     saveState();
@@ -682,7 +730,7 @@
     var status = document.getElementById('settle-status');
     var verdict = document.getElementById('settle-verdict');
 
-    setText('settle-convert', gameState.isFinished ? gameState.convert : '—');
+    setText('settle-convert', gameState.convert);
     setText('settle-steps', gameState.path.length - 1);
     setText('settle-reward', gameState.reward);
     setText('settle-risk', gameState.risk);
@@ -701,7 +749,8 @@
     } else {
       status.textContent = '✗ 失败';
       status.className = 'settle-status status-fail';
-      verdict.innerHTML = '💔 <strong>任务失败</strong><br><small>' + (gameState.failReason || '再接再厉') + '</small>';
+      var reason = gameState.failReason || '任务失败，请再接再厉。';
+      verdict.innerHTML = '💔 <strong>任务失败</strong><br><small>' + reason + '</small>';
       verdict.className = 'settle-verdict verdict-fail';
     }
   }
@@ -713,10 +762,11 @@
   }
 
   function renderButtons() {
-    const canUndo = gameState.path.length > 1 && !gameState.isFinished;
+    const canUndo = gameState.path.length > 1 && !gameState.isFinished && !isPlaying;
     document.getElementById('btn-undo').disabled = !canUndo;
-    document.getElementById('btn-reset').disabled = gameState.path.length <= 1;
-    document.getElementById('btn-play').disabled = gameState.path.length <= 1;
+    document.getElementById('btn-restart').disabled = isPlaying;
+    document.getElementById('btn-reset').disabled = gameState.path.length <= 1 || isPlaying;
+    document.getElementById('btn-play').disabled = gameState.path.length <= 1 || isPlaying;
   }
 
   function setText(id, text) {
@@ -724,29 +774,37 @@
     if (el) el.textContent = text;
   }
 
-  function showModal(title, body) {
+  function showModal(title, body, onConfirm) {
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-body').innerHTML = body;
+    modalConfirmCallback = onConfirm || null;
     document.getElementById('modal-overlay').classList.add('show');
   }
 
   function hideModal() {
     document.getElementById('modal-overlay').classList.remove('show');
+    modalConfirmCallback = null;
   }
 
   function playReplay() {
     if (gameState.path.length <= 1) return;
+    if (isPlaying) return;
     const steps = [...gameState.path];
     const levelId = gameState.levelId;
     let idx = 0;
 
+    isPlaying = true;
     gameState = createInitialState(levelId);
+    triggerStartEvents();
     render();
 
-    const timer = setInterval(() => {
+    replayTimer = setInterval(() => {
       idx++;
       if (idx >= steps.length) {
-        clearInterval(timer);
+        clearInterval(replayTimer);
+        replayTimer = null;
+        isPlaying = false;
+        render();
         return;
       }
       const pos = steps[idx];
@@ -764,6 +822,7 @@
 
     document.querySelectorAll('.level-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (isPlaying) return;
         const levelId = btn.dataset.level;
         const level = LEVELS[levelId];
         showModal(level.name,
@@ -771,25 +830,24 @@
            <p><strong>胜利条件：</strong>${level.winFormula}</p>
            <p><strong>失败条件：</strong>${level.failCondition}</p>
            <p><small>隐藏条件：${level.hidden.description}</small></p>
-           <p style="margin-top:1em;color:#666">是否切换到此局？当前进度将丢失。</p>`
+           <p style="margin-top:1em;color:#666">是否切换到此局？当前进度将丢失。</p>`,
+          () => switchLevel(levelId)
         );
-        document.getElementById('modal-confirm').onclick = () => {
-          hideModal();
-          switchLevel(levelId);
-        };
       });
     });
 
     document.getElementById('btn-undo').addEventListener('click', undoStep);
     document.getElementById('btn-restart').addEventListener('click', () => {
-      showModal('重新开始', '<p>确定要重新开始本局吗？当前进度将丢失。</p>');
-      document.getElementById('modal-confirm').onclick = () => {
-        hideModal();
-        restartLevel();
-      };
+      if (isPlaying) return;
+      showModal(
+        '重新开始',
+        '<p>确定要重新开始本局吗？当前进度将丢失。</p>',
+        () => restartLevel()
+      );
     });
 
     document.getElementById('btn-reset').addEventListener('click', () => {
+      if (isPlaying) return;
       if (gameState.path.length > 1) {
         restartLevel();
       }
@@ -797,7 +855,17 @@
 
     document.getElementById('btn-play').addEventListener('click', playReplay);
 
-    document.getElementById('modal-confirm').addEventListener('click', hideModal);
+    document.getElementById('modal-confirm').addEventListener('click', () => {
+      if (modalConfirmCallback) {
+        try {
+          modalConfirmCallback();
+        } finally {
+          hideModal();
+        }
+      } else {
+        hideModal();
+      }
+    });
     document.getElementById('modal-overlay').addEventListener('click', (e) => {
       if (e.target.id === 'modal-overlay') hideModal();
     });
