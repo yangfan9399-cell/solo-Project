@@ -1,0 +1,13 @@
+{
+  "name": "snow-cable-route-deduction",
+  "version": "1.0.0",
+  "description": "《雪线缆屋航线推演局》- 路径解谜挑战游戏",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "express": "^4.22.2"
+  }
+}

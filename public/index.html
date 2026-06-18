@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雪线缆屋航线推演局</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">❄</span>
+      <span class="title">雪线缆屋航线推演局</span>
+      <span class="subtitle">Snow Cable Route Deduction Bureau</span>
+    </div>
+    <div class="topbar-right">
+      <button id="btn-select-game" class="btn btn-outline">切换对局</button>
+      <button id="btn-save-manual" class="btn btn-outline">保存进度</button>
+      <button id="btn-new-session" class="btn btn-primary">重开本局</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel panel-board" id="panel-board">
+      <div class="panel-header">
+        <h2>局面盘 · <span id="game-name">未选择对局</span></h2>
+        <div class="game-meta">
+          <span id="game-subtitle"></span>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card stat-switch">
+          <div class="stat-label">雪线缆屋换轨值</div>
+          <div class="stat-value" id="stat-switch">0</div>
+          <div class="stat-bar"><div class="stat-bar-fill" id="bar-switch"></div></div>
+        </div>
+        <div class="stat-card stat-trans">
+          <div class="stat-label">雪线缆屋转译槽</div>
+          <div class="stat-value" id="stat-trans">0</div>
+          <div class="stat-bar"><div class="stat-bar-fill" id="bar-trans"></div></div>
+        </div>
+        <div class="stat-card stat-rewrite">
+          <div class="stat-label">雪线缆屋复写痕</div>
+          <div class="stat-value" id="stat-rewrite">0</div>
+        </div>
+        <div class="stat-card stat-risk">
+          <div class="stat-label">巳号风险</div>
+          <div class="stat-value" id="stat-risk">0</div>
+          <div class="stat-bar danger"><div class="stat-bar-fill" id="bar-risk"></div></div>
+        </div>
+        <div class="stat-card stat-reward">
+          <div class="stat-label">申号奖励</div>
+          <div class="stat-value" id="stat-reward">0</div>
+        </div>
+        <div class="stat-card stat-fail hidden" id="card-fail">
+          <div class="stat-label">午号失败因子</div>
+          <div class="stat-value" id="stat-fail">0</div>
+          <div class="stat-bar danger"><div class="stat-bar-fill" id="bar-fail"></div></div>
+        </div>
+        <div class="stat-card stat-steps">
+          <div class="stat-label">步数</div>
+          <div class="stat-value"><span id="stat-step">0</span>/<span id="stat-maxstep">0</span></div>
+        </div>
+      </div>
+
+      <div class="wu-flames hidden" id="wu-flames">
+        <span class="flame-title">三焰坛：</span>
+        <span class="flame" data-flame="a">紫焰坛</span>
+        <span class="flame" data-flame="b">绯焰坛</span>
+        <span class="flame" data-flame="c">金焰坛</span>
+      </div>
+
+      <div class="board-container">
+        <svg id="board-svg" viewBox="0 0 720 500" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#7ec8e3"/>
+            </marker>
+            <pattern id="snow-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="0.5" fill="white" opacity="0.3"/>
+              <circle cx="10" cy="8" r="0.4" fill="white" opacity="0.25"/>
+              <circle cx="15" cy="14" r="0.6" fill="white" opacity="0.35"/>
+            </pattern>
+          </defs>
+          <rect width="720" height="500" fill="url(#snow-pattern)"/>
+          <g id="edges-group"></g>
+          <g id="nodes-group"></g>
+          <g id="path-group"></g>
+        </svg>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot start"></span>始发</div>
+        <div class="legend-item"><span class="legend-dot target"></span>终点</div>
+        <div class="legend-item"><span class="legend-dot normal"></span>普通</div>
+        <div class="legend-item"><span class="legend-dot event"></span>事件</div>
+        <div class="legend-item"><span class="legend-dot reward"></span>奖励</div>
+        <div class="legend-item"><span class="legend-dot danger"></span>危险</div>
+        <div class="legend-item flame-legend hidden" id="flame-legend"><span class="legend-dot flame"></span>焰坛</div>
+        <div class="legend-item"><span class="legend-line heavy"></span>高消耗</div>
+        <div class="legend-item"><span class="legend-line locked"></span>已锁定</div>
+      </div>
+    </section>
+
+    <aside class="right-col">
+      <section class="panel panel-events" id="panel-events">
+        <div class="panel-header">
+          <h3>事件匣</h3>
+          <span class="panel-badge" id="events-count">0</span>
+        </div>
+        <div class="events-list" id="events-list">
+          <div class="empty-tip">选择对局并开始推演后，事件将在此处触发。</div>
+        </div>
+      </section>
+
+      <section class="panel panel-replay" id="panel-replay">
+        <div class="panel-header">
+          <h3>回放轴</h3>
+          <div class="panel-actions">
+            <button class="btn-mini" id="btn-jump-start">⟪</button>
+            <button class="btn-mini" id="btn-prev">◀</button>
+            <button class="btn-mini" id="btn-next">▶</button>
+            <button class="btn-mini" id="btn-jump-end">⟫</button>
+          </div>
+        </div>
+        <div class="replay-axis" id="replay-axis">
+          <div class="empty-tip">尚无推演步骤，开始行动后将在此处记录。</div>
+        </div>
+        <div class="replay-controls">
+          <button class="btn btn-outline btn-sm" id="btn-revert">回溯到此步</button>
+          <span class="replay-status" id="replay-status">实时推演</span>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <section class="panel panel-settle" id="panel-settle">
+    <div class="panel-header">
+      <h3>结算簿</h3>
+      <button class="btn btn-outline btn-sm" id="btn-settle">请求后端重算结算</button>
+    </div>
+    <div class="settle-body" id="settle-body">
+      <div class="empty-tip">对局结束或点击"请求后端重算结算"后，将在此处展示详细结算。</div>
+    </div>
+  </section>
+
+  <!-- Game Select Modal -->
+  <div class="modal-mask hidden" id="modal-select">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>选择推演对局</h3>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="game-list">
+        <div class="loading">加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Toast -->
+  <div class="toast-container" id="toast-container"></div>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
