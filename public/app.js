@@ -44,6 +44,10 @@ function initEventListeners() {
 
   document.getElementById('revert-btn').addEventListener('click', handleRevert);
   document.getElementById('recalc-btn').addEventListener('click', handleRecalculate);
+
+  document.getElementById('actions-toggle').addEventListener('click', () => {
+    document.querySelector('.secondary-panel').classList.toggle('collapsed');
+  });
 }
 
 function checkSavedGame() {
@@ -388,6 +392,8 @@ function renderMap() {
   const map = gameState.scenario.map;
   document.getElementById('map-name').textContent = map.name;
 
+  const isActive = gameState.status === 'active';
+
   const connectionsGroup = document.getElementById('map-connections');
   const nodesGroup = document.getElementById('map-nodes');
   connectionsGroup.innerHTML = '';
@@ -438,7 +444,6 @@ function renderMap() {
     const isCurrent = node.id === currentNodeId;
     const isReachable = reachableSet.has(node.id);
     const isLocked = !isVisited && !isCurrent && !isReachable;
-    const isActive = gameState.status === 'active';
 
     let classes = 'map-node';
     if (isCurrent) classes += ' current';

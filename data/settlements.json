@@ -27,7 +27,21 @@
         "breakdown": "{\"baseScore\":212.5,\"efficiencyBonus\":193.18181818181816,\"riskPenalty\":5,\"calibrationBonus\":60,\"jiaPenalty\":9,\"secretBonus\":0,\"hiddenBonus\":0,\"winMultiplier\":1.5}",
         "calculated_at": "2026-06-18T19:07:09.146Z"
       }
+    ],
+    "11": [
+      {
+        "id": 6,
+        "game_id": "11",
+        "final_stardust_strip": 212.5,
+        "total_steps": 11,
+        "resource_efficiency": 19.318181818181817,
+        "risk_level": "低",
+        "result": "胜利",
+        "score": 677.5227272727273,
+        "breakdown": "{\"baseScore\":212.5,\"efficiencyBonus\":193.18181818181816,\"riskPenalty\":5,\"calibrationBonus\":60,\"jiaPenalty\":9,\"secretBonus\":0,\"hiddenBonus\":0,\"winMultiplier\":1.5}",
+        "calculated_at": "2026-06-18T19:21:45.486Z"
+      }
     ]
   },
-  "nextSettlementId": 5
+  "nextSettlementId": 7
 }

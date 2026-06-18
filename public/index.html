@@ -60,8 +60,36 @@
 
       <div class="main-game-area">
         <div class="left-panel">
-          <div class="panel board-panel">
-            <h3>🎯 局面盘</h3>
+          <div class="panel map-panel primary-map-panel">
+            <h3 class="primary-title">🗺️ <span id="map-name">星尘棋盘</span> · 主要操作区</h3>
+            <div class="map-container large" id="map-container">
+              <svg class="map-svg" id="map-svg" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <g id="map-connections"></g>
+                <g id="map-nodes"></g>
+              </svg>
+            </div>
+            <p class="map-hint" id="map-hint">从起点节点开始，点击相邻节点移动并获取奖励 — 这是你的主要行动方式</p>
+            <div class="map-legend">
+              <span class="legend-item"><span class="legend-start"></span>起点</span>
+              <span class="legend-item"><span class="legend-current"></span>当前</span>
+              <span class="legend-item"><span class="legend-reachable"></span>可前往</span>
+              <span class="legend-item"><span class="legend-visited"></span>已访问</span>
+              <span class="legend-item"><span class="legend-secret"></span>秘印</span>
+              <span class="legend-item"><span class="legend-danger"></span>危险</span>
+            </div>
+          </div>
+
+          <div class="panel board-panel compact-board">
+            <h3>📊 局面状态</h3>
             
             <div class="stat-grid">
               <div class="stat-card primary">
@@ -130,67 +158,49 @@
             </div>
           </div>
 
-          <div class="panel map-panel">
-            <h3>🗺️ <span id="map-name">星尘棋盘</span></h3>
-            <div class="map-container" id="map-container">
-              <svg class="map-svg" id="map-svg" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet">
-                <defs>
-                  <filter id="glow">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                    <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                </defs>
-                <g id="map-connections"></g>
-                <g id="map-nodes"></g>
-              </svg>
-            </div>
-            <p class="map-hint" id="map-hint">从起点节点开始，点击相邻节点移动并获取奖励</p>
-          </div>
+          <div class="panel actions-panel secondary-panel">
+            <h3 class="collapsible-header" id="actions-toggle">
+              ⚡ 辅助操作 · 资源调度 <span class="toggle-arrow">▼</span>
+            </h3>
+            <div class="collapsible-body" id="actions-body">
+              <div class="action-section">
+                <h4>资源调配</h4>
+                <div class="action-controls">
+                  <select id="alloc-resource" class="select-input">
+                    <option value="energy">能量</option>
+                    <option value="data">数据</option>
+                    <option value="time">时间</option>
+                  </select>
+                  <select id="alloc-target" class="select-input">
+                    <option value="stardust">转化为星尘 (x2)</option>
+                    <option value="risk_reduction">降低风险</option>
+                    <option value="reward_boost">提升奖励</option>
+                  </select>
+                  <input type="number" id="alloc-amount" class="num-input" value="5" min="1">
+                  <button id="alloc-btn" class="btn btn-primary">执行调配</button>
+                </div>
+              </div>
 
-          <div class="panel actions-panel">
-            <h3>⚡ 资源调度</h3>
-            
-            <div class="action-section">
-              <h4>资源调配</h4>
-              <div class="action-controls">
-                <select id="alloc-resource" class="select-input">
-                  <option value="energy">能量</option>
-                  <option value="data">数据</option>
-                  <option value="time">时间</option>
-                </select>
-                <select id="alloc-target" class="select-input">
-                  <option value="stardust">转化为星尘 (x2)</option>
-                  <option value="risk_reduction">降低风险</option>
-                  <option value="reward_boost">提升奖励</option>
-                </select>
-                <input type="number" id="alloc-amount" class="num-input" value="5" min="1">
-                <button id="alloc-btn" class="btn btn-primary">执行调配</button>
+              <div class="action-section">
+                <h4>排演发动</h4>
+                <div class="action-controls">
+                  <select id="rehearsal-action" class="select-input">
+                    <option value="boost_stardust">星尘爆发 (+25)</option>
+                    <option value="reduce_risk">风险压制 (-10%)</option>
+                    <option value="gain_calibration">获得定标痕 (+1)</option>
+                  </select>
+                  <button id="rehearsal-btn" class="btn btn-secondary">消耗排演槽</button>
+                </div>
+              </div>
+
+              <div class="action-section">
+                <h4>定标增幅</h4>
+                <div class="action-controls">
+                  <p class="action-desc">消耗1定标痕，星尘剥离值 +10%</p>
+                  <button id="calibrate-btn" class="btn btn-accent">启动定标</button>
+                </div>
               </div>
             </div>
-
-            <div class="action-section">
-              <h4>排演发动</h4>
-              <div class="action-controls">
-                <select id="rehearsal-action" class="select-input">
-                  <option value="boost_stardust">星尘爆发 (+25)</option>
-                  <option value="reduce_risk">风险压制 (-10%)</option>
-                  <option value="gain_calibration">获得定标痕 (+1)</option>
-                </select>
-                <button id="rehearsal-btn" class="btn btn-secondary">消耗排演槽</button>
-              </div>
-            </div>
-
-            <div class="action-section">
-              <h4>定标增幅</h4>
-              <div class="action-controls">
-                <p class="action-desc">消耗1定标痕，星尘剥离值 +10%</p>
-                <button id="calibrate-btn" class="btn btn-accent">启动定标</button>
-              </div>
-            </div>
-
             <button id="next-turn-btn" class="btn btn-next">⏭️ 下一回合</button>
           </div>
         </div>

@@ -17,9 +17,15 @@ function apiRequest(path, method = 'GET', data = null) {
       res.on('data', (chunk) => body += chunk);
       res.on('end', () => {
         try {
-          resolve(JSON.parse(body));
+          const parsed = JSON.parse(body);
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(parsed);
+          } else {
+            const msg = parsed.error || `HTTP ${res.statusCode}`;
+            reject(new Error(msg));
+          }
         } catch (e) {
-          reject(e);
+          reject(new Error(`HTTP ${res.statusCode}: ${body}`));
         }
       });
     });
