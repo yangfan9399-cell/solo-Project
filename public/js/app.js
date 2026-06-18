@@ -102,14 +102,21 @@ async function selectGame(gameId) {
     try {
       const sessionData = JSON.parse(savedSession);
       const data = await apiRequest(`${API_BASE}/sessions/${sessionData.sessionId}`);
-      if (data && data.session && !data.session.isFinished) {
+      if (data && data.session) {
         state.currentSession = data.session;
         state.currentGame = gameId;
+        state.lastDelta = null;
+        state.currentReplayStep = data.session.currentStep;
+        state.viewMode = 'latest';
         await loadGameData(gameId);
         await loadReplayHistory();
         saveCurrentSession();
-        showToast(`恢复之前的 ${state.currentGameData.name} 进度`, 'info');
         renderAll();
+        if (data.session.isFinished) {
+          showToast(`恢复 ${state.currentGameData.name}（已结束，可查看结算）`, 'info');
+        } else {
+          showToast(`恢复之前的 ${state.currentGameData.name} 进度`, 'info');
+        }
         return;
       }
     } catch (e) {
@@ -127,6 +134,7 @@ async function selectGame(gameId) {
     state.currentGame = gameId;
     state.currentReplayStep = 0;
     state.viewMode = 'latest';
+    state.lastDelta = null;
     await loadGameData(gameId);
     await loadReplayHistory();
     saveCurrentSession();
@@ -278,6 +286,24 @@ function renderStatusFactors(displayState) {
       deltaEl.innerHTML = '';
     }
   });
+
+  const htFactor = document.getElementById('hiddenTriggerFactor');
+  const htEl = document.getElementById('hiddenTrigger');
+  const htDeltaEl = document.getElementById('hiddenTriggerDelta');
+  
+  if (displayState.hiddenTrigger !== undefined) {
+    htFactor.style.display = '';
+    htEl.textContent = displayState.hiddenTrigger;
+    if (state.lastDelta && state.viewMode === 'latest' && state.lastDelta.hiddenTrigger) {
+      htDeltaEl.innerHTML = formatDelta(state.lastDelta.hiddenTrigger);
+      htEl.classList.add('changed');
+      setTimeout(() => htEl.classList.remove('changed'), 500);
+    } else {
+      htDeltaEl.innerHTML = '';
+    }
+  } else {
+    htFactor.style.display = 'none';
+  }
 }
 
 function renderEvents() {
@@ -467,6 +493,22 @@ function renderReplayDetail(stepIndex) {
         <span class="detail-value">${s.failureY} ${formatDelta(d.failureY)}</span>
       </div>
     `;
+    if (s.hiddenTrigger !== undefined) {
+      html += `
+        <div class="detail-row">
+          <span class="detail-label">隐藏触发</span>
+          <span class="detail-value">${s.hiddenTrigger} ${d.hiddenTrigger ? formatDelta(d.hiddenTrigger) : ''}</span>
+        </div>
+      `;
+    }
+    if (d.secretUnlocked === true) {
+      html += `
+        <div class="detail-row">
+          <span class="detail-label">隐藏解锁</span>
+          <span class="detail-value" style="color: #a78bfa;">✓ 已触发</span>
+        </div>
+      `;
+    }
   } else {
     html += `
       <div class="detail-row">
@@ -651,7 +693,7 @@ function renderGameInfo() {
 
 function updateSettleButton() {
   const btn = document.getElementById('btnSettle');
-  btn.disabled = !state.currentSession || !state.currentSession.isFinished;
+  btn.disabled = !state.currentSession;
 }
 
 async function requestSettlement() {

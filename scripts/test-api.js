@@ -134,6 +134,77 @@ async function test() {
   console.log('   ✓ 重算配平槽:', youSettlement.finalState.balanceSlots);
   assert(youSettlement.finalResult.win, '后端重算应验证胜利！');
   
+  console.log('\n12. 刷新恢复专项测试 - 模拟页面刷新后重新加载会话...');
+  const refreshSession = await get('/api/sessions/' + youId);
+  const rs = refreshSession.session;
+  assert(rs, '刷新后能重新加载会话');
+  assert(rs.currentState.secretUnlocked === true, '刷新后 secretUnlocked=true 保留');
+  assert(rs.currentState.hiddenTrigger >= 5, `刷新后 hiddenTrigger=${rs.currentState.hiddenTrigger} 保留(≥5)`);
+  assert(rs.currentState.balanceSlots[3] === 66, '刷新后第四配平槽=66 保留');
+  assert(rs.currentState.balanceSlots[0] === 66, '刷新后配平槽0=66 保留');
+  assert(rs.currentState.invertedValue === 88, '刷新后倒排值=88 保留');
+  assert(rs.currentState.failureY === 0, '刷新后酉号=0 保留');
+  assert(rs.currentState.stepCount > 0, `刷新后 stepCount=${rs.currentState.stepCount} 保留`);
+  assert(rs.isFinished === true, '刷新后 isFinished=true 保留');
+  assert(rs.result.type === 'win', '刷新后胜利结果保留');
+  console.log('   ✓ 刷新恢复: 所有关键字段完整保留');
+
+  console.log('\n13. 刷新后回放历史完整性...');
+  const refreshReplay = await get('/api/sessions/' + youId + '/replay');
+  assert(refreshReplay.history.length >= 10, `回放步数=${refreshReplay.history.length} ≥10`);
+  const unlockStep = refreshReplay.history.find(h => h.eventId === 'e5');
+  assert(unlockStep, '回放中存在e5(第四共鸣)步骤');
+  assert(unlockStep.state.secretUnlocked === true, '回放e5步骤状态包含secretUnlocked=true');
+  assert(unlockStep.state.balanceSlots[3] === 66, '回放e5步骤状态包含槽3=66');
+  assert(unlockStep.delta && unlockStep.delta.secretUnlocked === true, '回放e5步骤delta包含secretUnlocked=true');
+  assert(unlockStep.delta && unlockStep.delta.hiddenTrigger >= 0, '回放e5步骤delta包含hiddenTrigger变化');
+  console.log('   ✓ 回放历史完整，隐藏解锁步骤含delta字段');
+
+  console.log('\n14. 刷新后回放单步详情验证...');
+  for (let i = 0; i < Math.min(3, refreshReplay.history.length); i++) {
+    const stepDetail = await get('/api/sessions/' + youId + '/replay/' + i);
+    assert(stepDetail.step, `步${i}详情存在`);
+    assert(stepDetail.step.state, `步${i}详情含state`);
+  }
+  console.log('   ✓ 回放单步详情API正常');
+
+  console.log('\n15. 刷新后仍可请求结算...');
+  const refreshSettle = await post('/api/sessions/' + youId + '/settle', {});
+  assert(refreshSettle.recalculated === true, '结算重算成功');
+  assert(refreshSettle.finalResult.win === true, '结算结果: 胜利');
+  assert(refreshSettle.finalState.secretUnlocked === true, '结算重算: secretUnlocked保留');
+  assert(refreshSettle.finalState.balanceSlots[3] === 66, '结算重算: 槽3=66保留');
+  assert(refreshSettle.finalState.invertedValue === 88, '结算重算: 倒排值=88保留');
+  console.log('   ✓ 刷新后结算功能正常，隐藏状态完整参与重算');
+
+  console.log('\n16. 中途刷新恢复测试 - 解锁后、胜利前...');
+  const midSession = await post('/api/sessions', { gameId: 'you' });
+  const midId = midSession.session.sessionId;
+  await post('/api/sessions/' + midId + '/execute', { eventId: 'e2' });
+  await post('/api/sessions/' + midId + '/execute', { eventId: 'e1' });
+  await post('/api/sessions/' + midId + '/execute', { eventId: 'e3' });
+  await post('/api/sessions/' + midId + '/execute', { eventId: 'e3' });
+  await post('/api/sessions/' + midId + '/execute', { eventId: 'e4' });
+  await post('/api/sessions/' + midId + '/execute', { eventId: 'e2' });
+  await post('/api/sessions/' + midId + '/execute', { eventId: 'e5' });
+
+  const midRefresh = await get('/api/sessions/' + midId);
+  const ms = midRefresh.session;
+  assert(ms.isFinished === false, '中途刷新: 游戏未结束');
+  assert(ms.currentState.secretUnlocked === true, '中途刷新: secretUnlocked=true');
+  assert(ms.currentState.balanceSlots[3] === 66, '中途刷新: 槽3=66');
+  assert(ms.currentStep === 7, `中途刷新: 步数=7(实际${ms.currentStep})`);
+  console.log('   ✓ 中途刷新: 隐藏已解锁，游戏继续');
+
+  const midReplay = await get('/api/sessions/' + midId + '/replay');
+  assert(midReplay.history.length === 8, `中途回放: 8步(初始+7步, 实际${midReplay.history.length})`);
+  console.log('   ✓ 中途刷新: 回放完整(8步)');
+
+  const contResult = await post('/api/sessions/' + midId + '/execute', { eventId: 'e7' });
+  assert(contResult.success === true, '中途刷新后继续: e7完美调和成功');
+  assert(contResult.session.currentState.balanceSlots[0] === 66, '继续后: 槽0=66');
+  console.log('   ✓ 中途刷新后继续操作正常');
+
   console.log('\n=== 所有 API 测试通过！ ✓');
 }
 

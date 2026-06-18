@@ -1,0 +1,1055 @@
+{
+  "sessionId": "sess_1781807302410_rm41t3cv2",
+  "gameId": "you",
+  "currentState": {
+    "invertedValue": 88,
+    "balanceSlots": [
+      66,
+      66,
+      66,
+      66
+    ],
+    "measureTraces": [
+      {
+        "time": 0,
+        "value": 35,
+        "stable": false
+      },
+      {
+        "time": 1,
+        "value": 32,
+        "stable": false
+      },
+      {
+        "time": 2,
+        "value": 38,
+        "stable": false
+      },
+      {
+        "time": 3,
+        "value": 28,
+        "stable": false
+      },
+      {
+        "time": 1781807302411,
+        "value": 41,
+        "stable": false
+      },
+      {
+        "time": 1781807302412,
+        "value": 49,
+        "stable": false
+      },
+      {
+        "time": 1781807302412,
+        "value": 49,
+        "stable": true
+      },
+      {
+        "time": 1781807302413,
+        "value": 49,
+        "stable": true
+      },
+      {
+        "time": 1781807302413,
+        "value": 53,
+        "stable": true
+      },
+      {
+        "time": 1781807302414,
+        "value": 59,
+        "stable": false
+      },
+      {
+        "time": 1781807302415,
+        "value": 59,
+        "stable": true,
+        "secret": true
+      },
+      {
+        "time": 1781807302416,
+        "value": 59,
+        "stable": true
+      },
+      {
+        "time": 1781807302416,
+        "value": 88,
+        "stable": false
+      },
+      {
+        "time": 1781807302417,
+        "value": 88,
+        "stable": true
+      }
+    ],
+    "riskC": 0,
+    "rewardM": 2,
+    "failureY": 0,
+    "hiddenTrigger": 7,
+    "secretUnlocked": true,
+    "stepCount": 10
+  },
+  "replayHistory": [
+    {
+      "step": 0,
+      "timestamp": 1781807302410,
+      "type": "init",
+      "eventId": null,
+      "eventName": "游戏开始",
+      "state": {
+        "invertedValue": 35,
+        "balanceSlots": [
+          25,
+          15,
+          35,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          }
+        ],
+        "riskC": 10,
+        "rewardM": 8,
+        "failureY": 2,
+        "hiddenTrigger": 0,
+        "secretUnlocked": false,
+        "stepCount": 0
+      },
+      "delta": null
+    },
+    {
+      "step": 1,
+      "timestamp": 1781807302411,
+      "type": "action",
+      "eventId": "e2",
+      "eventName": "时序涟漪",
+      "eventDescription": "倒排值+6，配平槽1+8，卯号+2",
+      "cost": {
+        "riskC": 0
+      },
+      "state": {
+        "invertedValue": 41,
+        "balanceSlots": [
+          25,
+          23,
+          35,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          }
+        ],
+        "riskC": 10,
+        "rewardM": 10,
+        "failureY": 2,
+        "hiddenTrigger": 0,
+        "secretUnlocked": false,
+        "stepCount": 1
+      },
+      "delta": {
+        "invertedValue": 6,
+        "balanceSlots": [
+          0,
+          8,
+          0,
+          0
+        ],
+        "riskC": 0,
+        "rewardM": 2,
+        "failureY": 0,
+        "hiddenTrigger": 0,
+        "secretUnlocked": null
+      }
+    },
+    {
+      "step": 2,
+      "timestamp": 1781807302412,
+      "type": "action",
+      "eventId": "e1",
+      "eventName": "琉璃震颤",
+      "eventDescription": "倒排值+8，配平槽0+6，隐藏触发+1，丙号-1",
+      "cost": {
+        "riskC": 1
+      },
+      "state": {
+        "invertedValue": 49,
+        "balanceSlots": [
+          31,
+          23,
+          35,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": false
+          }
+        ],
+        "riskC": 9,
+        "rewardM": 10,
+        "failureY": 2,
+        "hiddenTrigger": 1,
+        "secretUnlocked": false,
+        "stepCount": 2
+      },
+      "delta": {
+        "invertedValue": 8,
+        "balanceSlots": [
+          6,
+          0,
+          0,
+          0
+        ],
+        "riskC": -1,
+        "rewardM": 0,
+        "failureY": 0,
+        "hiddenTrigger": 1,
+        "secretUnlocked": null
+      }
+    },
+    {
+      "step": 3,
+      "timestamp": 1781807302412,
+      "type": "action",
+      "eventId": "e3",
+      "eventName": "裂隙窥伺",
+      "eventDescription": "酉号+1，隐藏触发+3，配平槽2+5",
+      "cost": {
+        "riskC": 1,
+        "rewardM": 2
+      },
+      "state": {
+        "invertedValue": 49,
+        "balanceSlots": [
+          31,
+          23,
+          40,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": true
+          }
+        ],
+        "riskC": 8,
+        "rewardM": 8,
+        "failureY": 3,
+        "hiddenTrigger": 4,
+        "secretUnlocked": false,
+        "stepCount": 3
+      },
+      "delta": {
+        "invertedValue": 0,
+        "balanceSlots": [
+          0,
+          0,
+          5,
+          0
+        ],
+        "riskC": -1,
+        "rewardM": -2,
+        "failureY": 1,
+        "hiddenTrigger": 3,
+        "secretUnlocked": null
+      }
+    },
+    {
+      "step": 4,
+      "timestamp": 1781807302413,
+      "type": "action",
+      "eventId": "e3",
+      "eventName": "裂隙窥伺",
+      "eventDescription": "酉号+1，隐藏触发+3，配平槽2+5",
+      "cost": {
+        "riskC": 1,
+        "rewardM": 2
+      },
+      "state": {
+        "invertedValue": 49,
+        "balanceSlots": [
+          31,
+          23,
+          45,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 49,
+            "stable": true
+          }
+        ],
+        "riskC": 7,
+        "rewardM": 6,
+        "failureY": 4,
+        "hiddenTrigger": 7,
+        "secretUnlocked": false,
+        "stepCount": 4
+      },
+      "delta": {
+        "invertedValue": 0,
+        "balanceSlots": [
+          0,
+          0,
+          5,
+          0
+        ],
+        "riskC": -1,
+        "rewardM": -2,
+        "failureY": 1,
+        "hiddenTrigger": 3,
+        "secretUnlocked": null
+      }
+    },
+    {
+      "step": 5,
+      "timestamp": 1781807302413,
+      "type": "action",
+      "eventId": "e4",
+      "eventName": "温室庇护",
+      "eventDescription": "酉号-2，倒排值+4，丙号-1",
+      "cost": {
+        "riskC": 1
+      },
+      "state": {
+        "invertedValue": 53,
+        "balanceSlots": [
+          31,
+          23,
+          45,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 53,
+            "stable": true
+          }
+        ],
+        "riskC": 6,
+        "rewardM": 6,
+        "failureY": 2,
+        "hiddenTrigger": 7,
+        "secretUnlocked": false,
+        "stepCount": 5
+      },
+      "delta": {
+        "invertedValue": 4,
+        "balanceSlots": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "riskC": -1,
+        "rewardM": 0,
+        "failureY": -2,
+        "hiddenTrigger": 0,
+        "secretUnlocked": null
+      }
+    },
+    {
+      "step": 6,
+      "timestamp": 1781807302414,
+      "type": "action",
+      "eventId": "e2",
+      "eventName": "时序涟漪",
+      "eventDescription": "倒排值+6，配平槽1+8，卯号+2",
+      "cost": {
+        "riskC": 0
+      },
+      "state": {
+        "invertedValue": 59,
+        "balanceSlots": [
+          31,
+          31,
+          45,
+          0
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 53,
+            "stable": true
+          },
+          {
+            "time": 1781807302414,
+            "value": 59,
+            "stable": false
+          }
+        ],
+        "riskC": 6,
+        "rewardM": 8,
+        "failureY": 2,
+        "hiddenTrigger": 7,
+        "secretUnlocked": false,
+        "stepCount": 6
+      },
+      "delta": {
+        "invertedValue": 6,
+        "balanceSlots": [
+          0,
+          8,
+          0,
+          0
+        ],
+        "riskC": 0,
+        "rewardM": 2,
+        "failureY": 0,
+        "hiddenTrigger": 0,
+        "secretUnlocked": null
+      }
+    },
+    {
+      "step": 7,
+      "timestamp": 1781807302415,
+      "type": "action",
+      "eventId": "e5",
+      "eventName": "第四共鸣",
+      "eventDescription": "隐藏触发≥5时解锁：槽3=66，量测痕标记",
+      "cost": {
+        "riskC": 2,
+        "rewardM": 3
+      },
+      "state": {
+        "invertedValue": 59,
+        "balanceSlots": [
+          31,
+          31,
+          45,
+          66
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 53,
+            "stable": true
+          },
+          {
+            "time": 1781807302414,
+            "value": 59,
+            "stable": false
+          },
+          {
+            "time": 1781807302415,
+            "value": 59,
+            "stable": true,
+            "secret": true
+          }
+        ],
+        "riskC": 4,
+        "rewardM": 5,
+        "failureY": 2,
+        "hiddenTrigger": 7,
+        "secretUnlocked": true,
+        "stepCount": 7
+      },
+      "delta": {
+        "invertedValue": 0,
+        "balanceSlots": [
+          0,
+          0,
+          0,
+          66
+        ],
+        "riskC": -2,
+        "rewardM": -3,
+        "failureY": 0,
+        "hiddenTrigger": 0,
+        "secretUnlocked": true
+      }
+    },
+    {
+      "step": 8,
+      "timestamp": 1781807302416,
+      "type": "action",
+      "eventId": "e7",
+      "eventName": "完美调和",
+      "eventDescription": "需隐藏解锁：配平槽前3=66",
+      "cost": {
+        "riskC": 2,
+        "rewardM": 2
+      },
+      "state": {
+        "invertedValue": 59,
+        "balanceSlots": [
+          66,
+          66,
+          66,
+          66
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 53,
+            "stable": true
+          },
+          {
+            "time": 1781807302414,
+            "value": 59,
+            "stable": false
+          },
+          {
+            "time": 1781807302415,
+            "value": 59,
+            "stable": true,
+            "secret": true
+          },
+          {
+            "time": 1781807302416,
+            "value": 59,
+            "stable": true
+          }
+        ],
+        "riskC": 2,
+        "rewardM": 3,
+        "failureY": 2,
+        "hiddenTrigger": 7,
+        "secretUnlocked": true,
+        "stepCount": 8
+      },
+      "delta": {
+        "invertedValue": 0,
+        "balanceSlots": [
+          35,
+          35,
+          21,
+          0
+        ],
+        "riskC": -2,
+        "rewardM": -2,
+        "failureY": 0,
+        "hiddenTrigger": 0,
+        "secretUnlocked": null
+      }
+    },
+    {
+      "step": 9,
+      "timestamp": 1781807302416,
+      "type": "action",
+      "eventId": "e6",
+      "eventName": "精准校准",
+      "eventDescription": "需隐藏解锁：倒排值=88",
+      "cost": {
+        "riskC": 1
+      },
+      "state": {
+        "invertedValue": 88,
+        "balanceSlots": [
+          66,
+          66,
+          66,
+          66
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 53,
+            "stable": true
+          },
+          {
+            "time": 1781807302414,
+            "value": 59,
+            "stable": false
+          },
+          {
+            "time": 1781807302415,
+            "value": 59,
+            "stable": true,
+            "secret": true
+          },
+          {
+            "time": 1781807302416,
+            "value": 59,
+            "stable": true
+          },
+          {
+            "time": 1781807302416,
+            "value": 88,
+            "stable": false
+          }
+        ],
+        "riskC": 1,
+        "rewardM": 3,
+        "failureY": 2,
+        "hiddenTrigger": 7,
+        "secretUnlocked": true,
+        "stepCount": 9
+      },
+      "delta": {
+        "invertedValue": 29,
+        "balanceSlots": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "riskC": -1,
+        "rewardM": 0,
+        "failureY": 0,
+        "hiddenTrigger": 0,
+        "secretUnlocked": null
+      }
+    },
+    {
+      "step": 10,
+      "timestamp": 1781807302417,
+      "type": "action",
+      "eventId": "e8",
+      "eventName": "净化仪式",
+      "eventDescription": "酉号=0，丙号-1，卯号-1",
+      "cost": {
+        "riskC": 1,
+        "rewardM": 1
+      },
+      "state": {
+        "invertedValue": 88,
+        "balanceSlots": [
+          66,
+          66,
+          66,
+          66
+        ],
+        "measureTraces": [
+          {
+            "time": 0,
+            "value": 35,
+            "stable": false
+          },
+          {
+            "time": 1,
+            "value": 32,
+            "stable": false
+          },
+          {
+            "time": 2,
+            "value": 38,
+            "stable": false
+          },
+          {
+            "time": 3,
+            "value": 28,
+            "stable": false
+          },
+          {
+            "time": 1781807302411,
+            "value": 41,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": false
+          },
+          {
+            "time": 1781807302412,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 49,
+            "stable": true
+          },
+          {
+            "time": 1781807302413,
+            "value": 53,
+            "stable": true
+          },
+          {
+            "time": 1781807302414,
+            "value": 59,
+            "stable": false
+          },
+          {
+            "time": 1781807302415,
+            "value": 59,
+            "stable": true,
+            "secret": true
+          },
+          {
+            "time": 1781807302416,
+            "value": 59,
+            "stable": true
+          },
+          {
+            "time": 1781807302416,
+            "value": 88,
+            "stable": false
+          },
+          {
+            "time": 1781807302417,
+            "value": 88,
+            "stable": true
+          }
+        ],
+        "riskC": 0,
+        "rewardM": 2,
+        "failureY": 0,
+        "hiddenTrigger": 7,
+        "secretUnlocked": true,
+        "stepCount": 10
+      },
+      "delta": {
+        "invertedValue": 0,
+        "balanceSlots": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "riskC": -1,
+        "rewardM": -1,
+        "failureY": -2,
+        "hiddenTrigger": 0,
+        "secretUnlocked": null
+      },
+      "result": {
+        "type": "win",
+        "message": "时序修复成功！温室恢复稳定。"
+      }
+    }
+  ],
+  "currentStep": 10,
+  "isFinished": true,
+  "result": {
+    "type": "win",
+    "message": "时序修复成功！温室恢复稳定。"
+  },
+  "createdAt": 1781807302410,
+  "updatedAt": 1781807302417
+}

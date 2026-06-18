@@ -131,7 +131,9 @@ function executeEvent(session, eventId) {
     balanceSlots: newState.balanceSlots.map((v, i) => v - prevState.balanceSlots[i]),
     riskC: newState.riskC - prevState.riskC,
     rewardM: newState.rewardM - prevState.rewardM,
-    failureY: newState.failureY - prevState.failureY
+    failureY: newState.failureY - prevState.failureY,
+    hiddenTrigger: (newState.hiddenTrigger || 0) - (prevState.hiddenTrigger || 0),
+    secretUnlocked: newState.secretUnlocked !== prevState.secretUnlocked ? newState.secretUnlocked : null
   };
 
   newState.measureTraces = newState.measureTraces || [];

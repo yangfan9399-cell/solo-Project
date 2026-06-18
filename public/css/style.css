@@ -486,7 +486,7 @@ body::before {
 
 .status-factors {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 0.75rem;
 }
 
@@ -512,6 +512,9 @@ body::before {
 .factor.failure-y { border-color: rgba(249, 115, 22, 0.3); }
 .factor.failure-y:hover { box-shadow: 0 0 15px rgba(249, 115, 22, 0.3); }
 
+.factor.hidden-trigger { border-color: rgba(139, 92, 246, 0.3); }
+.factor.hidden-trigger:hover { box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
+
 .factor-label {
   font-size: 0.75rem;
   color: #94a3b8;
@@ -526,6 +529,8 @@ body::before {
 .factor.risk-c .factor-value { color: #f87171; }
 .factor.reward-m .factor-value { color: #4ade80; }
 .factor.failure-y .factor-value { color: #fb923c; }
+
+.factor.hidden-trigger .factor-value { color: #a78bfa; }
 
 .factor-value.changed {
   animation: valuePulse 0.5s ease;
