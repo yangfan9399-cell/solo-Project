@@ -1,0 +1,296 @@
+{
+  "gameId": "zi",
+  "currentState": {
+    "sealedValue": 224,
+    "rewriteSlots": 0,
+    "translationTraces": 4,
+    "yiRisk": 10,
+    "renReward": 5,
+    "ziFailure": 51,
+    "turn": 10,
+    "maxTurns": 12
+  },
+  "history": [
+    {
+      "step": 0,
+      "type": "init",
+      "state": {
+        "sealedValue": 80,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 0,
+        "turn": 1,
+        "maxTurns": 12
+      },
+      "eventId": null,
+      "timestamp": 1781806436705
+    },
+    {
+      "step": 1,
+      "type": "event",
+      "eventId": "zi_e1",
+      "eventName": "琉璃共振",
+      "stateBefore": {
+        "sealedValue": 80,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 0,
+        "turn": 1,
+        "maxTurns": 12
+      },
+      "state": {
+        "sealedValue": 92,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 5,
+        "turn": 2,
+        "maxTurns": 12
+      },
+      "timestamp": 1781806436708
+    },
+    {
+      "step": 2,
+      "type": "event",
+      "eventId": "zi_e1",
+      "eventName": "琉璃共振",
+      "stateBefore": {
+        "sealedValue": 92,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 5,
+        "turn": 2,
+        "maxTurns": 12
+      },
+      "state": {
+        "sealedValue": 104,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 10,
+        "turn": 3,
+        "maxTurns": 12
+      },
+      "timestamp": 1781806436711
+    },
+    {
+      "step": 3,
+      "type": "event",
+      "eventId": "zi_e1",
+      "eventName": "琉璃共振",
+      "stateBefore": {
+        "sealedValue": 104,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 10,
+        "turn": 3,
+        "maxTurns": 12
+      },
+      "state": {
+        "sealedValue": 116,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 15,
+        "turn": 4,
+        "maxTurns": 12
+      },
+      "timestamp": 1781806436712
+    },
+    {
+      "step": 4,
+      "type": "event",
+      "eventId": "zi_e1",
+      "eventName": "琉璃共振",
+      "stateBefore": {
+        "sealedValue": 116,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 15,
+        "turn": 4,
+        "maxTurns": 12
+      },
+      "state": {
+        "sealedValue": 128,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 20,
+        "turn": 5,
+        "maxTurns": 12
+      },
+      "timestamp": 1781806436714
+    },
+    {
+      "step": 5,
+      "type": "event",
+      "eventId": "zi_e1",
+      "eventName": "琉璃共振",
+      "stateBefore": {
+        "sealedValue": 128,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 20,
+        "turn": 5,
+        "maxTurns": 12
+      },
+      "state": {
+        "sealedValue": 140,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 25,
+        "turn": 6,
+        "maxTurns": 12
+      },
+      "timestamp": 1781806436716
+    },
+    {
+      "step": 6,
+      "type": "event",
+      "eventId": "zi_e1",
+      "eventName": "琉璃共振",
+      "stateBefore": {
+        "sealedValue": 140,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 25,
+        "turn": 6,
+        "maxTurns": 12
+      },
+      "state": {
+        "sealedValue": 152,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 30,
+        "turn": 7,
+        "maxTurns": 12
+      },
+      "timestamp": 1781806436719
+    },
+    {
+      "step": 7,
+      "type": "event",
+      "eventId": "zi_e1",
+      "eventName": "琉璃共振",
+      "stateBefore": {
+        "sealedValue": 152,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 30,
+        "turn": 7,
+        "maxTurns": 12
+      },
+      "state": {
+        "sealedValue": 164,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 35,
+        "turn": 8,
+        "maxTurns": 12
+      },
+      "timestamp": 1781806436720
+    },
+    {
+      "step": 8,
+      "type": "event",
+      "eventId": "zi_e2",
+      "eventName": "深层复写",
+      "stateBefore": {
+        "sealedValue": 164,
+        "rewriteSlots": 4,
+        "translationTraces": 2,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 35,
+        "turn": 8,
+        "maxTurns": 12
+      },
+      "state": {
+        "sealedValue": 194,
+        "rewriteSlots": 2,
+        "translationTraces": 3,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 43,
+        "turn": 9,
+        "maxTurns": 12
+      },
+      "timestamp": 1781806436721
+    },
+    {
+      "step": 9,
+      "type": "event",
+      "eventId": "zi_e2",
+      "eventName": "深层复写",
+      "stateBefore": {
+        "sealedValue": 194,
+        "rewriteSlots": 2,
+        "translationTraces": 3,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 43,
+        "turn": 9,
+        "maxTurns": 12
+      },
+      "state": {
+        "sealedValue": 224,
+        "rewriteSlots": 0,
+        "translationTraces": 4,
+        "yiRisk": 10,
+        "renReward": 5,
+        "ziFailure": 51,
+        "turn": 10,
+        "maxTurns": 12
+      },
+      "timestamp": 1781806436722
+    }
+  ],
+  "isEnded": true,
+  "result": {
+    "gameId": "zi",
+    "gameName": "子局 · 隐秘之境",
+    "finalState": {
+      "sealedValue": 224,
+      "rewriteSlots": 0,
+      "translationTraces": 4,
+      "yiRisk": 10,
+      "renReward": 5,
+      "ziFailure": 51,
+      "turn": 10,
+      "maxTurns": 12
+    },
+    "steps": 10,
+    "win": true,
+    "lose": false,
+    "hiddenTriggered": true,
+    "message": "隐藏结局触发！隐藏结局：琉璃之心觉醒，获得特殊成就「破晓之子」",
+    "score": 447,
+    "hiddenMessage": "隐藏结局：琉璃之心觉醒，获得特殊成就「破晓之子」"
+  }
+}

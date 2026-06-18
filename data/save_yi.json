@@ -1,11 +1,11 @@
 {
   "gameId": "yi",
   "currentState": {
-    "sealedValue": 140,
+    "sealedValue": 130,
     "rewriteSlots": 4,
     "translationTraces": 3,
     "yiRisk": 5,
-    "renReward": 0,
+    "renReward": 3,
     "ziFailure": 0,
     "turn": 3,
     "maxTurns": 8
@@ -25,7 +25,7 @@
         "maxTurns": 8
       },
       "eventId": null,
-      "timestamp": 1781805352703
+      "timestamp": 1781806274960
     },
     {
       "step": 1,
@@ -52,13 +52,13 @@
         "turn": 2,
         "maxTurns": 8
       },
-      "timestamp": 1781805360898
+      "timestamp": 1781806274962
     },
     {
       "step": 2,
       "type": "event",
-      "eventId": "yi_e1",
-      "eventName": "晨光折射",
+      "eventId": "yi_e6",
+      "eventName": "壬号观测",
       "stateBefore": {
         "sealedValue": 125,
         "rewriteSlots": 4,
@@ -70,16 +70,16 @@
         "maxTurns": 8
       },
       "state": {
-        "sealedValue": 140,
+        "sealedValue": 130,
         "rewriteSlots": 4,
         "translationTraces": 3,
         "yiRisk": 5,
-        "renReward": 0,
+        "renReward": 3,
         "ziFailure": 0,
         "turn": 3,
         "maxTurns": 8
       },
-      "timestamp": 1781805360906
+      "timestamp": 1781806274963
     }
   ],
   "isEnded": false,

@@ -212,16 +212,60 @@ class LiuliGame {
     const lose = this.gameConfig.loseCondition;
 
     let winText = '';
-    if (win.type === 'sealedValue') winText = `封存值 ≥ ${win.target}`;
-    else if (win.type === 'renReward') winText = `壬号奖励 ≥ ${win.target}`;
-
     let loseText = '';
-    if (lose.type === 'yiRisk') loseText = `乙号风险 ≥ ${lose.target}`;
-    else if (lose.type === 'sealedValue') loseText = `封存值 ≤ ${lose.target}`;
-    else if (lose.type === 'ziFailure') loseText = `子号失败因子 ≥ ${lose.target}`;
+
+    if (win.type === 'sealedValue') {
+      winText = `封存值 ≥ ${win.target}（当前 0）`;
+      if (this.currentState) {
+        winText = `封存值 ≥ ${win.target}（当前 ${this.currentState.sealedValue}）`;
+      }
+    } else if (win.type === 'renReward') {
+      winText = `壬号奖励 ≥ ${win.target}（当前 0）`;
+      if (this.currentState) {
+        winText = `壬号奖励 ≥ ${win.target}（当前 ${this.currentState.renReward}）`;
+      }
+    }
+
+    if (lose.type === 'yiRisk') {
+      loseText = `乙号风险 ≥ ${lose.target}（当前 0）`;
+      if (this.currentState) {
+        loseText = `乙号风险 ≥ ${lose.target}（当前 ${this.currentState.yiRisk}）`;
+      }
+    } else if (lose.type === 'sealedValue') {
+      loseText = `封存值 ≤ ${lose.target}（当前 100）`;
+      if (this.currentState) {
+        loseText = `封存值 ≤ ${lose.target}（当前 ${this.currentState.sealedValue}）`;
+      }
+    } else if (lose.type === 'ziFailure') {
+      loseText = `子号失败因子 ≥ ${lose.target}（当前 0）`;
+      if (this.currentState) {
+        loseText = `子号失败因子 ≥ ${lose.target}（当前 ${this.currentState.ziFailure}）`;
+      }
+    }
 
     document.getElementById('winCondition').textContent = winText;
     document.getElementById('loseCondition').textContent = loseText;
+
+    const hiddenBlock = document.getElementById('hiddenConditionBlock');
+    const hiddenEl = document.getElementById('hiddenCondition');
+    if (this.gameConfig.hiddenCondition) {
+      const hc = this.gameConfig.hiddenCondition;
+      let hiddenText = '';
+      if (hc.type === 'ziFailure_and_sealed') {
+        let ziNow = 0, svNow = 0;
+        if (this.currentState) {
+          ziNow = this.currentState.ziFailure;
+          svNow = this.currentState.sealedValue;
+        }
+        hiddenText = `子号失败因子 ≥ ${hc.ziFailureMin} 且 封存值 ≥ ${hc.sealedValueMin}（当前 ${ziNow} / ${svNow}）`;
+      } else {
+        hiddenText = '探索中...';
+      }
+      hiddenEl.textContent = hiddenText;
+      hiddenBlock.classList.remove('hidden');
+    } else {
+      hiddenBlock.classList.add('hidden');
+    }
   }
 
   renderState(state) {
@@ -342,53 +386,75 @@ class LiuliGame {
 
   renderSettlement() {
     const container = document.getElementById('settlementContent');
-    
-    if (!this.isEnded || !this.result) {
-      container.innerHTML = '<p class="settlement-placeholder">游戏进行中...</p>';
+    const r = this.result;
+    const hasHidden = this.gameConfig && this.gameConfig.hiddenCondition;
+
+    if (!this.isEnded || !r) {
+      let hintHtml = '';
+      if (hasHidden && this.currentState) {
+        const hc = this.gameConfig.hiddenCondition;
+        if (hc.type === 'ziFailure_and_sealed') {
+          const ziPct = Math.min(100, (this.currentState.ziFailure / hc.ziFailureMin) * 100);
+          const svPct = Math.min(100, (this.currentState.sealedValue / hc.sealedValueMin) * 100);
+          hintHtml = `
+            <div class="game-hint hidden-hint">
+              <strong>隐藏线索：</strong>子号失败因子 ≥ ${hc.ziFailureMin}（当前 ${this.currentState.ziFailure}，${ziPct.toFixed(0)}%）
+              且 封存值 ≥ ${hc.sealedValueMin}（当前 ${this.currentState.sealedValue}，${svPct.toFixed(0)}%）
+              即可触发隐藏结局。
+            </div>
+          `;
+        }
+      }
+      container.innerHTML = `
+        <p class="settlement-placeholder">游戏进行中...</p>
+        ${hintHtml}
+      `;
       return;
     }
 
-    const r = this.result;
     let statusClass = 'win';
     let statusText = '胜利';
+    let hiddenBadge = '';
+    let hiddenBox = '';
+
     if (r.hiddenTriggered) {
       statusClass = 'hidden';
-      statusText = '隐藏结局';
+      statusText = '隐藏结局 · 胜利';
+      hiddenBadge = '<div class="settlement-hidden-badge">✦ 隐藏结局触发 ✦</div>';
+      if (r.hiddenMessage) {
+        hiddenBox = `<div class="hidden-message-box">${r.hiddenMessage}</div>`;
+      }
     } else if (r.lose) {
       statusClass = 'lose';
       statusText = '失败';
     }
 
+    const stats = [
+      { label: '总步数', value: r.steps },
+      { label: '封存值', value: r.finalState.sealedValue },
+      { label: '复写槽', value: r.finalState.rewriteSlots },
+      { label: '转译痕', value: r.finalState.translationTraces },
+      { label: '乙号风险', value: r.finalState.yiRisk },
+      { label: '壬号奖励', value: r.finalState.renReward },
+      { label: '子号失败', value: r.finalState.ziFailure }
+    ];
+
+    const statsHtml = stats.map(s => `
+      <div class="settlement-stat">
+        <span class="settlement-stat-label">${s.label}</span>
+        <span class="settlement-stat-value">${s.value}</span>
+      </div>
+    `).join('');
+
     container.innerHTML = `
       <div class="settlement-result">
+        ${hiddenBadge}
         <div class="settlement-status ${statusClass}">${statusText}</div>
         <div class="settlement-message">${r.message}</div>
+        ${hiddenBox}
         <div class="settlement-score">${r.score} 分</div>
         <div class="settlement-stats">
-          <div class="settlement-stat">
-            <span class="settlement-stat-label">总步数</span>
-            <span class="settlement-stat-value">${r.steps}</span>
-          </div>
-          <div class="settlement-stat">
-            <span class="settlement-stat-label">封存值</span>
-            <span class="settlement-stat-value">${r.finalState.sealedValue}</span>
-          </div>
-          <div class="settlement-stat">
-            <span class="settlement-stat-label">乙号风险</span>
-            <span class="settlement-stat-value">${r.finalState.yiRisk}</span>
-          </div>
-          <div class="settlement-stat">
-            <span class="settlement-stat-label">壬号奖励</span>
-            <span class="settlement-stat-value">${r.finalState.renReward}</span>
-          </div>
-          <div class="settlement-stat">
-            <span class="settlement-stat-label">子号失败</span>
-            <span class="settlement-stat-value">${r.finalState.ziFailure}</span>
-          </div>
-          <div class="settlement-stat">
-            <span class="settlement-stat-label">复写槽</span>
-            <span class="settlement-stat-value">${r.finalState.rewriteSlots}</span>
-          </div>
+          ${statsHtml}
         </div>
       </div>
     `;

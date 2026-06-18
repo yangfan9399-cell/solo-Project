@@ -82,7 +82,8 @@ app.get('/api/game/:gameId/config', (req, res) => {
     winCondition: config.winCondition,
     loseCondition: config.loseCondition,
     maxTurns: config.initialState.maxTurns,
-    hasHidden: !!config.hiddenCondition
+    hiddenCondition: config.hiddenCondition || null,
+    initialState: config.initialState
   });
 });
 

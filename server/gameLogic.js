@@ -105,12 +105,12 @@ const GAMES = {
     winCondition: { type: 'sealedValue', target: 200 },
     loseCondition: { type: 'ziFailure', target: 100 },
     events: [
-      { id: 'zi_e1', name: '琉璃共振', desc: '封存值+12，子号失败因子+3', effect: { sealedValue: 12, ziFailure: 3 }, cost: {} },
-      { id: 'zi_e2', name: '深层复写', desc: '消耗2复写槽，封存值+30，子号失败因子+8', effect: { sealedValue: 30, ziFailure: 8 }, cost: { rewriteSlots: 2 } },
+      { id: 'zi_e1', name: '琉璃共振', desc: '封存值+12，子号失败因子+5', effect: { sealedValue: 12, ziFailure: 5 }, cost: {} },
+      { id: 'zi_e2', name: '深层复写', desc: '消耗2复写槽，封存值+30，子号失败因子+8，转译痕+1', effect: { sealedValue: 30, ziFailure: 8, translationTraces: 1 }, cost: { rewriteSlots: 2 } },
       { id: 'zi_e3', name: '转译净化', desc: '消耗2转译痕，子号失败因子-15', effect: { ziFailure: -15 }, cost: { translationTraces: 2 } },
       { id: 'zi_e4', name: '乙号屏障', desc: '消耗1复写槽，乙号风险-8，封存值+10', effect: { yiRisk: -8, sealedValue: 10 }, cost: { rewriteSlots: 1 } },
       { id: 'zi_e5', name: '壬号增幅', desc: '壬号奖励+4，封存值+8', effect: { renReward: 4, sealedValue: 8 }, cost: {} },
-      { id: 'zi_e6', name: '隐秘通道', desc: '消耗3转译痕，封存值+50，子号失败因子+20', effect: { sealedValue: 50, ziFailure: 20 }, cost: { translationTraces: 3 } },
+      { id: 'zi_e6', name: '隐秘通道', desc: '消耗2转译痕，封存值+50，子号失败因子+20', effect: { sealedValue: 50, ziFailure: 20 }, cost: { translationTraces: 2 } },
       { id: 'zi_e7', name: '稳态维持', desc: '封存值+6，所有风险-2', effect: { sealedValue: 6, yiRisk: -2, ziFailure: -2 }, cost: {} }
     ],
     mapNodes: [
