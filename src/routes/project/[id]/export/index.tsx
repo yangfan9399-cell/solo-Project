@@ -98,6 +98,16 @@ function generateSummaryReport(project: Project, samples: Sample[], anomalies: A
   return JSON.stringify(report, null, 2);
 }
 
+function filterSamples(samples: Sample[], scope: string): Sample[] {
+  if (scope === 'verified') {
+    return samples.filter((s) => s.status === 'verified');
+  }
+  if (scope === 'annotated-verified') {
+    return samples.filter((s) => s.status === 'annotated' || s.status === 'verified');
+  }
+  return [...samples];
+}
+
 export default component$(() => {
   const location = useLocation();
   const projectId = location.params.id;
@@ -122,13 +132,6 @@ export default component$(() => {
   const copied = useSignal(false);
   const exportGenerated = useSignal(false);
   const exportError = useSignal('');
-
-  const loadData = $(() => {
-    state.project = getProject(projectId);
-    state.samples = getAllSamples(projectId);
-    state.exports = getAllExports(projectId);
-    state.anomalies = getAllAnomalies(projectId);
-  });
 
   useVisibleTask$(({ track }) => {
     track(() => location.url.pathname);
@@ -194,16 +197,6 @@ export default component$(() => {
     }
   });
 
-  function getFilteredSamples(): Sample[] {
-    if (scope.value === 'verified') {
-      return state.samples.filter((s) => s.status === 'verified');
-    }
-    if (scope.value === 'annotated-verified') {
-      return state.samples.filter((s) => s.status === 'annotated' || s.status === 'verified');
-    }
-    return [...state.samples];
-  }
-
   const handleExport = $(() => {
     exportError.value = '';
     if (!state.project) {
@@ -218,7 +211,7 @@ export default component$(() => {
     if (scope.value === 'summary') {
       content = generateSummaryReport(state.project, state.samples, state.anomalies);
     } else {
-      const filtered = getFilteredSamples();
+      const filtered = filterSamples(state.samples, scope.value);
       content = format.value === 'json' ? samplesToJson(filtered) : samplesToCsv(filtered);
     }
     const record: ExportRecord = {
@@ -226,7 +219,7 @@ export default component$(() => {
       projectId,
       format: scope.value === 'summary' ? 'json' : format.value,
       createdAt: new Date().toISOString(),
-      sampleCount: scope.value === 'summary' ? state.samples.length : getFilteredSamples().length,
+      sampleCount: scope.value === 'summary' ? state.samples.length : filterSamples(state.samples, scope.value).length,
       content,
     };
     saveExport(record);
@@ -286,7 +279,7 @@ export default component$(() => {
       viewExportId.value = null;
       viewContent.value = '';
     }
-    loadData();
+    state.exports = getAllExports(projectId);
   });
 
   if (!state.project) {
@@ -307,7 +300,7 @@ export default component$(() => {
             <Link href={`/project/${projectId}`} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               ← 返回项目
             </Link>
-          </div> as any
+          </div>
         }
       />
 

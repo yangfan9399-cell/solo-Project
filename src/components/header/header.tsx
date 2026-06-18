@@ -1,9 +1,9 @@
-import { component$, type JSXNode, Slot } from '@builder.io/qwik';
+import { component$, type JSXOutput, Slot } from '@builder.io/qwik';
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  actions?: JSXNode;
+  actions?: JSXOutput;
 }
 
 export const PageHeader = component$<PageHeaderProps>(({ title, subtitle, actions }) => {
