@@ -51,9 +51,9 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-09T19:06:07.185Z",
         "toStatus": "DRAFT",
-        "remark": "针叶木浆批次 088"
+        "timestamp": "2026-06-09T19:06:07.185Z",
+        "note": "针叶木浆批次 088"
       },
       {
         "id": "a_mqlaunrl_gudno3",
@@ -61,10 +61,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-09T19:06:07.185Z",
         "fromStatus": "DRAFT",
         "toStatus": "PRECHECK_PASS",
-        "remark": ""
+        "timestamp": "2026-06-09T19:06:07.185Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrl_j6gooq",
@@ -72,10 +72,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-11T19:06:07.185Z",
         "fromStatus": "PRECHECK_PASS",
         "toStatus": "PENDING_JUDGE",
-        "remark": "样本齐全"
+        "timestamp": "2026-06-11T19:06:07.185Z",
+        "note": "样本齐全"
       },
       {
         "id": "a_mqlaunrl_flo14a",
@@ -83,10 +83,10 @@
         "operatorId": "U002",
         "operatorName": "李娜",
         "operatorRole": "主管",
-        "at": "2026-06-14T19:06:07.185Z",
         "fromStatus": "PENDING_JUDGE",
         "toStatus": "JUDGED_PASS",
-        "remark": "纤维形态良好，符合标准"
+        "timestamp": "2026-06-14T19:06:07.185Z",
+        "note": "纤维形态良好，符合标准"
       }
     ],
     "judgeConclusion": "PASS",
@@ -126,6 +126,15 @@
         "capturedAt": "2026-06-19T19:06:07.184Z",
         "operatorName": "刘芳",
         "notes": ""
+      },
+      {
+        "label": "测试上传显微照片",
+        "magnification": "×400 光学显微镜",
+        "imageUrl": "data:image/svg+xml;utf8,<svg/>",
+        "capturedBy": "王强",
+        "notes": "测试自动添加审计记录",
+        "id": "mp_mqlbny0q_01tya5",
+        "capturedAt": "2026-06-19T19:28:53.498Z"
       }
     ],
     "dryingRecords": [
@@ -149,9 +158,9 @@
         "operatorId": "U004",
         "operatorName": "刘芳",
         "operatorRole": "质检员",
-        "at": "2026-06-11T19:06:07.185Z",
         "toStatus": "DRAFT",
-        "remark": "阔叶木浆生产样"
+        "timestamp": "2026-06-11T19:06:07.185Z",
+        "note": "阔叶木浆生产样"
       },
       {
         "id": "a_mqlaunrl_k8esqd",
@@ -159,10 +168,10 @@
         "operatorId": "U004",
         "operatorName": "刘芳",
         "operatorRole": "质检员",
-        "at": "2026-06-11T19:06:07.185Z",
         "fromStatus": "DRAFT",
         "toStatus": "PRECHECK_PASS",
-        "remark": ""
+        "timestamp": "2026-06-11T19:06:07.185Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrl_c443tt",
@@ -170,10 +179,10 @@
         "operatorId": "U004",
         "operatorName": "刘芳",
         "operatorRole": "质检员",
-        "at": "2026-06-13T19:06:07.185Z",
         "fromStatus": "PRECHECK_PASS",
         "toStatus": "PENDING_JUDGE",
-        "remark": ""
+        "timestamp": "2026-06-13T19:06:07.185Z",
+        "note": ""
       },
       {
         "id": "a_mqlb3qie_0dtgra",
@@ -181,10 +190,21 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-19T19:13:10.646Z",
         "fromStatus": "PENDING_JUDGE",
         "toStatus": "RETURNED_FOR_REVIEW",
-        "remark": "API测试状态变更"
+        "timestamp": "2026-06-19T19:13:10.646Z",
+        "note": "API测试状态变更"
+      },
+      {
+        "id": "a_mqlbny0q_cpx1oy",
+        "action": "上传显微照片",
+        "operatorId": "U295",
+        "operatorName": "王强",
+        "operatorRole": "质检员",
+        "timestamp": "2026-06-19T19:28:53.498Z",
+        "fromStatus": "RETURNED_FOR_REVIEW",
+        "toStatus": "RETURNED_FOR_REVIEW",
+        "note": "上传显微照片：测试上传显微照片（×400 光学显微镜）"
       }
     ],
     "tags": [],
@@ -243,9 +263,9 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-13T19:06:07.185Z",
         "toStatus": "DRAFT",
-        "remark": "白度计故障暂缺"
+        "timestamp": "2026-06-13T19:06:07.185Z",
+        "note": "白度计故障暂缺"
       },
       {
         "id": "a_mqlaunrl_8frpjt",
@@ -253,10 +273,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-13T19:06:07.185Z",
         "fromStatus": "DRAFT",
         "toStatus": "PRECHECK_FAIL",
-        "remark": "缺测：白度"
+        "timestamp": "2026-06-13T19:06:07.185Z",
+        "note": "缺测：白度"
       }
     ],
     "tags": [
@@ -295,9 +315,9 @@
         "operatorId": "U003",
         "operatorName": "王强",
         "operatorRole": "化验员",
-        "at": "2026-06-15T19:06:07.185Z",
         "toStatus": "DRAFT",
-        "remark": "待补测纤维/白度/含水率"
+        "timestamp": "2026-06-15T19:06:07.185Z",
+        "note": "待补测纤维/白度/含水率"
       },
       {
         "id": "a_mqlaunrl_9pg59f",
@@ -305,10 +325,10 @@
         "operatorId": "U003",
         "operatorName": "王强",
         "operatorRole": "化验员",
-        "at": "2026-06-15T19:06:07.185Z",
         "fromStatus": "DRAFT",
         "toStatus": "PRECHECK_FAIL",
-        "remark": "缺测：纤维分布、白度、含水率"
+        "timestamp": "2026-06-15T19:06:07.185Z",
+        "note": "缺测：纤维分布、白度、含水率"
       }
     ],
     "tags": [
@@ -353,9 +373,9 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-10T19:06:07.185Z",
         "toStatus": "DRAFT",
-        "remark": "操作员误重复录入"
+        "timestamp": "2026-06-10T19:06:07.185Z",
+        "note": "操作员误重复录入"
       },
       {
         "id": "a_mqlaunrl_g0w8kn",
@@ -363,10 +383,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-10T19:06:07.185Z",
         "fromStatus": "DRAFT",
         "toStatus": "PRECHECK_FAIL",
-        "remark": "与库中样本编号重复"
+        "timestamp": "2026-06-10T19:06:07.185Z",
+        "note": "与库中样本编号重复"
       }
     ],
     "tags": [
@@ -428,9 +448,9 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-07T19:06:07.185Z",
         "toStatus": "DRAFT",
-        "remark": "竹浆·标准烘干条件平行样A"
+        "timestamp": "2026-06-07T19:06:07.185Z",
+        "note": "竹浆·标准烘干条件平行样A"
       },
       {
         "id": "a_mqlaunrl_i5c3za",
@@ -438,10 +458,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-07T19:06:07.185Z",
         "fromStatus": "DRAFT",
         "toStatus": "PRECHECK_PASS",
-        "remark": ""
+        "timestamp": "2026-06-07T19:06:07.185Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrl_honpj9",
@@ -449,10 +469,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-08T19:06:07.185Z",
         "fromStatus": "PRECHECK_PASS",
         "toStatus": "PENDING_JUDGE",
-        "remark": ""
+        "timestamp": "2026-06-08T19:06:07.185Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrl_81skcq",
@@ -460,10 +480,10 @@
         "operatorId": "U002",
         "operatorName": "李娜",
         "operatorRole": "主管",
-        "at": "2026-06-09T19:06:07.185Z",
         "fromStatus": "PENDING_JUDGE",
         "toStatus": "JUDGED_PASS",
-        "remark": "标准条件下检测合格"
+        "timestamp": "2026-06-09T19:06:07.185Z",
+        "note": "标准条件下检测合格"
       }
     ],
     "judgeConclusion": "PASS",
@@ -528,9 +548,9 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-07T19:06:07.186Z",
         "toStatus": "DRAFT",
-        "remark": "竹浆·快速烘干130℃平行样B"
+        "timestamp": "2026-06-07T19:06:07.186Z",
+        "note": "竹浆·快速烘干130℃平行样B"
       },
       {
         "id": "a_mqlaunrm_g575uj",
@@ -538,10 +558,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-07T19:06:07.186Z",
         "fromStatus": "DRAFT",
         "toStatus": "PRECHECK_PASS",
-        "remark": ""
+        "timestamp": "2026-06-07T19:06:07.186Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrm_9ro4zg",
@@ -549,10 +569,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-08T19:06:07.186Z",
         "fromStatus": "PRECHECK_PASS",
         "toStatus": "PENDING_JUDGE",
-        "remark": ""
+        "timestamp": "2026-06-08T19:06:07.186Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrm_1w8y08",
@@ -560,10 +580,10 @@
         "operatorId": "U002",
         "operatorName": "李娜",
         "operatorRole": "主管",
-        "at": "2026-06-10T19:06:07.186Z",
         "fromStatus": "PENDING_JUDGE",
         "toStatus": "RETURNED_FOR_REVIEW",
-        "remark": "同批次不同烘干条件含水率差异1.13pp，需复判"
+        "timestamp": "2026-06-10T19:06:07.186Z",
+        "note": "同批次不同烘干条件含水率差异1.13pp，需复判"
       }
     ],
     "judgeConclusion": "CONFLICT",
@@ -630,9 +650,9 @@
         "operatorId": "U006",
         "operatorName": "赵明辉",
         "operatorRole": "主管",
-        "at": "2026-06-04T19:06:07.186Z",
         "toStatus": "DRAFT",
-        "remark": "审计抽查"
+        "timestamp": "2026-06-04T19:06:07.186Z",
+        "note": "审计抽查"
       },
       {
         "id": "a_mqlaunrm_56ooro",
@@ -640,10 +660,10 @@
         "operatorId": "U006",
         "operatorName": "赵明辉",
         "operatorRole": "主管",
-        "at": "2026-06-04T19:06:07.186Z",
         "fromStatus": "DRAFT",
         "toStatus": "PRECHECK_PASS",
-        "remark": ""
+        "timestamp": "2026-06-04T19:06:07.186Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrm_0iv1d2",
@@ -651,10 +671,10 @@
         "operatorId": "U002",
         "operatorName": "李娜",
         "operatorRole": "主管",
-        "at": "2026-06-05T19:06:07.186Z",
         "fromStatus": "PRECHECK_PASS",
         "toStatus": "JUDGED_PASS",
-        "remark": ""
+        "timestamp": "2026-06-05T19:06:07.186Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrm_dswx7i",
@@ -662,10 +682,10 @@
         "operatorId": "U002",
         "operatorName": "李娜",
         "operatorRole": "主管",
-        "at": "2026-06-16T19:06:07.186Z",
         "fromStatus": "JUDGED_PASS",
         "toStatus": "LOCKED",
-        "remark": "季度审计封存，不得修改"
+        "timestamp": "2026-06-16T19:06:07.186Z",
+        "note": "季度审计封存，不得修改"
       }
     ],
     "judgeConclusion": "PASS",
@@ -731,9 +751,9 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-01T19:06:07.186Z",
         "toStatus": "DRAFT",
-        "remark": ""
+        "timestamp": "2026-06-01T19:06:07.186Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrm_yp8l1f",
@@ -741,10 +761,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-01T19:06:07.186Z",
         "fromStatus": "DRAFT",
         "toStatus": "PRECHECK_PASS",
-        "remark": ""
+        "timestamp": "2026-06-01T19:06:07.186Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrm_ad59w5",
@@ -752,10 +772,10 @@
         "operatorId": "U001",
         "operatorName": "张伟",
         "operatorRole": "操作员",
-        "at": "2026-06-02T19:06:07.186Z",
         "fromStatus": "PRECHECK_PASS",
         "toStatus": "PENDING_JUDGE",
-        "remark": ""
+        "timestamp": "2026-06-02T19:06:07.186Z",
+        "note": ""
       },
       {
         "id": "a_mqlaunrm_x2jgwv",
@@ -763,10 +783,10 @@
         "operatorId": "U002",
         "operatorName": "李娜",
         "operatorRole": "主管",
-        "at": "2026-06-03T19:06:07.186Z",
         "fromStatus": "PENDING_JUDGE",
         "toStatus": "JUDGED_FAIL",
-        "remark": "白度偏低，短纤维比例偏高"
+        "timestamp": "2026-06-03T19:06:07.186Z",
+        "note": "白度偏低，短纤维比例偏高"
       },
       {
         "id": "a_mqlaunrm_4t67mq",
@@ -774,10 +794,10 @@
         "operatorId": "U002",
         "operatorName": "李娜",
         "operatorRole": "总监",
-        "at": "2026-06-17T19:06:07.186Z",
         "fromStatus": "JUDGED_FAIL",
         "toStatus": "RETURNED_FOR_REVIEW",
-        "remark": "供应商申诉，需重新检验确认"
+        "timestamp": "2026-06-17T19:06:07.186Z",
+        "note": "供应商申诉，需重新检验确认"
       }
     ],
     "judgeConclusion": "FAIL",

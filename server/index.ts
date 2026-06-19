@@ -383,8 +383,16 @@ function addDryingRecord(sampleId: string, rec: Omit<DryingRecord, 'id' | 'moist
 function addMicroPhoto(sampleId: string, photo: Omit<MicroPhoto, 'id' | 'capturedAt'>, samples: FiberSample[]): FiberSample[] {
   return samples.map(s => {
     if (s.id !== sampleId) return s
-    const p: MicroPhoto = { ...photo, id: uidFn('mp'), capturedAt: nowFn() }
-    return { ...s, microPhotos: [...s.microPhotos, p] }
+    const now = nowFn()
+    const p: MicroPhoto = { ...photo, id: uidFn('mp'), capturedAt: now }
+    const opName = (photo as any).capturedBy || s.operatorName || '张伟'
+    const opId = s.operatorId || 'U001'
+    const auditNote = `上传显微照片：${photo.caption || '未命名'}${(photo as any).magnification ? '（' + (photo as any).magnification + '）' : ''}`
+    return {
+      ...s,
+      microPhotos: [...s.microPhotos, p],
+      auditLogs: [...s.auditLogs, makeAudit(uidFn('a'), '上传显微照片', { id: opId, name: opName, role: '质检员' } as any, now, s.status, s.status, auditNote)],
+    }
   })
 }
 
@@ -536,7 +544,7 @@ app.get('/api/samples/all', (req, res) => {
   res.json({ success: true, samples: readSamples() })
 })
 
-const PORT = Number(process.env.PORT) || 3001
+const PORT = Number(process.env.PORT) || 4010
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 纸浆纤维质检后端 API 已启动`)
   console.log(`   地址: http://localhost:${PORT}`)

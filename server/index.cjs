@@ -41,8 +41,8 @@ const OPERATORS = [
   { id: 'U004', name: '刘芳', role: '质检员' },
 ]
 
-function makeAudit(id, action, operator, at, fromStatus, toStatus, remark) {
-  return { id, action, operatorId: operator.id, operatorName: operator.name, operatorRole: operator.role, at, fromStatus, toStatus, remark: remark || '' }
+function makeAudit(id, action, operator, timestamp, fromStatus, toStatus, note) {
+  return { id, action, operatorId: operator.id, operatorName: operator.name, operatorRole: operator.role, timestamp, fromStatus, toStatus, note: note || '' }
 }
 
 function moistureFromWeights(wet, dry) {
@@ -322,6 +322,23 @@ function buildSeedSamples() {
 
 /* ============== 数据持久化 ============== */
 
+function migrateAuditFields(sample) {
+  if (!sample.auditLogs || !Array.isArray(sample.auditLogs)) return sample
+  sample.auditLogs = sample.auditLogs.map(log => {
+    const migrated = { ...log }
+    if (migrated.at !== undefined && migrated.timestamp === undefined) {
+      migrated.timestamp = migrated.at
+      delete migrated.at
+    }
+    if (migrated.remark !== undefined && migrated.note === undefined) {
+      migrated.note = migrated.remark
+      delete migrated.remark
+    }
+    return migrated
+  })
+  return sample
+}
+
 function readSamples() {
   if (samplesCache) return samplesCache
   ensureDataDir()
@@ -333,7 +350,9 @@ function readSamples() {
   }
   try {
     const raw = fs.readFileSync(DATA_FILE, 'utf-8')
-    samplesCache = JSON.parse(raw)
+    const parsed = JSON.parse(raw)
+    const migrated = Array.isArray(parsed) ? parsed.map(migrateAuditFields) : parsed
+    samplesCache = migrated
     return samplesCache
   } catch (e) {
     console.error('读取数据失败，重置为种子数据:', e.message)
@@ -663,8 +682,15 @@ function addDryingRecord(sampleId, rec, samples) {
 function addMicroPhoto(sampleId, photo, samples) {
   return samples.map(s => {
     if (s.id !== sampleId) return s
-    const p = { ...photo, id: uid('mp'), capturedAt: nowIso() }
-    return { ...s, microPhotos: [...s.microPhotos, p] }
+    const now = nowIso()
+    const p = { ...photo, id: uid('mp'), capturedAt: now }
+    const op = { id: photo.capturedBy ? 'U' + Math.abs(photo.capturedBy.charCodeAt(0)).toString().padStart(3, '0').slice(0, 3) : s.operatorId || 'U001', name: photo.capturedBy || s.operatorName || '张伟', role: '质检员' }
+    const auditNote = `上传显微照片：${photo.label || '未命名'}${photo.magnification ? '（' + photo.magnification + '）' : ''}`
+    return {
+      ...s,
+      microPhotos: [...s.microPhotos, p],
+      auditLogs: [...s.auditLogs, makeAudit(uid('a'), '上传显微照片', op, now, s.status, s.status, auditNote)],
+    }
   })
 }
 
