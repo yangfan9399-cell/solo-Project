@@ -44,6 +44,7 @@ app.post('/api/sessions', (req, res) => {
         stepIndex: h.stepIndex,
         eventId: h.eventId,
         timestamp: h.timestamp,
+        delta: h.delta,
       })),
     });
   } catch (e) {
@@ -65,6 +66,7 @@ app.get('/api/sessions/:sessionId', (req, res) => {
       stepIndex: h.stepIndex,
       eventId: h.eventId,
       timestamp: h.timestamp,
+      delta: h.delta,
     })),
   });
 });
@@ -104,6 +106,7 @@ app.post('/api/sessions/:sessionId/execute', (req, res) => {
       stepIndex: h.stepIndex,
       eventId: h.eventId,
       timestamp: h.timestamp,
+      delta: h.delta,
     })),
   });
 });
@@ -122,6 +125,7 @@ app.post('/api/sessions/:sessionId/skip', (req, res) => {
       stepIndex: h.stepIndex,
       eventId: h.eventId,
       timestamp: h.timestamp,
+      delta: h.delta,
     })),
   });
 });
@@ -150,6 +154,7 @@ app.post('/api/sessions/:sessionId/restore/:stepIndex', (req, res) => {
       stepIndex: h.stepIndex,
       eventId: h.eventId,
       timestamp: h.timestamp,
+      delta: h.delta,
     })),
   });
 });

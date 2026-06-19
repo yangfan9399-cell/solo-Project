@@ -461,6 +461,151 @@ body {
   border-color: var(--accent-gold);
 }
 
+.replay-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.replay-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 3px solid var(--border);
+}
+
+.replay-detail-row:hover {
+  border-color: var(--accent-silver);
+  transform: translateX(2px);
+}
+
+.replay-detail-row.current {
+  border-left-color: var(--accent-gold);
+  background: rgba(212, 168, 83, 0.08);
+}
+
+.replay-detail-row.start {
+  border-left-color: var(--accent-blue);
+}
+
+.replay-detail-row.skip {
+  border-left-color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.replay-detail-row.selected {
+  border-color: var(--accent-blue);
+  box-shadow: var(--glow-blue);
+  background: rgba(85, 136, 221, 0.1);
+}
+
+.replay-detail-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.replay-step-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-silver);
+  min-width: 32px;
+  padding-top: 2px;
+}
+
+.replay-step-info {
+  flex: 1;
+}
+
+.replay-event-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.replay-event-name.skip {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.replay-delta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.delta-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border: 1px solid;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.delta-tag.pos {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.delta-tag.neg {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.delta-tag.patrol {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.replay-detail-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.replay-delta-summary {
+  font-size: 11px;
+  text-align: right;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  white-space: nowrap;
+}
+
+.replay-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.replay-badge.current {
+  background: var(--accent-gold);
+  color: var(--bg-dark);
+}
+
+.replay-badge.selected {
+  background: var(--accent-blue);
+  color: white;
+}
+
+.replay-step.selected {
+  border-color: var(--accent-blue);
+  box-shadow: var(--glow-blue);
+}
+
 /* 结算簿样式 */
 .settlement-panel {
   grid-column: span 2;

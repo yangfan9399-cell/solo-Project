@@ -43,10 +43,22 @@ export interface GameState {
   hiddenTriggered?: boolean;
 }
 
+export interface StepDelta {
+  eventName: string | null;
+  isSkip: boolean;
+  mergeValue: number;
+  riskYin: number;
+  rewardDing: number;
+  failGui: number;
+  slotsLit: number;
+  patrolMove: number;
+}
+
 export interface HistoryStep {
   stepIndex: number;
   eventId: string | null;
   timestamp: number;
+  delta?: StepDelta;
 }
 
 export interface GameSettlement {

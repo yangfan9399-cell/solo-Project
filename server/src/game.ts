@@ -8,6 +8,7 @@ import {
   GameSlot,
   StageConfig,
   GameStageId,
+  StepDelta,
 } from './types';
 import { getStageConfig } from './stages';
 
@@ -179,6 +180,39 @@ function cloneState(state: GameState): GameState {
   return JSON.parse(JSON.stringify(state));
 }
 
+function calcDelta(
+  prev: GameState,
+  curr: GameState,
+  eventName: string | null,
+  isSkip: boolean
+): StepDelta {
+  const prevLit = prev.slots.filter((s) => s.lit).length;
+  const currLit = curr.slots.filter((s) => s.lit).length;
+  return {
+    eventName,
+    isSkip,
+    mergeValue: curr.mergeValue - prev.mergeValue,
+    riskYin: curr.riskYin - prev.riskYin,
+    rewardDing: curr.rewardDing - prev.rewardDing,
+    failGui: curr.failGui - prev.failGui,
+    slotsLit: currLit - prevLit,
+    patrolMove: Math.abs(curr.patrol.position - prev.patrol.position),
+  };
+}
+
+function emptyDelta(): StepDelta {
+  return {
+    eventName: null,
+    isSkip: false,
+    mergeValue: 0,
+    riskYin: 0,
+    rewardDing: 0,
+    failGui: 0,
+    slotsLit: 0,
+    patrolMove: 0,
+  };
+}
+
 const sessions = new Map<string, GameSession>();
 
 export function createSession(stageId: GameStageId): GameSession {
@@ -199,6 +233,7 @@ export function createSession(stageId: GameStageId): GameSession {
         eventId: null,
         state: cloneState(initialState),
         timestamp: Date.now(),
+        delta: { ...emptyDelta(), eventName: '暗房初始化' },
       },
     ],
     createdAt: Date.now(),
@@ -229,7 +264,8 @@ export function executeEvent(sessionId: string, eventId: string): GameSession | 
     return session;
   }
 
-  const newState = cloneState(session.currentState);
+  const prevState = session.currentState;
+  const newState = cloneState(prevState);
   newState.stepIndex += 1;
   newState.rewardDing -= event.cost;
 
@@ -244,12 +280,15 @@ export function executeEvent(sessionId: string, eventId: string): GameSession | 
     newState.availableEvents = [];
   }
 
+  const delta = calcDelta(prevState, newState, event.name, false);
+
   session.currentState = newState;
   session.history.push({
     stepIndex: newState.stepIndex,
     eventId,
     state: cloneState(newState),
     timestamp: Date.now(),
+    delta,
   });
   session.updatedAt = Date.now();
 
@@ -265,7 +304,8 @@ export function skipStep(sessionId: string): GameSession | null {
 
   if (session.currentState.isGameOver) return session;
 
-  const newState = cloneState(session.currentState);
+  const prevState = session.currentState;
+  const newState = cloneState(prevState);
   newState.stepIndex += 1;
 
   advancePatrol(newState, config);
@@ -279,12 +319,15 @@ export function skipStep(sessionId: string): GameSession | null {
     newState.availableEvents = [];
   }
 
+  const delta = calcDelta(prevState, newState, '跳过本步', true);
+
   session.currentState = newState;
   session.history.push({
     stepIndex: newState.stepIndex,
     eventId: null,
     state: cloneState(newState),
     timestamp: Date.now(),
+    delta,
   });
   session.updatedAt = Date.now();
 

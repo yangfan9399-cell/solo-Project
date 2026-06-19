@@ -27,11 +27,23 @@ export interface GameEvent {
   };
 }
 
+export interface StepDelta {
+  eventName: string | null;
+  isSkip: boolean;
+  mergeValue: number;
+  riskYin: number;
+  rewardDing: number;
+  failGui: number;
+  slotsLit: number;
+  patrolMove: number;
+}
+
 export interface GameStep {
   stepIndex: number;
   eventId: string | null;
   state: GameState;
   timestamp: number;
+  delta: StepDelta;
 }
 
 export interface GameState {
