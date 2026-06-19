@@ -4,6 +4,7 @@ let diffVersion1 = null;
 let diffVersion2 = null;
 let rollbackTargetVersion = null;
 let commentVersion = null;
+let isRollingBack = false;
 
 async function loadRecords() {
   try {
@@ -503,10 +504,26 @@ function renderRollbackPreview(preview) {
   let html = '';
   
   if (preview.isLatestLocked) {
-    html += `<div class="warning-box">⚠️ 当前最新版本已锁定，无法执行回滚操作！</div>`;
-    confirmBtn.disabled = true;
+    html += `
+      <div class="warning-box">
+        <strong>🔒 版本锁定警告</strong><br>
+        当前最新版本（v${preview.fromVersion}）已被锁定，无法执行回滚操作。<br>
+        如需回滚，请先解锁最新版本或联系管理员。
+      </div>
+    `;
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = '版本已锁定';
+      confirmBtn.classList.remove('btn-danger');
+      confirmBtn.classList.add('btn-secondary');
+    }
   } else {
-    confirmBtn.disabled = false;
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '确认回滚';
+      confirmBtn.classList.add('btn-danger');
+      confirmBtn.classList.remove('btn-secondary');
+    }
   }
   
   html += `
@@ -530,7 +547,7 @@ function renderRollbackPreview(preview) {
     </div>
     
     <div class="info-box">
-      ℹ️ 回滚操作不会删除历史版本，而是创建一个新的版本，数据内容与目标版本一致，确保历史记录完整可追溯。
+      ℹ️ 回滚操作不会删除历史版本，而是创建一个新的版本，数据内容与目标版本一致，确保历史记录完整可追溯。所有版本变更均记录在案，不可篡改。
     </div>
     
     <h4 style="margin: 16px 0 8px; color: #1e3a5f;">字段变化预览：</h4>
@@ -555,7 +572,10 @@ function renderRollbackPreview(preview) {
   html += '</div>';
   
   if (preview.evidenceChanged) {
-    html += `<div class="warning-box" style="margin-top: 12px;">⚠️ 包含显微照片变更，请确认证据回滚的必要性</div>`;
+    html += `<div class="warning-box" style="margin-top: 12px;">
+      <strong>⚠️ 证据变更风险</strong><br>
+      回滚包含显微照片等证据变更，请确认证据回滚的必要性和合规性。证据变更将被永久记录。
+    </div>`;
   }
   
   previewEl.innerHTML = html;
@@ -567,10 +587,18 @@ function closeRollbackModal() {
 }
 
 async function confirmRollback() {
+  if (isRollingBack) return;
   if (!rollbackTargetVersion) return;
   
   const reason = prompt('请输入回滚理由：', '回滚操作');
   if (!reason) return;
+  
+  isRollingBack = true;
+  const confirmBtn = document.getElementById('confirmRollbackBtn');
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '回滚中...';
+  }
   
   try {
     const res = await fetch(`/api/records/${currentRecordId}/rollback`, {
@@ -598,11 +626,14 @@ async function confirmRollback() {
   } catch (err) {
     console.error('Rollback failed:', err);
     alert('回滚失败：' + err.message);
+  } finally {
+    isRollingBack = false;
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '确认回滚';
+    }
   }
 }
-
-document.getElementById('confirmRollbackBtn').addEventListener
-  && document.getElementById('confirmRollbackBtn').addEventListener('click', confirmRollback);
 
 async function openCommentModal() {
   if (!currentVersion) {
@@ -687,10 +718,9 @@ async function submitComment() {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadRecords();
-});
-
-document.addEventListener('click', function(e) {
-  if (e.target.id === 'confirmRollbackBtn') {
-    confirmRollback();
+  
+  const confirmRollbackBtn = document.getElementById('confirmRollbackBtn');
+  if (confirmRollbackBtn) {
+    confirmRollbackBtn.addEventListener('click', confirmRollback);
   }
 });

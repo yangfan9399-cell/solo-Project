@@ -1,12 +1,12 @@
 [
   {
-    "id": "id_zw0ypzg11",
+    "id": "id_kbn07we0t",
     "title": "DJ-2024-001 针叶木浆纤维检测",
     "currentVersion": 3,
     "versions": [
       {
-        "id": "id_skpkxfz2u",
-        "recordId": "id_zw0ypzg11",
+        "id": "id_cz10keasg",
+        "recordId": "id_kbn07we0t",
         "version": 1,
         "parentVersion": null,
         "data": {
@@ -38,16 +38,16 @@
         "source": "初始录入",
         "reason": "纸浆批次DJ-2024-001首次质量检测",
         "isLocked": false,
-        "createdAt": "2026-06-15T18:27:36.115Z",
+        "createdAt": "2026-06-15T18:41:12.963Z",
         "createdBy": "实验室操作员2",
         "comments": [],
         "rollbackHistory": []
       },
       {
-        "id": "id_24c5mpwff",
-        "recordId": "id_zw0ypzg11",
+        "id": "id_eh3u8z6ej",
+        "recordId": "id_kbn07we0t",
         "version": 2,
-        "parentVersion": "id_skpkxfz2u",
+        "parentVersion": "id_cz10keasg",
         "data": {
           "fiberLengthDistribution": {
             "avg": 2.41,
@@ -77,23 +77,23 @@
         "source": "复测修正",
         "reason": "测试员B复测，发现纤维分散更均匀后平均值提升",
         "isLocked": false,
-        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdAt": "2026-06-16T18:41:12.964Z",
         "createdBy": "实验室操作员3",
         "comments": [
           {
-            "id": "id_4xsogfsyk",
+            "id": "id_wu1b0a1p7",
             "author": "测试员A",
             "content": "我认为我的初始测量是准确的，纤维没有明显结团",
-            "createdAt": "2026-06-16T18:27:36.116Z"
+            "createdAt": "2026-06-16T18:41:12.964Z"
           }
         ],
         "rollbackHistory": []
       },
       {
-        "id": "id_yzjl5q15a",
-        "recordId": "id_zw0ypzg11",
+        "id": "id_ha5p9yr61",
+        "recordId": "id_kbn07we0t",
         "version": 3,
-        "parentVersion": "id_24c5mpwff",
+        "parentVersion": "id_eh3u8z6ej",
         "data": {
           "fiberLengthDistribution": {
             "avg": 2.38,
@@ -123,14 +123,14 @@
         "source": "仲裁判定",
         "reason": "两次测量存在差异，由高级技师进行仲裁测量",
         "isLocked": false,
-        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdAt": "2026-06-17T18:41:12.964Z",
         "createdBy": "实验室操作员1",
         "comments": [
           {
-            "id": "id_7rh7i7t8j",
+            "id": "id_0hyfcyada",
             "author": "高级技师王工",
             "content": "仲裁结果基于三次独立测量取平均，建议统一使用标准分散方法",
-            "createdAt": "2026-06-18T18:27:36.116Z"
+            "createdAt": "2026-06-18T18:41:12.964Z"
           }
         ],
         "rollbackHistory": []
@@ -138,13 +138,13 @@
     ]
   },
   {
-    "id": "id_5mf94n5vl",
+    "id": "id_mgxy59y1t",
     "title": "DJ-2024-002 阔叶木浆纤维检测",
     "currentVersion": 3,
     "versions": [
       {
-        "id": "id_7cf6qpei5",
-        "recordId": "id_5mf94n5vl",
+        "id": "id_497i1tl65",
+        "recordId": "id_mgxy59y1t",
         "version": 1,
         "parentVersion": null,
         "data": {
@@ -176,16 +176,16 @@
         "source": "初始录入",
         "reason": "阔叶木浆批次DJ-2024-002检测",
         "isLocked": false,
-        "createdAt": "2026-06-15T18:27:36.116Z",
+        "createdAt": "2026-06-15T18:41:12.964Z",
         "createdBy": "实验室操作员2",
         "comments": [],
         "rollbackHistory": []
       },
       {
-        "id": "id_0k031tny5",
-        "recordId": "id_5mf94n5vl",
+        "id": "id_nvx8t0n49",
+        "recordId": "id_mgxy59y1t",
         "version": 2,
-        "parentVersion": "id_7cf6qpei5",
+        "parentVersion": "id_497i1tl65",
         "data": {
           "fiberLengthDistribution": {
             "avg": 1.85,
@@ -215,23 +215,23 @@
         "source": "证据替换",
         "reason": "原显微照片模糊，重新制片后拍摄高清照片",
         "isLocked": false,
-        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdAt": "2026-06-16T18:41:12.964Z",
         "createdBy": "实验室操作员3",
         "comments": [
           {
-            "id": "id_s75poymva",
+            "id": "id_thm8lpntp",
             "author": "质量主管",
             "content": "照片更换已审核通过，原照片存档保留",
-            "createdAt": "2026-06-17T18:27:36.116Z"
+            "createdAt": "2026-06-17T18:41:12.964Z"
           }
         ],
         "rollbackHistory": []
       },
       {
-        "id": "id_rcib9y1l4",
-        "recordId": "id_5mf94n5vl",
+        "id": "id_ftd3et2xb",
+        "recordId": "id_mgxy59y1t",
         "version": 3,
-        "parentVersion": "id_0k031tny5",
+        "parentVersion": "id_nvx8t0n49",
         "data": {
           "fiberLengthDistribution": {
             "avg": 1.82,
@@ -261,7 +261,7 @@
         "source": "数据修正",
         "reason": "高清照片下发现更多短纤维，重新统计分布",
         "isLocked": false,
-        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdAt": "2026-06-17T18:41:12.964Z",
         "createdBy": "实验室操作员1",
         "comments": [],
         "rollbackHistory": []
@@ -269,13 +269,13 @@
     ]
   },
   {
-    "id": "id_baz95widu",
+    "id": "id_no87xm9qt",
     "title": "DJ-2024-003 漂白针叶木浆检测",
     "currentVersion": 3,
     "versions": [
       {
-        "id": "id_91zf9oxg5",
-        "recordId": "id_baz95widu",
+        "id": "id_72332abjq",
+        "recordId": "id_no87xm9qt",
         "version": 1,
         "parentVersion": null,
         "data": {
@@ -307,16 +307,16 @@
         "source": "初始录入",
         "reason": "漂白针叶木浆检测",
         "isLocked": false,
-        "createdAt": "2026-06-15T18:27:36.116Z",
+        "createdAt": "2026-06-15T18:41:12.964Z",
         "createdBy": "实验室操作员2",
         "comments": [],
         "rollbackHistory": []
       },
       {
-        "id": "id_lhuhnsnfg",
-        "recordId": "id_baz95widu",
+        "id": "id_zs3rc4rlz",
+        "recordId": "id_no87xm9qt",
         "version": 2,
-        "parentVersion": "id_91zf9oxg5",
+        "parentVersion": "id_72332abjq",
         "data": {
           "fiberLengthDistribution": {
             "avg": 2.1,
@@ -346,16 +346,16 @@
         "source": "备注补充",
         "reason": "添加杂细胞含量备注，提醒下游工序注意",
         "isLocked": false,
-        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdAt": "2026-06-16T18:41:12.964Z",
         "createdBy": "实验室操作员3",
         "comments": [],
         "rollbackHistory": []
       },
       {
-        "id": "id_6wmdllbsy",
-        "recordId": "id_baz95widu",
+        "id": "id_q0c3k61a7",
+        "recordId": "id_no87xm9qt",
         "version": 3,
-        "parentVersion": "id_lhuhnsnfg",
+        "parentVersion": "id_zs3rc4rlz",
         "data": {
           "fiberLengthDistribution": {
             "avg": 2.1,
@@ -385,14 +385,14 @@
         "source": "备注撤回",
         "reason": "经核查，杂细胞含量在标准范围内，之前备注有误，予以撤回",
         "isLocked": false,
-        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdAt": "2026-06-17T18:41:12.964Z",
         "createdBy": "实验室操作员1",
         "comments": [
           {
-            "id": "id_t67y0mvba",
+            "id": "id_feti89504",
             "author": "审核员李工",
             "content": "备注撤回已确认，误报已记录在案，请测试员加强复核",
-            "createdAt": "2026-06-18T18:27:36.116Z"
+            "createdAt": "2026-06-18T18:41:12.964Z"
           }
         ],
         "rollbackHistory": [
@@ -401,20 +401,20 @@
             "toVersion": 3,
             "reason": "错误备注撤回",
             "operator": "审核员李工",
-            "timestamp": "2026-06-18T18:27:36.116Z"
+            "timestamp": "2026-06-18T18:41:12.964Z"
           }
         ]
       }
     ]
   },
   {
-    "id": "id_00xsrr7u5",
+    "id": "id_ad6o0n9dc",
     "title": "DJ-2024-004 进口针叶木浆检测",
     "currentVersion": 3,
     "versions": [
       {
-        "id": "id_ehai4aveh",
-        "recordId": "id_00xsrr7u5",
+        "id": "id_u1s829q9v",
+        "recordId": "id_ad6o0n9dc",
         "version": 1,
         "parentVersion": null,
         "data": {
@@ -446,16 +446,16 @@
         "source": "初始录入",
         "reason": "进口俄罗斯针叶木浆检测",
         "isLocked": false,
-        "createdAt": "2026-06-15T18:27:36.116Z",
+        "createdAt": "2026-06-15T18:41:12.964Z",
         "createdBy": "实验室操作员2",
         "comments": [],
         "rollbackHistory": []
       },
       {
-        "id": "id_7wrvxqghl",
-        "recordId": "id_00xsrr7u5",
+        "id": "id_yn2qdamjy",
+        "recordId": "id_ad6o0n9dc",
         "version": 2,
-        "parentVersion": "id_ehai4aveh",
+        "parentVersion": "id_u1s829q9v",
         "data": {
           "fiberLengthDistribution": {
             "avg": 2.58,
@@ -485,16 +485,16 @@
         "source": "平行样补充",
         "reason": "增加第二个平行样数据，取平均值",
         "isLocked": false,
-        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdAt": "2026-06-16T18:41:12.964Z",
         "createdBy": "实验室操作员3",
         "comments": [],
         "rollbackHistory": []
       },
       {
-        "id": "id_lxyvgzhu9",
-        "recordId": "id_00xsrr7u5",
+        "id": "id_y2zjhhqip",
+        "recordId": "id_ad6o0n9dc",
         "version": 3,
-        "parentVersion": "id_7wrvxqghl",
+        "parentVersion": "id_yn2qdamjy",
         "data": {
           "fiberLengthDistribution": {
             "avg": 2.58,
@@ -524,14 +524,14 @@
         "source": "审核锁定",
         "reason": "质量部审核通过，版本锁定作为结算依据",
         "isLocked": true,
-        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdAt": "2026-06-17T18:41:12.964Z",
         "createdBy": "实验室操作员1",
         "comments": [
           {
-            "id": "id_pmpurzlq7",
+            "id": "id_9eefi72np",
             "author": "质量部经理",
             "content": "该批次数据已审核，作为与供应商结算的最终依据，版本锁定。",
-            "createdAt": "2026-06-18T18:27:36.116Z"
+            "createdAt": "2026-06-18T18:41:12.964Z"
           }
         ],
         "rollbackHistory": []
@@ -539,13 +539,13 @@
     ]
   },
   {
-    "id": "id_qgoooo3nh",
+    "id": "id_dvy7yfaik",
     "title": "DJ-2024-005 混合浆检测（烘干条件对比）",
     "currentVersion": 4,
     "versions": [
       {
-        "id": "id_f6xjy25yu",
-        "recordId": "id_qgoooo3nh",
+        "id": "id_on4c1h0hj",
+        "recordId": "id_dvy7yfaik",
         "version": 1,
         "parentVersion": null,
         "data": {
@@ -577,16 +577,16 @@
         "source": "初始录入",
         "reason": "混合浆检测，标准105℃烘干",
         "isLocked": false,
-        "createdAt": "2026-06-15T18:27:36.116Z",
+        "createdAt": "2026-06-15T18:41:12.964Z",
         "createdBy": "实验室操作员2",
         "comments": [],
         "rollbackHistory": []
       },
       {
-        "id": "id_rmrr3mm8p",
-        "recordId": "id_qgoooo3nh",
+        "id": "id_3vrinxxye",
+        "recordId": "id_dvy7yfaik",
         "version": 2,
-        "parentVersion": "id_f6xjy25yu",
+        "parentVersion": "id_on4c1h0hj",
         "data": {
           "fiberLengthDistribution": {
             "avg": 2.2,
@@ -616,23 +616,23 @@
         "source": "烘干条件变更",
         "reason": "使用120℃快速烘干法，缩短检测时间",
         "isLocked": false,
-        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdAt": "2026-06-16T18:41:12.964Z",
         "createdBy": "实验室操作员3",
         "comments": [
           {
-            "id": "id_9ep59uqst",
+            "id": "id_qkefwvpbw",
             "author": "测试员小陈",
             "content": "新方法效率提升很多，建议推广使用",
-            "createdAt": "2026-06-15T18:27:36.116Z"
+            "createdAt": "2026-06-15T18:41:12.964Z"
           }
         ],
         "rollbackHistory": []
       },
       {
-        "id": "id_8rolylhlv",
-        "recordId": "id_qgoooo3nh",
+        "id": "id_r1psstohy",
+        "recordId": "id_dvy7yfaik",
         "version": 3,
-        "parentVersion": "id_rmrr3mm8p",
+        "parentVersion": "id_3vrinxxye",
         "data": {
           "fiberLengthDistribution": {
             "avg": 2.25,
@@ -662,23 +662,23 @@
         "source": "数据修正",
         "reason": "高温下纤维有轻微降解，白度异常升高",
         "isLocked": false,
-        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdAt": "2026-06-17T18:41:12.964Z",
         "createdBy": "实验室操作员1",
         "comments": [
           {
-            "id": "id_gjt8glsvu",
+            "id": "id_778yttbvv",
             "author": "资深技师",
             "content": "白度异常升高可疑，高温可能导致纤维组分变化",
-            "createdAt": "2026-06-16T18:27:36.116Z"
+            "createdAt": "2026-06-16T18:41:12.964Z"
           }
         ],
         "rollbackHistory": []
       },
       {
-        "id": "id_jyvbvx7xq",
-        "recordId": "id_qgoooo3nh",
+        "id": "id_xh6dom60f",
+        "recordId": "id_dvy7yfaik",
         "version": 4,
-        "parentVersion": "id_f6xjy25yu",
+        "parentVersion": "id_on4c1h0hj",
         "data": {
           "fiberLengthDistribution": {
             "avg": 2.2,
@@ -708,14 +708,14 @@
         "source": "错误回滚",
         "reason": "高温烘干会导致纤维降解和数据失真，回滚至标准方法版本",
         "isLocked": false,
-        "createdAt": "2026-06-18T18:27:36.116Z",
+        "createdAt": "2026-06-18T18:41:12.964Z",
         "createdBy": "实验室操作员2",
         "comments": [
           {
-            "id": "id_wi9nrzgb5",
+            "id": "id_zngykpvd5",
             "author": "技术总监",
             "content": "确认回滚。高温烘干仅作参考，正式报告必须使用标准方法。",
-            "createdAt": "2026-06-18T18:27:36.116Z"
+            "createdAt": "2026-06-18T18:41:12.964Z"
           }
         ],
         "rollbackHistory": [
@@ -725,7 +725,7 @@
             "newVersion": 4,
             "reason": "高温烘干方法被证实会导致纤维降解，数据失真，回滚至标准方法版本",
             "operator": "技术总监",
-            "timestamp": "2026-06-18T18:27:36.116Z",
+            "timestamp": "2026-06-18T18:41:12.964Z",
             "affectedRecords": [
               "报告系统-2024-Q1",
               "质量统计月报-03"
