@@ -9,6 +9,7 @@ import {
   StageConfig,
   GameStageId,
   StepDelta,
+  SettlementBreakdownItem,
 } from './types';
 import { getStageConfig } from './stages';
 
@@ -342,54 +343,243 @@ export function calculateSettlement(sessionId: string): GameSettlement | null {
   if (!config) return null;
 
   const state = session.currentState;
+  const breakdown: SettlementBreakdownItem[] = [];
   const details: string[] = [];
 
-  let score = 0;
   const litSlots = state.slots.filter((s) => s.lit).length;
+  const totalSlots = state.slots.length;
 
-  score += state.mergeValue * 2;
-  score += litSlots * 15;
-  score += state.rewardDing * 3;
-  score -= state.riskYin * 2;
-  score -= state.failGui * 3;
+  let baseScore = 0;
+  let bonusScore = 0;
+  let penaltyScore = 0;
+  let finalMultiplier = 1;
 
-  if (state.isWin) {
-    const stepsBonus = Math.max(0, config.maxSteps - state.stepIndex) * 10;
-    score += stepsBonus;
-    details.push(`步数奖励: +${stepsBonus} (剩余${config.maxSteps - state.stepIndex}步)`);
+  // === 基础分 ===
+  const mergeScore = state.mergeValue * 2;
+  baseScore += mergeScore;
+  breakdown.push({
+    category: '基础分',
+    label: '银盐归并值',
+    formula: `${state.mergeValue} × 2 = ${mergeScore}`,
+    value: mergeScore,
+    description: '归并值越高，基础分越高。每点归并值计 2 分。',
+  });
+
+  const slotScore = litSlots * 15;
+  baseScore += slotScore;
+  breakdown.push({
+    category: '基础分',
+    label: '点亮槽数量',
+    formula: `${litSlots} × 15 = ${slotScore}`,
+    value: slotScore,
+    description: `已点亮 ${litSlots}/${totalSlots} 个槽。每个点亮槽计 15 分。`,
+  });
+
+  const rewardScore = state.rewardDing * 3;
+  baseScore += rewardScore;
+  breakdown.push({
+    category: '基础分',
+    label: '丁号奖励剩余',
+    formula: `${state.rewardDing} × 3 = ${rewardScore}`,
+    value: rewardScore,
+    description: '结算时剩余的丁号奖励转化为分数。每点奖励计 3 分。',
+  });
+
+  // === 扣分项 ===
+  const riskPenalty = state.riskYin * 2;
+  if (riskPenalty > 0) {
+    penaltyScore += riskPenalty;
+    breakdown.push({
+      category: '扣分项',
+      label: '寅号风险惩罚',
+      formula: `${state.riskYin} × 2 = -${riskPenalty}`,
+      value: -riskPenalty,
+      description: `寅号风险 ${state.riskYin}/${config.riskYinThreshold}。每点风险扣 2 分。`,
+    });
   }
 
+  const failPenalty = state.failGui * 3;
+  if (failPenalty > 0) {
+    penaltyScore += failPenalty;
+    breakdown.push({
+      category: '扣分项',
+      label: '癸号失败因子惩罚',
+      formula: `${state.failGui} × 3 = -${failPenalty}`,
+      value: -failPenalty,
+      description: `癸号失败因子 ${state.failGui}/${config.failGuiThreshold}。每点因子扣 3 分。`,
+    });
+  }
+
+  // === 加分项 ===
+  if (state.isWin) {
+    const stepsRemaining = config.maxSteps - state.stepIndex;
+    const stepsBonus = Math.max(0, stepsRemaining) * 10;
+    bonusScore += stepsBonus;
+    breakdown.push({
+      category: '加分项',
+      label: '剩余步数奖励',
+      formula: `${stepsRemaining} × 10 = +${stepsBonus}`,
+      value: stepsBonus,
+      description: `在 ${config.maxSteps} 步限制内提前完成。剩余 ${stepsRemaining} 步，每步加 10 分。`,
+    });
+  }
+
+  // === 胜负判定 ===
+  let winCurrent = 0;
+  let winMet = false;
+  let winLabel = '';
+
+  switch (config.winCondition.type) {
+    case 'merge-value':
+      winCurrent = state.mergeValue;
+      winMet = state.mergeValue >= config.winCondition.target;
+      winLabel = `归并值 ≥ ${config.winCondition.target}`;
+      break;
+    case 'all-lit':
+      winCurrent = litSlots;
+      winMet = litSlots >= config.winCondition.target;
+      winLabel = `点亮 ${config.winCondition.target} 个槽`;
+      break;
+    case 'patrol-cycle':
+      winCurrent = state.patrol.position;
+      winMet = state.patrol.position >= config.winCondition.target;
+      winLabel = `巡测位置 ≥ ${config.winCondition.target}`;
+      break;
+    default:
+      winCurrent = state.mergeValue;
+      winMet = state.isWin;
+      winLabel = '达成胜利条件';
+  }
+
+  breakdown.push({
+    category: '胜负判定',
+    label: winLabel,
+    formula: `当前: ${winCurrent} / 目标: ${config.winCondition.target}`,
+    value: winMet ? 1 : 0,
+    description: winMet ? '✅ 胜利条件达成！' : '❌ 未达成胜利条件。',
+  });
+
+  if (state.failReason) {
+    breakdown.push({
+      category: '胜负判定',
+      label: '失败原因',
+      formula: state.failReason,
+      value: 0,
+      description: state.failReason,
+    });
+  }
+
+  // === 局特色 / 隐藏条件 ===
+  if (config.hiddenCondition) {
+    const hiddenMet = state.hiddenTriggered;
+    let hiddenDesc = '';
+    let hiddenFormula = '';
+
+    if (config.hiddenCondition.type === 'no-risk') {
+      hiddenDesc = '零风险完美修复：寅号风险全程保持 0 并达成胜利条件';
+      hiddenFormula = hiddenMet ? '✅ 隐藏条件达成！分数 ×2' : `❌ 寅号风险 ${state.riskYin} ≠ 0，未触发`;
+    } else {
+      hiddenDesc = `隐藏条件类型: ${config.hiddenCondition.type}`;
+      hiddenFormula = hiddenMet ? '✅ 已触发' : '❌ 未触发';
+    }
+
+    if (hiddenMet) {
+      finalMultiplier *= 2;
+      breakdown.push({
+        category: '奖励倍率',
+        label: '癸局隐藏奖励：零风险完美修复',
+        formula: '总分 × 2',
+        value: 2,
+        description: hiddenDesc,
+      });
+    } else {
+      breakdown.push({
+        category: '奖励倍率',
+        label: '癸局隐藏条件（未触发）',
+        formula: hiddenFormula,
+        value: 1,
+        description: hiddenDesc + '。提示：尝试全程保持寅号风险为 0。',
+      });
+    }
+  }
+
+  // === 总分计算 ===
+  let subScore = baseScore + bonusScore - penaltyScore;
+  const finalScore = Math.round(subScore * finalMultiplier);
+
+  // === 评级 ===
+  let rank = '丁';
+  let rankDesc = '';
+  if (state.isWin) {
+    if (state.hiddenTriggered) {
+      rank = '癸·极';
+      rankDesc = '最高评级：隐藏条件达成的完美修复';
+    } else if (finalScore >= 500) {
+      rank = '甲';
+      rankDesc = '优秀：500 分以上';
+    } else if (finalScore >= 350) {
+      rank = '乙';
+      rankDesc = '良好：350 分以上';
+    } else if (finalScore >= 200) {
+      rank = '丙';
+      rankDesc = '合格：200 分以上';
+    } else {
+      rank = '丁';
+      rankDesc = '及格：200 分以下';
+    }
+  } else {
+    if (finalScore >= 200) {
+      rank = '戊';
+      rankDesc = '失败但表现尚可：200 分以上';
+    } else if (finalScore >= 100) {
+      rank = '己';
+      rankDesc = '失败：100-200 分';
+    } else {
+      rank = '庚';
+      rankDesc = '失败：100 分以下';
+    }
+  }
+
+  details.unshift(`归并值贡献: +${mergeScore}`);
+  details.unshift(`点亮槽贡献: +${slotScore} (${litSlots}/${totalSlots})`);
+  if (state.isWin) {
+    details.push(`步数奖励: +${bonusScore} (剩余${config.maxSteps - state.stepIndex}步)`);
+  }
   if (state.hiddenTriggered) {
-    score *= 2;
     details.push('隐藏条件达成！分数翻倍！');
   }
 
-  let rank = '丁';
-  if (state.isWin) {
-    if (state.hiddenTriggered) rank = '癸·极';
-    else if (score >= 500) rank = '甲';
-    else if (score >= 350) rank = '乙';
-    else if (score >= 200) rank = '丙';
-    else rank = '丁';
-  } else {
-    if (score >= 200) rank = '戊';
-    else if (score >= 100) rank = '己';
-    else rank = '庚';
-  }
-
-  details.unshift(`归并值贡献: +${state.mergeValue * 2}`);
-  details.unshift(`点亮槽贡献: +${litSlots * 15} (${litSlots}/${state.slots.length})`);
-
   return {
     stageId: state.stageId,
+    stageName: config.name,
     isWin: state.isWin,
+    failReason: state.failReason,
     finalMergeValue: state.mergeValue,
     stepsUsed: state.stepIndex,
-    score,
+    maxSteps: config.maxSteps,
+    score: finalScore,
     rank,
     details,
-    failReason: state.failReason,
     hiddenBonus: state.hiddenTriggered,
+    breakdown,
+    summary: {
+      baseScore,
+      bonusScore,
+      penaltyScore,
+      finalMultiplier,
+      finalScore,
+    },
+    winCondition: {
+      type: config.winCondition.type,
+      target: config.winCondition.target,
+      current: winCurrent,
+      met: winMet,
+    },
+    thresholds: {
+      riskYin: { current: state.riskYin, max: config.riskYinThreshold },
+      failGui: { current: state.failGui, max: config.failGuiThreshold },
+      rewardDing: { current: state.rewardDing },
+    },
   };
 }
 

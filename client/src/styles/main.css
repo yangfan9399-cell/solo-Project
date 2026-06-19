@@ -695,6 +695,159 @@ body {
   margin-top: 8px;
 }
 
+.settlement-breakdown {
+  max-width: 560px;
+  margin: 16px auto;
+  background: var(--bg-panel-2);
+  border-radius: 6px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.settlement-breakdown.verdict {
+  border-color: var(--accent-gold);
+}
+
+.settlement-breakdown.multiplier {
+  border-color: var(--accent-purple);
+  background: rgba(170, 102, 204, 0.05);
+}
+
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border);
+}
+
+.breakdown-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settlement-breakdown.verdict .breakdown-title {
+  color: var(--accent-gold);
+}
+
+.settlement-breakdown.multiplier .breakdown-title {
+  color: var(--accent-purple);
+}
+
+.breakdown-subtotal {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Menlo', monospace;
+}
+
+.settlement-breakdown.base .breakdown-subtotal {
+  color: var(--accent-gold);
+}
+
+.settlement-breakdown.bonus .breakdown-subtotal {
+  color: var(--accent-green);
+}
+
+.settlement-breakdown.penalty .breakdown-subtotal {
+  color: var(--accent-red);
+}
+
+.settlement-breakdown.multiplier .breakdown-subtotal {
+  color: var(--accent-purple);
+}
+
+.breakdown-list {
+  padding: 4px 0;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.breakdown-row:last-child {
+  border-bottom: none;
+}
+
+.breakdown-row-left {
+  flex: 1;
+  padding-right: 12px;
+}
+
+.breakdown-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.breakdown-formula {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', 'Menlo', monospace;
+  margin-bottom: 4px;
+}
+
+.breakdown-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.breakdown-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.settlement-calc-summary {
+  max-width: 360px;
+  margin: 20px auto;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  text-align: left;
+}
+
+.calc-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.calc-line span:last-child {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-weight: 600;
+}
+
+.calc-line.subtotal {
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding-top: 8px;
+  color: var(--text-primary);
+}
+
+.calc-line.total {
+  border-top: 2px solid var(--accent-gold);
+  margin-top: 8px;
+  padding-top: 10px;
+  font-size: 16px;
+  color: var(--accent-gold);
+  text-shadow: var(--glow-gold);
+}
+
 .settlement-actions {
   display: flex;
   gap: 12px;

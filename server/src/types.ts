@@ -62,16 +62,45 @@ export interface GameState {
   hiddenTriggered?: boolean;
 }
 
+export interface SettlementBreakdownItem {
+  category: '基础分' | '加分项' | '扣分项' | '奖励倍率' | '胜负判定';
+  label: string;
+  formula: string;
+  value: number;
+  description: string;
+}
+
 export interface GameSettlement {
   stageId: GameStageId;
+  stageName: string;
   isWin: boolean;
+  failReason?: string;
   finalMergeValue: number;
   stepsUsed: number;
+  maxSteps: number;
   score: number;
   rank: string;
   details: string[];
-  failReason?: string;
   hiddenBonus?: boolean;
+  breakdown: SettlementBreakdownItem[];
+  summary: {
+    baseScore: number;
+    bonusScore: number;
+    penaltyScore: number;
+    finalMultiplier: number;
+    finalScore: number;
+  };
+  winCondition: {
+    type: string;
+    target: number;
+    current: number;
+    met: boolean;
+  };
+  thresholds: {
+    riskYin: { current: number; max: number };
+    failGui: { current: number; max: number };
+    rewardDing: { current: number };
+  };
 }
 
 export interface GameSession {
