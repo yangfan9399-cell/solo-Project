@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  background: linear-gradient(180deg, #0A1628 0%, #060D18 100%);
+  background-attachment: fixed;
+  color: #C2CFE0;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(184, 115, 51, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184, 115, 51, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(10, 22, 40, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: #254870;
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #335E8E;
+}
+
+/* Selection */
+::selection {
+  background: rgba(184, 115, 51, 0.4);
+}
+
+.font-display {
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Glow text */
+.glow-copper {
+  text-shadow: 0 0 8px rgba(184, 115, 51, 0.6);
+}
+.glow-red {
+  text-shadow: 0 0 8px rgba(214, 69, 69, 0.7);
+}
+.glow-green {
+  text-shadow: 0 0 8px rgba(46, 139, 87, 0.6);
+}
+
+/* Panel */
+.panel {
+  background: linear-gradient(180deg, rgba(15, 36, 64, 0.9) 0%, rgba(10, 22, 40, 0.95) 100%);
+  border: 1px solid rgba(184, 115, 51, 0.15);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+}
+
+.panel-header {
+  border-bottom: 1px solid rgba(184, 115, 51, 0.2);
+}
+
+/* Buttons */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 font-mono text-xs font-medium transition-all duration-150 border;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+
+.btn-primary {
+  @apply bg-industrial-copper-600 text-deep-sea-950 border-industrial-copper-400 hover:bg-industrial-copper-500;
+}
+
+.btn-secondary {
+  @apply bg-deep-sea-700 text-deep-sea-50 border-deep-sea-500 hover:bg-deep-sea-600;
+}
+
+.btn-danger {
+  @apply bg-alert-red-600 text-white border-alert-red-500 hover:bg-alert-red-500;
+}
+
+.btn-success {
+  @apply bg-safety-green-600 text-white border-safety-green-500 hover:bg-safety-green-500;
+}
+
+.btn-ghost {
+  @apply bg-transparent text-deep-sea-100 border-transparent hover:bg-deep-sea-700 hover:border-deep-sea-500;
+}
+
+.btn:disabled {
+  @apply opacity-40 cursor-not-allowed;
+}
+
+/* Tags */
+.tag {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide border;
+  clip-path: polygon(2px 0, 100% 0, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0 100%, 0 2px);
+}
+
+/* Input */
+.input, .select, .textarea {
+  @apply w-full px-3 py-2 font-mono text-sm bg-deep-sea-900 border border-deep-sea-600 text-deep-sea-50 placeholder-deep-sea-400 focus:outline-none focus:border-industrial-copper-500 focus:shadow-glow-copper transition-all;
+}
+
+.textarea {
+  @apply resize-y min-h-[80px];
+}
+
+.label {
+  @apply block font-mono text-[11px] uppercase tracking-wider text-industrial-copper-300 mb-1;
+}
+
+/* Table */
+.table-industrial th {
+  @apply font-mono text-[10px] uppercase tracking-wider text-industrial-copper-400 text-left px-3 py-2 border-b border-deep-sea-600;
+}
+.table-industrial td {
+  @apply px-3 py-2 border-b border-deep-sea-800 text-sm;
+}
+.table-industrial tr:hover td {
+  @apply bg-deep-sea-800/60;
+}
+
+/* Conflict pulse */
+.conflict-pulse {
+  animation: conflict-pulse 2s ease-in-out infinite;
+}
+@keyframes conflict-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(214, 69, 69, 0.5); }
+  50% { box-shadow: 0 0 0 4px rgba(214, 69, 69, 0); }
+}
+
+/* Matrix heat levels */
+.heat-0 { background: rgba(10, 22, 40, 0.3); }
+.heat-1 { background: rgba(46, 139, 87, 0.15); }
+.heat-2 { background: rgba(230, 126, 34, 0.25); }
+.heat-3 { background: rgba(214, 69, 69, 0.35); }
+.heat-conflict {
+  background: rgba(214, 69, 69, 0.5);
+  animation: conflict-pulse 2s ease-in-out infinite;
+}
