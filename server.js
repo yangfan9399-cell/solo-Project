@@ -278,8 +278,8 @@ app.get('/api/replay/:sessionId', (req, res) => {
 });
 
 app.post('/api/settle', (req, res) => {
-  const { levelId, replay } = req.body;
-  const result = computeSettlement(levelId, replay);
+  const { levelId, actions } = req.body;
+  const result = computeSettlement(levelId, { actions });
   if (!result) return res.status(400).json({ error: '无法结算' });
   res.json(result);
 });

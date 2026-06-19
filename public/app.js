@@ -574,7 +574,7 @@ async function settleGame() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         levelId: state.currentLevelId,
-        replay: { actions: state.actions, _firedEvents: Array.from(state.firedEvents) }
+        actions: state.actions
       })
     });
     if (!res.ok) throw new Error('结算失败');
