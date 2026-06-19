@@ -109,7 +109,8 @@ export type EntityType =
   | 'part_batch'
   | 'approval'
   | 'conflict_recalc'
-  | 'export';
+  | 'export'
+  | 'system';
 
 export interface AuditLog {
   id: string;

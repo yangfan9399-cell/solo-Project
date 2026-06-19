@@ -1,0 +1,804 @@
+{
+  "initialized": true,
+  "workOrders": [
+    {
+      "id": "wo-001",
+      "code": "WG-2026-0001",
+      "turbineId": "WT-A01",
+      "towerSection": "nacelle",
+      "title": "主轴承定期检查与润滑",
+      "description": "例行季度检查，主轴承润滑脂更换，密封件外观检查。",
+      "startTime": "2026-06-22T00:00:00.000Z",
+      "endTime": "2026-06-22T06:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-004",
+          "partName": "齿轮油合成型",
+          "quantity": 60
+        }
+      ],
+      "teamId": "team-alpha",
+      "riskLevel": "medium",
+      "riskDescription": "机舱内作业，存在高空坠落风险。",
+      "safetyConfirmed": true,
+      "status": "approved",
+      "createdAt": "2026-06-17T02:00:00.000Z",
+      "updatedAt": "2026-06-19T06:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-19T06:00:00.000Z"
+    },
+    {
+      "id": "wo-002",
+      "code": "WG-2026-0002",
+      "turbineId": "WT-A03",
+      "towerSection": "blade_1",
+      "title": "叶片前缘裂纹修复",
+      "description": "1号叶片前缘发现约80cm裂纹，需使用修复套装现场处理。",
+      "startTime": "2026-06-22T23:30:00.000Z",
+      "endTime": "2026-06-24T09:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-006",
+          "partName": "叶片前缘修复套装",
+          "quantity": 1
+        }
+      ],
+      "teamId": "team-gamma",
+      "riskLevel": "high",
+      "riskDescription": "悬吊作业，高空强风环境，需双安全带系挂。",
+      "safetyConfirmed": false,
+      "status": "approved",
+      "createdAt": "2026-06-18T01:00:00.000Z",
+      "updatedAt": "2026-06-20T03:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-20T03:00:00.000Z"
+    },
+    {
+      "id": "wo-003",
+      "code": "WG-2026-0003",
+      "turbineId": "WT-A05",
+      "towerSection": "tower_lower",
+      "title": "塔筒下段防腐处理",
+      "description": "塔筒下段海雾盐蚀区域重新做防腐涂层。",
+      "startTime": "2026-06-24T01:00:00.000Z",
+      "endTime": "2026-06-26T10:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-003",
+          "partName": "偏航制动片",
+          "quantity": 4
+        }
+      ],
+      "teamId": "team-beta",
+      "riskLevel": "medium",
+      "riskDescription": "密闭空间作业，需通风与气体检测。",
+      "safetyConfirmed": true,
+      "status": "in_progress",
+      "createdAt": "2026-06-15T06:00:00.000Z",
+      "updatedAt": "2026-06-21T00:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-16T02:00:00.000Z"
+    },
+    {
+      "id": "wo-004",
+      "code": "WG-2026-0004",
+      "turbineId": "WT-A07",
+      "towerSection": "nacelle",
+      "title": "齿轮油更换与过滤",
+      "description": "年度齿轮箱油更换，配套滤芯更换与油样检测。",
+      "startTime": "2026-06-21T00:00:00.000Z",
+      "endTime": "2026-06-22T08:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-004",
+          "partName": "齿轮油合成型",
+          "quantity": 200
+        },
+        {
+          "partBatchId": "PB-007",
+          "partName": "液压油站滤芯",
+          "quantity": 2
+        }
+      ],
+      "teamId": "team-alpha",
+      "riskLevel": "medium",
+      "riskDescription": "大型部件吊装，需指挥信号清晰。",
+      "safetyConfirmed": true,
+      "status": "approved",
+      "createdAt": "2026-06-16T03:00:00.000Z",
+      "updatedAt": "2026-06-19T01:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-18T08:00:00.000Z"
+    },
+    {
+      "id": "wo-005",
+      "code": "WG-2026-0005",
+      "turbineId": "WT-A09",
+      "towerSection": "hub",
+      "title": "变桨电机更换",
+      "description": "2号变桨电机异响，整体更换并做参数校准。",
+      "startTime": "2026-06-25T01:00:00.000Z",
+      "endTime": "2026-06-25T09:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-002",
+          "partName": "变桨电机",
+          "quantity": 1
+        }
+      ],
+      "teamId": "team-delta",
+      "riskLevel": "medium",
+      "riskDescription": "轮毂内狭小空间作业，注意工具坠落。",
+      "safetyConfirmed": true,
+      "status": "pending",
+      "createdAt": "2026-06-19T02:00:00.000Z",
+      "updatedAt": "2026-06-20T01:00:00.000Z",
+      "createdBy": "运维调度员"
+    },
+    {
+      "id": "wo-006",
+      "code": "WG-2026-0006",
+      "turbineId": "WT-A02",
+      "towerSection": "tower_upper",
+      "title": "风速传感器校验",
+      "description": "风速仪读数偏差超过5%，需现场校准或更换。",
+      "startTime": "2026-06-20T02:00:00.000Z",
+      "endTime": "2026-06-20T06:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-005",
+          "partName": "风速传感器",
+          "quantity": 1
+        }
+      ],
+      "teamId": "team-beta",
+      "riskLevel": "low",
+      "riskDescription": "塔筒上部平台作业，空间相对充裕。",
+      "safetyConfirmed": true,
+      "status": "completed",
+      "createdAt": "2026-06-13T06:00:00.000Z",
+      "updatedAt": "2026-06-19T08:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-14T01:00:00.000Z",
+      "completedAt": "2026-06-19T07:30:00.000Z"
+    },
+    {
+      "id": "wo-007",
+      "code": "WG-2026-0007",
+      "turbineId": "WT-A01",
+      "towerSection": "tower_middle",
+      "title": "塔筒中段灯具更换（草稿）",
+      "description": "中段照明LED故障，计划更换整串灯具。",
+      "startTime": "2026-06-22T05:00:00.000Z",
+      "endTime": "2026-06-22T09:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-004",
+          "partName": "齿轮油合成型",
+          "quantity": 20
+        }
+      ],
+      "teamId": "team-gamma",
+      "riskLevel": "low",
+      "riskDescription": "常规灯具维护，风险较低。",
+      "safetyConfirmed": false,
+      "status": "draft",
+      "createdAt": "2026-06-20T06:00:00.000Z",
+      "updatedAt": "2026-06-20T06:00:00.000Z",
+      "createdBy": "检修主管"
+    },
+    {
+      "id": "wo-008",
+      "code": "WG-2026-0008",
+      "turbineId": "WT-A10",
+      "towerSection": "nacelle",
+      "title": "主轴承更换大修",
+      "description": "主轴承异响严重，需整体吊装更换，作业风险极高。",
+      "startTime": "2026-06-27T00:00:00.000Z",
+      "endTime": "2026-06-30T10:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-001",
+          "partName": "主轴承密封组件",
+          "quantity": 2
+        },
+        {
+          "partBatchId": "PB-004",
+          "partName": "齿轮油合成型",
+          "quantity": 150
+        }
+      ],
+      "teamId": "team-delta",
+      "riskLevel": "critical",
+      "riskDescription": "机舱大型部件拆解重装，存在装配精度要求极高。",
+      "safetyConfirmed": false,
+      "status": "approved",
+      "createdAt": "2026-06-10T01:00:00.000Z",
+      "updatedAt": "2026-06-20T02:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-12T06:00:00.000Z",
+      "locked": true,
+      "lockedBy": "检修主管",
+      "lockedAt": "2026-06-20T02:00:00.000Z"
+    },
+    {
+      "id": "wo-009",
+      "code": "WG-2026-0009",
+      "turbineId": "WT-A08",
+      "towerSection": "blade_2",
+      "title": "2号叶片前缘修复（延期）",
+      "description": "叶片前缘侵蚀修复，使用专用修复套装。",
+      "startTime": "2026-06-23T00:00:00.000Z",
+      "endTime": "2026-06-24T09:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-006",
+          "partName": "叶片前缘修复套装",
+          "quantity": 1
+        }
+      ],
+      "teamId": "team-alpha",
+      "riskLevel": "high",
+      "riskDescription": "高空悬吊作业，天气窗口窄。",
+      "safetyConfirmed": false,
+      "status": "delayed",
+      "createdAt": "2026-06-17T03:00:00.000Z",
+      "updatedAt": "2026-06-20T08:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-18T02:00:00.000Z",
+      "delayReason": "天气原因，风速超标无法作业"
+    },
+    {
+      "id": "wo-010",
+      "code": "WG-2026-0010",
+      "turbineId": "WT-A04",
+      "towerSection": "foundation",
+      "title": "基础基座渗水检查",
+      "description": "基础环发现渗水痕迹，需排查密封并注浆。",
+      "startTime": "2026-06-26T01:00:00.000Z",
+      "endTime": "2026-06-27T09:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-003",
+          "partName": "偏航制动片",
+          "quantity": 8
+        }
+      ],
+      "teamId": "team-beta",
+      "riskLevel": "low",
+      "riskDescription": "基础内部作业，无高空风险。",
+      "safetyConfirmed": true,
+      "status": "approved",
+      "createdAt": "2026-06-19T07:00:00.000Z",
+      "updatedAt": "2026-06-20T03:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-20T01:00:00.000Z"
+    },
+    {
+      "id": "wo-011",
+      "code": "WG-2026-0011",
+      "turbineId": "WT-A06",
+      "towerSection": "tower_lower",
+      "title": "塔筒螺栓力矩复检",
+      "description": "下段塔筒连接螺栓全部力矩复检与标记。",
+      "startTime": "2026-06-22T01:00:00.000Z",
+      "endTime": "2026-06-23T10:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-008",
+          "partName": "塔筒连接螺栓M36",
+          "quantity": 3
+        }
+      ],
+      "teamId": "team-gamma",
+      "riskLevel": "medium",
+      "riskDescription": "人工搬运重型套筒，注意腰背防护。",
+      "safetyConfirmed": true,
+      "status": "missing_parts",
+      "createdAt": "2026-06-18T08:00:00.000Z",
+      "updatedAt": "2026-06-20T06:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-19T03:00:00.000Z"
+    },
+    {
+      "id": "wo-012",
+      "code": "WG-2026-0012",
+      "turbineId": "WT-A11",
+      "towerSection": "hub",
+      "title": "轮毂变桨轴承润滑",
+      "description": "变桨轴承补充润滑脂，检查齿面磨损。",
+      "startTime": "2026-06-25T01:00:00.000Z",
+      "endTime": "2026-06-26T04:00:00.000Z",
+      "parts": [
+        {
+          "partBatchId": "PB-007",
+          "partName": "液压油站滤芯",
+          "quantity": 1
+        }
+      ],
+      "teamId": "team-delta",
+      "riskLevel": "medium",
+      "riskDescription": "轮毂内作业，空间狭窄。",
+      "safetyConfirmed": true,
+      "status": "approved",
+      "createdAt": "2026-06-15T02:00:00.000Z",
+      "updatedAt": "2026-06-17T01:00:00.000Z",
+      "createdBy": "运维调度员",
+      "approvedBy": "检修主管",
+      "approvedAt": "2026-06-16T06:00:00.000Z"
+    }
+  ],
+  "partBatches": [
+    {
+      "id": "PB-001",
+      "name": "主轴承密封组件",
+      "category": "传动系统",
+      "totalStock": 4,
+      "unit": "套"
+    },
+    {
+      "id": "PB-002",
+      "name": "变桨电机",
+      "category": "变桨系统",
+      "totalStock": 6,
+      "unit": "台"
+    },
+    {
+      "id": "PB-003",
+      "name": "偏航制动片",
+      "category": "偏航系统",
+      "totalStock": 20,
+      "unit": "片"
+    },
+    {
+      "id": "PB-004",
+      "name": "齿轮油合成型",
+      "category": "润滑耗材",
+      "totalStock": 500,
+      "unit": "升"
+    },
+    {
+      "id": "PB-005",
+      "name": "风速传感器",
+      "category": "控制系统",
+      "totalStock": 8,
+      "unit": "个"
+    },
+    {
+      "id": "PB-006",
+      "name": "叶片前缘修复套装",
+      "category": "叶片维护",
+      "totalStock": 3,
+      "unit": "套"
+    },
+    {
+      "id": "PB-007",
+      "name": "液压油站滤芯",
+      "category": "液压系统",
+      "totalStock": 12,
+      "unit": "个"
+    },
+    {
+      "id": "PB-008",
+      "name": "塔筒连接螺栓M36",
+      "category": "结构件",
+      "totalStock": 2,
+      "unit": "箱(50颗/箱)"
+    }
+  ],
+  "teams": [
+    {
+      "id": "team-alpha",
+      "name": "阿尔法班组",
+      "leader": "张建国",
+      "members": [
+        "张建国",
+        "李明",
+        "王海",
+        "赵磊"
+      ]
+    },
+    {
+      "id": "team-beta",
+      "name": "贝塔班组",
+      "leader": "陈志强",
+      "members": [
+        "陈志强",
+        "刘伟",
+        "孙涛"
+      ]
+    },
+    {
+      "id": "team-gamma",
+      "name": "伽马班组",
+      "leader": "周文博",
+      "members": [
+        "周文博",
+        "吴昊",
+        "郑宇",
+        "冯斌",
+        "何杰"
+      ]
+    },
+    {
+      "id": "team-delta",
+      "name": "德尔塔班组",
+      "leader": "林浩然",
+      "members": [
+        "林浩然",
+        "黄山",
+        "徐明"
+      ]
+    }
+  ],
+  "approvals": [
+    {
+      "id": "ap-001",
+      "workOrderId": "wo-001",
+      "action": "submit",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-18T02:00:00.000Z",
+      "comment": "提交审批，例行维护工单。"
+    },
+    {
+      "id": "ap-002",
+      "workOrderId": "wo-001",
+      "action": "approve",
+      "operator": "检修主管",
+      "operatorRole": "检修主管",
+      "timestamp": "2026-06-19T06:00:00.000Z",
+      "comment": "批准，注意安全确认。"
+    },
+    {
+      "id": "ap-003",
+      "workOrderId": "wo-002",
+      "action": "submit",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-19T07:00:00.000Z",
+      "comment": "紧急缺陷工单，叶片裂纹需尽快处理。"
+    },
+    {
+      "id": "ap-004",
+      "workOrderId": "wo-002",
+      "action": "approve",
+      "operator": "检修主管",
+      "operatorRole": "检修主管",
+      "timestamp": "2026-06-20T03:00:00.000Z",
+      "comment": "批准，安全确认必须到位。"
+    },
+    {
+      "id": "ap-005",
+      "workOrderId": "wo-003",
+      "action": "submit",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-15T07:00:00.000Z",
+      "comment": "防腐工程工单。"
+    },
+    {
+      "id": "ap-006",
+      "workOrderId": "wo-003",
+      "action": "approve",
+      "operator": "检修主管",
+      "operatorRole": "检修主管",
+      "timestamp": "2026-06-16T02:00:00.000Z",
+      "comment": "批准。"
+    },
+    {
+      "id": "ap-007",
+      "workOrderId": "wo-004",
+      "action": "submit",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-16T04:00:00.000Z",
+      "comment": "年度齿轮油更换。"
+    },
+    {
+      "id": "ap-008",
+      "workOrderId": "wo-004",
+      "action": "approve",
+      "operator": "检修主管",
+      "operatorRole": "检修主管",
+      "timestamp": "2026-06-18T08:00:00.000Z",
+      "comment": "批准，注意油品型号。"
+    },
+    {
+      "id": "ap-009",
+      "workOrderId": "wo-005",
+      "action": "submit",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-20T02:00:00.000Z",
+      "comment": "变桨电机更换。"
+    },
+    {
+      "id": "ap-010",
+      "workOrderId": "wo-006",
+      "action": "submit",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-13T07:00:00.000Z",
+      "comment": "风速传感器校准。"
+    },
+    {
+      "id": "ap-011",
+      "workOrderId": "wo-006",
+      "action": "approve",
+      "operator": "检修主管",
+      "operatorRole": "检修主管",
+      "timestamp": "2026-06-14T01:00:00.000Z",
+      "comment": "批准。"
+    },
+    {
+      "id": "ap-012",
+      "workOrderId": "wo-006",
+      "action": "complete",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-19T07:30:00.000Z",
+      "comment": "现场校准完成，偏差在允许范围内。"
+    },
+    {
+      "id": "ap-013",
+      "workOrderId": "wo-008",
+      "action": "submit",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-10T02:00:00.000Z",
+      "comment": "大修工单，主轴承更换。"
+    },
+    {
+      "id": "ap-014",
+      "workOrderId": "wo-008",
+      "action": "approve",
+      "operator": "检修主管",
+      "operatorRole": "检修主管",
+      "timestamp": "2026-06-12T06:00:00.000Z",
+      "comment": "批准，已锁定计划排期。"
+    },
+    {
+      "id": "ap-015",
+      "workOrderId": "wo-009",
+      "action": "submit",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-17T04:00:00.000Z",
+      "comment": "叶片修复工单。"
+    },
+    {
+      "id": "ap-016",
+      "workOrderId": "wo-009",
+      "action": "approve",
+      "operator": "检修主管",
+      "operatorRole": "检修主管",
+      "timestamp": "2026-06-18T02:00:00.000Z",
+      "comment": "批准，关注天气窗口。"
+    },
+    {
+      "id": "ap-017",
+      "workOrderId": "wo-009",
+      "action": "delay",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-20T08:00:00.000Z",
+      "comment": "人员调配延期执行"
+    },
+    {
+      "id": "ap-018",
+      "workOrderId": "wo-011",
+      "action": "submit",
+      "operator": "运维调度员",
+      "operatorRole": "运维调度员",
+      "timestamp": "2026-06-18T09:00:00.000Z",
+      "comment": "螺栓力矩复检。"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "log-1781889345986-pe6jj",
+      "action": "conflict_recalc",
+      "entityType": "conflict_recalc",
+      "operator": "检修主管",
+      "timestamp": "2026-06-19T17:15:45.995Z",
+      "details": {
+        "total": 10,
+        "byType": {
+          "safety_unconfirmed": 3,
+          "part_shortage": 1,
+          "window_overlap": 1,
+          "part_overlap": 5
+        }
+      }
+    },
+    {
+      "id": "log-init-001",
+      "action": "system_init",
+      "entityType": "system",
+      "entityId": "system",
+      "operator": "system",
+      "timestamp": "2026-05-20T16:00:00.000Z",
+      "details": {
+        "event": "系统初始化，加载预置数据"
+      }
+    },
+    {
+      "id": "log-init-002",
+      "action": "seed_work_order",
+      "entityType": "work_order",
+      "entityId": "wo-001",
+      "operator": "system",
+      "timestamp": "2026-06-12T16:00:00.000Z",
+      "details": {
+        "code": "WG-2026-0001",
+        "source": "预置数据"
+      }
+    },
+    {
+      "id": "log-init-003",
+      "action": "conflict_recalc",
+      "entityType": "conflict_recalc",
+      "entityId": "initial",
+      "operator": "system",
+      "timestamp": "2026-06-20T00:00:00.000Z",
+      "details": {
+        "total": 7,
+        "byType": {
+          "safety_unconfirmed": 2,
+          "part_shortage": 1,
+          "window_overlap": 1,
+          "part_overlap": 3
+        }
+      }
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "conflict-1781889345984-axuam3",
+      "type": "safety_unconfirmed",
+      "severity": "critical",
+      "title": "高风险作业未确认：WG-2026-0002",
+      "explanation": "工单 WG-2026-0002（高风险）尚未由安全审批人完成安全确认，不得执行。风险描述：悬吊作业，高空强风环境，需双安全带系挂。",
+      "workOrderIds": [
+        "wo-002"
+      ],
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    },
+    {
+      "id": "conflict-1781889345984-su05s8",
+      "type": "safety_unconfirmed",
+      "severity": "critical",
+      "title": "高风险作业未确认：WG-2026-0008",
+      "explanation": "工单 WG-2026-0008（极高风险）尚未由安全审批人完成安全确认，不得执行。风险描述：机舱大型部件拆解重装，存在装配精度要求极高。",
+      "workOrderIds": [
+        "wo-008"
+      ],
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    },
+    {
+      "id": "conflict-1781889345984-p7sgl0",
+      "type": "safety_unconfirmed",
+      "severity": "critical",
+      "title": "高风险作业未确认：WG-2026-0009",
+      "explanation": "工单 WG-2026-0009（高风险）尚未由安全审批人完成安全确认，不得执行。风险描述：高空悬吊作业，天气窗口窄。",
+      "workOrderIds": [
+        "wo-009"
+      ],
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    },
+    {
+      "id": "conflict-1781889345984-0lucl1",
+      "type": "part_shortage",
+      "severity": "critical",
+      "title": "备件库存不足：塔筒连接螺栓M36",
+      "explanation": "工单 WG-2026-0011 需求 3箱(50颗/箱)，但批号 PB-008 库存仅 2箱(50颗/箱)。",
+      "workOrderIds": [
+        "wo-011"
+      ],
+      "partBatchId": "PB-008",
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    },
+    {
+      "id": "conflict-1781889345984-olrrpx",
+      "type": "window_overlap",
+      "severity": "warning",
+      "title": "停机窗口冲突：WT-A01",
+      "explanation": "风车 WT-A01 在同一时段被两条工单占用：WG-2026-0001[approved] (6/22 08:00–6/22 14:00) 与 WG-2026-0007[draft] (6/22 13:00–6/22 17:00)。同一风车无法同时执行两项检修，其中一方仍为草稿可调整排期。",
+      "workOrderIds": [
+        "wo-001",
+        "wo-007"
+      ],
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    },
+    {
+      "id": "conflict-1781889345984-6mmxnu",
+      "type": "part_overlap",
+      "severity": "warning",
+      "title": "备件占用冲突：齿轮油合成型 [PB-004]",
+      "explanation": "批号 PB-004（齿轮油合成型）为同一物理备件，工单 WG-2026-0001 需求 60升 与 WG-2026-0004 需求 200升 在时段 (6/22 08:00–6/22 14:00 ∩ 6/21 08:00–6/22 16:00) 重叠，无法同时被两处作业占用。",
+      "workOrderIds": [
+        "wo-001",
+        "wo-004"
+      ],
+      "partBatchId": "PB-004",
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    },
+    {
+      "id": "conflict-1781889345984-wjntj4",
+      "type": "part_overlap",
+      "severity": "warning",
+      "title": "备件占用冲突：齿轮油合成型 [PB-004]",
+      "explanation": "批号 PB-004（齿轮油合成型）为同一物理备件，工单 WG-2026-0001 需求 60升 与 WG-2026-0007 需求 20升 在时段 (6/22 08:00–6/22 14:00 ∩ 6/22 13:00–6/22 17:00) 重叠，无法同时被两处作业占用，可通过调整排期或改派备件解决。",
+      "workOrderIds": [
+        "wo-001",
+        "wo-007"
+      ],
+      "partBatchId": "PB-004",
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    },
+    {
+      "id": "conflict-1781889345984-9pq0b5",
+      "type": "part_overlap",
+      "severity": "warning",
+      "title": "备件占用冲突：齿轮油合成型 [PB-004]",
+      "explanation": "批号 PB-004（齿轮油合成型）为同一物理备件，工单 WG-2026-0004 需求 200升 与 WG-2026-0007 需求 20升 在时段 (6/21 08:00–6/22 16:00 ∩ 6/22 13:00–6/22 17:00) 重叠，无法同时被两处作业占用，可通过调整排期或改派备件解决。",
+      "workOrderIds": [
+        "wo-004",
+        "wo-007"
+      ],
+      "partBatchId": "PB-004",
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    },
+    {
+      "id": "conflict-1781889345984-u33coj",
+      "type": "part_overlap",
+      "severity": "warning",
+      "title": "备件占用冲突：叶片前缘修复套装 [PB-006]",
+      "explanation": "批号 PB-006（叶片前缘修复套装）为同一物理备件，工单 WG-2026-0002 需求 1套 与 WG-2026-0009 需求 1套 在时段 (6/23 07:30–6/24 17:00 ∩ 6/23 08:00–6/24 17:00) 重叠，无法同时被两处作业占用。",
+      "workOrderIds": [
+        "wo-002",
+        "wo-009"
+      ],
+      "partBatchId": "PB-006",
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    },
+    {
+      "id": "conflict-1781889345984-7d807m",
+      "type": "part_overlap",
+      "severity": "warning",
+      "title": "备件占用冲突：偏航制动片 [PB-003]",
+      "explanation": "批号 PB-003（偏航制动片）为同一物理备件，工单 WG-2026-0003 需求 4片 与 WG-2026-0010 需求 8片 在时段 (6/24 09:00–6/26 18:00 ∩ 6/26 09:00–6/27 17:00) 重叠，无法同时被两处作业占用。",
+      "workOrderIds": [
+        "wo-003",
+        "wo-010"
+      ],
+      "partBatchId": "PB-003",
+      "detectedAt": "2026-06-19T17:15:45.984Z"
+    }
+  ],
+  "lastConflictRecalc": "2026-06-19T17:15:45.993Z",
+  "filters": {},
+  "ui": {
+    "selectedDate": "2026-06-20T00:00:00.000Z",
+    "showWorkOrderModal": false,
+    "showExportModal": false,
+    "activeTab": "matrix",
+    "matrixWeekOffset": 1,
+    "matrixSelectedPartId": "PB-006",
+    "rightPanelTab": "audit"
+  },
+  "currentUser": {
+    "name": "检修主管",
+    "role": "检修主管"
+  }
+}

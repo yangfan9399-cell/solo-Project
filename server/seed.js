@@ -289,7 +289,7 @@ const seedUI = {
   rightPanelTab: 'approvals',
 };
 
-module.exports = {
+export {
   seedWorkOrders,
   seedPartBatches,
   seedTeams,

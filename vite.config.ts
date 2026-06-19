@@ -11,4 +11,13 @@ export default defineConfig({
     react(),
     tsconfigPaths()
   ],
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
+  },
 })
