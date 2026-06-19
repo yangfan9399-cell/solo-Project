@@ -17,7 +17,7 @@
       const levelId = this.getSelectedLevelId();
       this.levelId = levelId;
       this.level = LEVELS[levelId];
-      if (this.hasPlayingState(levelId)) {
+      if (this.hasSavedState(levelId)) {
         try {
           this.continueGame();
           return;
@@ -49,12 +49,12 @@
       return sel ? sel.value : 'jia';
     },
 
-    hasPlayingState(levelId) {
+    hasSavedState(levelId) {
       try {
         const raw = localStorage.getItem(GAME_KEY);
         if (!raw) return false;
         const data = JSON.parse(raw);
-        return data.levelId === levelId && data.gameState && data.gameState.status === 'playing';
+        return data.levelId === levelId && data.gameState && data.gameState.status;
       } catch (e) {
         return false;
       }
@@ -110,7 +110,7 @@
           this.hideContinue();
           return;
         }
-        if (!data.gameState || data.gameState.status === 'playing') {
+        if (data.gameState && data.gameState.status) {
           this.showContinue();
         } else {
           this.hideContinue();
@@ -208,11 +208,19 @@
         this.replayHistory = Replay.getSteps();
 
         if (this.gameState.status !== 'playing') {
-          Settlement.calculate(this.level, this.gameState, this.replayHistory);
+          Board.setMessage('正在请求后端结算服务重算……', 'info');
+          this._requestBackendSettlement({
+            onSuccess: (data) => {
+              Board.setMessage(`已接续推演局并完成后端重算，总分：${data.total}　评级：${data.grade}（${data.server || '后端服务'}）`, 'success');
+            },
+            onFallback: (err, res) => {
+              Board.setMessage(`已接续推演局，但后端不可用，使用本地算法重算（${err.message}），总分：${res.total}`, 'warn');
+            }
+          }).then(() => this.refreshUI());
+        } else {
+          Board.setMessage('已接续当前推演局，可继续操作。', 'success');
+          this.refreshUI();
         }
-
-        Board.setMessage('已接续当前推演局，可继续操作。', 'success');
-        this.refreshUI();
       } catch (e) {
         console.error(e);
         Board.setMessage('接续失败，数据损坏，请启新推演。', 'error');
@@ -294,10 +302,17 @@
       if (lossReason) {
         this.gameState.status = 'defeat';
         this.gameState.endReason = lossReason;
-        Board.setMessage(`推演失败：${lossReason}`, 'error');
-        Settlement.calculate(this.level, this.gameState, this.replayHistory);
+        Board.setMessage(`推演失败：${lossReason}（后端结算中…）`, 'error');
         this.saveState();
         this.refreshUI();
+        this._requestBackendSettlement({
+          onSuccess: (data) => {
+            Board.setMessage(`推演失败：${lossReason}　后端结算完成，总分：${data.total}　评级：${data.grade}（${data.server || '后端服务'}）`, 'error');
+          },
+          onFallback: (err, res) => {
+            Board.setMessage(`推演失败：${lossReason}　后端不可用，本地算法总分：${res.total}（${err.message}）`, 'error');
+          }
+        });
         return;
       }
 
@@ -305,10 +320,17 @@
         if (this.checkWin(node)) {
           this.gameState.status = 'victory';
           this.gameState.endReason = '达成目标';
-          Board.setMessage('推演成功！航线顺利抵达终点。', 'success');
-          Settlement.calculate(this.level, this.gameState, this.replayHistory);
+          Board.setMessage('推演成功！航线顺利抵达终点。（后端结算中…）', 'success');
           this.saveState();
           this.refreshUI();
+          this._requestBackendSettlement({
+            onSuccess: (data) => {
+              Board.setMessage(`推演成功！航线顺利抵达终点。后端结算完成，总分：${data.total}　评级：${data.grade}（${data.server || '后端服务'}）`, 'success');
+            },
+            onFallback: (err, res) => {
+              Board.setMessage(`推演成功！但后端不可用，本地算法总分：${res.total}（${err.message}）`, 'warn');
+            }
+          });
           return;
         } else {
           Board.setMessage('虽抵达终点，但潮汐钟塔点亮值未达目标……继续前行或撤回？', 'warn');
@@ -319,8 +341,17 @@
         if (this.gameState.status === 'playing') {
           this.gameState.status = 'defeat';
           this.gameState.endReason = '描线槽用尽，航线无法继续';
-          Board.setMessage('潮汐钟塔描线槽已用尽，推演失败。', 'error');
-          Settlement.calculate(this.level, this.gameState, this.replayHistory);
+          Board.setMessage('潮汐钟塔描线槽已用尽，推演失败。（后端结算中…）', 'error');
+          this.saveState();
+          this.refreshUI();
+          this._requestBackendSettlement({
+            onSuccess: (data) => {
+              Board.setMessage(`描线槽已用尽，推演失败。后端结算完成，总分：${data.total}　评级：${data.grade}（${data.server || '后端服务'}）`, 'error');
+            },
+            onFallback: (err, res) => {
+              Board.setMessage(`描线槽已用尽，推演失败。后端不可用，本地算法总分：${res.total}（${err.message}）`, 'error');
+            }
+          });
         }
       }
 
@@ -485,7 +516,43 @@
       return node.eventId === evt.eventId;
     },
 
-    recalculate() {
+    async _requestBackendSettlement(opts) {
+      opts = opts || {};
+      const that = this;
+      const historySummary = this.replayHistory.map(function(s) {
+        return {
+          nodeId: s.nodeId, nodeName: s.nodeName, nodeType: s.nodeType, label: s.label,
+          deltaLight: s.deltaLight, deltaRisk: s.deltaRisk, deltaReward: s.deltaReward, deltaFail: s.deltaFail
+        };
+      });
+
+      try {
+        const rsp = await fetch('/api/recalculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            levelId: this.levelId, gameState: this.gameState, history: historySummary
+          })
+        });
+        if (!rsp.ok) throw new Error('HTTP ' + rsp.status);
+        const data = await rsp.json();
+        if (data && typeof data.total === 'number') {
+          Settlement.setResult(data);
+          if (opts.flash !== false) Settlement.flash();
+          if (opts.onSuccess) opts.onSuccess(data);
+          return { ok: true, backend: true, data: data };
+        }
+        throw new Error('返回数据无效');
+      } catch (err) {
+        console.error('后端结算失败:', err);
+        const res = Settlement.calculate(that.level, that.gameState, that.replayHistory, true);
+        if (opts.flash !== false) Settlement.flash();
+        if (opts.onFallback) opts.onFallback(err, res);
+        return { ok: true, backend: false, data: res, error: err };
+      }
+    },
+
+    async recalculate() {
       if (!this.gameState || (this.gameState.status !== 'victory' && this.gameState.status !== 'defeat')) {
         Board.setMessage('推演未结束，暂无需重算。', 'warn');
         return;
@@ -498,51 +565,17 @@
       }
       Board.setMessage('正在请求后端结算服务重算……', 'info');
 
-      const historySummary = this.replayHistory.map(s => ({
-        nodeId: s.nodeId,
-        nodeName: s.nodeName,
-        nodeType: s.nodeType,
-        label: s.label,
-        deltaLight: s.deltaLight,
-        deltaRisk: s.deltaRisk,
-        deltaReward: s.deltaReward,
-        deltaFail: s.deltaFail
-      }));
+      const result = await this._requestBackendSettlement({});
+      if (result.backend) {
+        Board.setMessage(`后端重算完成，总分：${result.data.total}　评级：${result.data.grade}（${result.data.server || '后端服务'}）`, 'success');
+      } else {
+        Board.setMessage(`后端不可用，已使用本地算法重算（${result.error.message}），总分：${result.data.total}`, 'warn');
+      }
 
-      fetch('/api/recalculate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          levelId: this.levelId,
-          gameState: this.gameState,
-          history: historySummary
-        })
-      })
-        .then(rsp => {
-          if (!rsp.ok) throw new Error('HTTP ' + rsp.status);
-          return rsp.json();
-        })
-        .then(data => {
-          if (data && typeof data.total === 'number') {
-            Settlement.setResult(data);
-            Settlement.flash();
-            Board.setMessage(`后端重算完成，总分：${data.total}　评级：${data.grade}（${data.server || '后端服务'}）`, 'success');
-          } else {
-            throw new Error('返回数据无效');
-          }
-        })
-        .catch(err => {
-          console.error('后端重算失败:', err);
-          const res = Settlement.calculate(this.level, this.gameState, this.replayHistory, true);
-          Settlement.flash();
-          Board.setMessage(`后端不可用，已使用本地算法重算（${err.message}），总分：${res.total}`, 'warn');
-        })
-        .finally(() => {
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = '后端重算';
-          }
-        });
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '后端重算';
+      }
     },
 
     autoReplay() {
