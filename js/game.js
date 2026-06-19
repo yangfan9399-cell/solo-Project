@@ -490,9 +490,59 @@
         Board.setMessage('推演未结束，暂无需重算。', 'warn');
         return;
       }
-      const res = Settlement.calculate(this.level, this.gameState, this.replayHistory, true);
-      Settlement.flash();
-      Board.setMessage(`后端重算完成，总分：${res.total}　评级：${res.grade}`, 'success');
+
+      const btn = document.getElementById('recalcBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '重算中…';
+      }
+      Board.setMessage('正在请求后端结算服务重算……', 'info');
+
+      const historySummary = this.replayHistory.map(s => ({
+        nodeId: s.nodeId,
+        nodeName: s.nodeName,
+        nodeType: s.nodeType,
+        label: s.label,
+        deltaLight: s.deltaLight,
+        deltaRisk: s.deltaRisk,
+        deltaReward: s.deltaReward,
+        deltaFail: s.deltaFail
+      }));
+
+      fetch('/api/recalculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          levelId: this.levelId,
+          gameState: this.gameState,
+          history: historySummary
+        })
+      })
+        .then(rsp => {
+          if (!rsp.ok) throw new Error('HTTP ' + rsp.status);
+          return rsp.json();
+        })
+        .then(data => {
+          if (data && typeof data.total === 'number') {
+            Settlement.setResult(data);
+            Settlement.flash();
+            Board.setMessage(`后端重算完成，总分：${data.total}　评级：${data.grade}（${data.server || '后端服务'}）`, 'success');
+          } else {
+            throw new Error('返回数据无效');
+          }
+        })
+        .catch(err => {
+          console.error('后端重算失败:', err);
+          const res = Settlement.calculate(this.level, this.gameState, this.replayHistory, true);
+          Settlement.flash();
+          Board.setMessage(`后端不可用，已使用本地算法重算（${err.message}），总分：${res.total}`, 'warn');
+        })
+        .finally(() => {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = '后端重算';
+          }
+        });
     },
 
     autoReplay() {

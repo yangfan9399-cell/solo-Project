@@ -181,10 +181,16 @@ const Settlement = (function() {
     }
   }
 
+  function setResult(result) {
+    state.result = result;
+    render();
+  }
+
   function getResult() { return state.result; }
 
   return {
     calculate,
+    setResult,
     clear,
     render,
     flash,
