@@ -15,7 +15,30 @@ function loadData() {
     return initDefaultData();
   }
   try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+    let data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+    let migrated = false;
+    if (data.specimens) {
+      data.specimens.forEach(s => {
+        if ((s.id === 1 || s.id === 2) && !s.retest_group) {
+          s.retest_group = {
+            group_id: 'GG-2026-SPORE-01',
+            group_name: '贡嘎山东坡孢子异常跨季节复测组',
+            season: s.id === 1 ? '春季' : '秋季',
+            paired_specimen_id: s.id === 1 ? 2 : 1,
+            is_first_sample: s.id === 1,
+            category_change_summary: s.id === 1
+              ? '首次采集判定为A类疑似新亚种，秋季复测后归属调整为B类环境胁迫'
+              : '春季首次采集判定为A类疑似新亚种，本次秋季复测后归属调整为B类环境胁迫'
+          };
+          migrated = true;
+        }
+      });
+    }
+    if (migrated) {
+      saveData(data);
+      console.log('数据迁移完成：已为 LC-2026-0012/0145 补充跨季节复测关联信息');
+    }
+    return data;
   } catch (e) {
     console.error('数据文件损坏，重新初始化', e);
     return initDefaultData();
@@ -63,6 +86,14 @@ function initDefaultData() {
       abnormal_type: '孢子密度异常',
       abnormal_desc: '春季孢子数量远超同海拔同类标本，疑似环境胁迫或遗传变异',
       belong_category: 'A类-疑似新亚种',
+      retest_group: {
+        group_id: 'GG-2026-SPORE-01',
+        group_name: '贡嘎山东坡孢子异常跨季节复测组',
+        season: '春季',
+        paired_specimen_id: 2,
+        is_first_sample: true,
+        category_change_summary: '首次采集判定为A类疑似新亚种，秋季复测后归属调整为B类环境胁迫'
+      },
       triage_status: '待分诊',
       triage_result: null,
       triage_note: null,
@@ -89,6 +120,14 @@ function initDefaultData() {
       abnormal_type: '孢子密度+形态异常',
       abnormal_desc: '【跨季节复测】同一坐标点秋季复测标本，孢子密度仍偏高且出现形态变异，春季原分类为A类疑似新亚种，当前表现更符合环境胁迫特征，需确认归属分类是否从A类调整为B类',
       belong_category: 'B类-环境胁迫',
+      retest_group: {
+        group_id: 'GG-2026-SPORE-01',
+        group_name: '贡嘎山东坡孢子异常跨季节复测组',
+        season: '秋季',
+        paired_specimen_id: 1,
+        is_first_sample: false,
+        category_change_summary: '春季首次采集判定为A类疑似新亚种，本次秋季复测后归属调整为B类环境胁迫'
+      },
       triage_status: '待分诊',
       triage_result: null,
       triage_note: null,
@@ -471,12 +510,73 @@ app.get('/api/specimens/:id', (req, res) => {
     .filter(Boolean)
     .sort((a, b) => b.similarity_score - a.similarity_score);
 
+  let retest_comparison = null;
+  if (s.retest_group) {
+    const paired = data.specimens.find(x => x.id === s.retest_group.paired_specimen_id);
+    if (paired) {
+      const firstSample = s.retest_group.is_first_sample ? s : paired;
+      const secondSample = s.retest_group.is_first_sample ? paired : s;
+      retest_comparison = {
+        group_id: s.retest_group.group_id,
+        group_name: s.retest_group.group_name,
+        current_season: s.retest_group.season,
+        category_change_summary: s.retest_group.category_change_summary,
+        paired_specimen_no: paired.specimen_no,
+        paired_season: paired.retest_group ? paired.retest_group.season : '未知',
+        first: {
+          specimen_no: firstSample.specimen_no,
+          season: firstSample.retest_group ? firstSample.retest_group.season : '春季',
+          collection_date: firstSample.collection_date,
+          collector: firstSample.collector,
+          abnormal_type: firstSample.abnormal_type,
+          belong_category: firstSample.belong_category,
+          spore_density: firstSample.spore_density,
+          micro_slide: firstSample.micro_slide,
+          triage_status: firstSample.triage_status,
+          triage_result: firstSample.triage_result
+        },
+        second: {
+          specimen_no: secondSample.specimen_no,
+          season: secondSample.retest_group ? secondSample.retest_group.season : '秋季',
+          collection_date: secondSample.collection_date,
+          collector: secondSample.collector,
+          abnormal_type: secondSample.abnormal_type,
+          belong_category: secondSample.belong_category,
+          spore_density: secondSample.spore_density,
+          micro_slide: secondSample.micro_slide,
+          triage_status: secondSample.triage_status,
+          triage_result: secondSample.triage_result
+        },
+        category_change: {
+          from: firstSample.belong_category,
+          to: secondSample.belong_category,
+          changed: firstSample.belong_category !== secondSample.belong_category
+        },
+        shared_context: {
+          species: s.species,
+          collection_location: s.collection_location,
+          collection_coords: s.collection_coords,
+          altitude: s.altitude,
+          substrate: s.substrate,
+          humidity_exposure: s.humidity_exposure
+        },
+        key_differences: [
+          { field: '异常类型', first: firstSample.abnormal_type, second: secondSample.abnormal_type },
+          { field: '孢子密度', first: firstSample.spore_density, second: secondSample.spore_density },
+          { field: '显微切片', first: firstSample.micro_slide, second: secondSample.micro_slide },
+          { field: '采集人', first: firstSample.collector, second: secondSample.collector }
+        ]
+      };
+    }
+  }
+
   res.json({
     ...s,
     responsible_name: r ? r.name : null,
     responsible_role: r ? r.role : null,
     triage_records: records,
-    similar_cases: similar
+    similar_cases: similar,
+    retest_comparison
   });
 });
 

@@ -81,9 +81,13 @@ async function loadQueue() {
       const coordShort = coords.length === 2
         ? `${parseFloat(coords[0]).toFixed(2)}, ${parseFloat(coords[1]).toFixed(2)}`
         : s.collection_coords;
+      const retestBadge = s.retest_group
+        ? `<span class="queue-retest-badge" title="${s.retest_group.group_name}">🔄 ${s.retest_group.season}复测</span>`
+        : '';
 
       return `
         <div class="queue-item ${sc} ${active}" data-id="${s.id}">
+          ${retestBadge}
           <div class="queue-top">
             <span class="queue-spec-no mono">${s.specimen_no}</span>
             <span class="status-tag status-${s.triage_status}">${s.triage_status}</span>
@@ -149,6 +153,60 @@ async function loadDetail() {
     document.getElementById('d-date').textContent = s.collection_date;
     document.getElementById('d-collector').textContent = s.collector;
     document.getElementById('d-desc').textContent = s.abnormal_desc;
+
+    const retestSection = document.getElementById('section-retest');
+    if (s.retest_comparison) {
+      retestSection.style.display = 'block';
+      const rc = s.retest_comparison;
+      document.getElementById('retest-group-name').textContent = rc.group_name;
+      document.getElementById('retest-group-id').textContent = '复测组：' + rc.group_id;
+      document.getElementById('retest-current-season').textContent = rc.current_season;
+
+      document.getElementById('retest-cat-from').textContent = rc.category_change.from;
+      document.getElementById('retest-from-season').textContent = rc.first.season;
+      document.getElementById('retest-from-no').textContent = rc.first.specimen_no;
+      document.getElementById('retest-cat-to').textContent = rc.category_change.to;
+      document.getElementById('retest-to-season').textContent = rc.second.season;
+      document.getElementById('retest-to-no').textContent = rc.second.specimen_no;
+      document.getElementById('retest-change-summary').textContent = rc.category_change_summary;
+
+      document.getElementById('retest-ctx-location').textContent = rc.shared_context.collection_location;
+      document.getElementById('retest-ctx-coords').textContent = rc.shared_context.collection_coords;
+      document.getElementById('retest-ctx-altitude').textContent = rc.shared_context.altitude;
+      document.getElementById('retest-ctx-substrate').textContent = rc.shared_context.substrate;
+
+      document.getElementById('retest-spring-no').textContent = rc.first.specimen_no;
+      document.getElementById('retest-autumn-no').textContent = rc.second.specimen_no;
+      document.getElementById('retest-spring-date').textContent = rc.first.collection_date;
+      document.getElementById('retest-autumn-date').textContent = rc.second.collection_date;
+      document.getElementById('retest-spring-collector').textContent = rc.first.collector;
+      document.getElementById('retest-autumn-collector').textContent = rc.second.collector;
+      document.getElementById('retest-spring-type').textContent = rc.first.abnormal_type;
+      document.getElementById('retest-autumn-type').textContent = rc.second.abnormal_type;
+      document.getElementById('retest-spring-spore').textContent = rc.first.spore_density;
+      document.getElementById('retest-autumn-spore').textContent = rc.second.spore_density;
+      document.getElementById('retest-spring-micro').textContent = rc.first.micro_slide;
+      document.getElementById('retest-autumn-micro').textContent = rc.second.micro_slide;
+      document.getElementById('retest-spring-cat').textContent = rc.first.belong_category;
+      document.getElementById('retest-autumn-cat').textContent = rc.second.belong_category;
+      const springStatusEl = document.getElementById('retest-spring-status');
+      springStatusEl.textContent = rc.first.triage_status;
+      springStatusEl.className = `status-tag status-${rc.first.triage_status}`;
+      const autumnStatusEl = document.getElementById('retest-autumn-status');
+      autumnStatusEl.textContent = rc.second.triage_status;
+      autumnStatusEl.className = `status-tag status-${rc.second.triage_status}`;
+
+      document.getElementById('retest-jump-target').textContent = rc.paired_specimen_no;
+      const jumpBtn = document.getElementById('retest-jump-btn');
+      jumpBtn.onclick = () => {
+        state.selectedId = s.retest_group.paired_specimen_id;
+        loadQueue();
+        loadDetail();
+        showToast('已跳转至关联复测标本');
+      };
+    } else {
+      retestSection.style.display = 'none';
+    }
 
     if (s.responsible_name) {
       document.getElementById('resp-name').textContent = s.responsible_name;

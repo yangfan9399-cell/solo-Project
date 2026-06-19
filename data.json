@@ -56,7 +56,15 @@
       "close_reason": null,
       "close_note": null,
       "created_at": "2026-06-14T19:08:22.784Z",
-      "triaged_at": null
+      "triaged_at": null,
+      "retest_group": {
+        "group_id": "GG-2026-SPORE-01",
+        "group_name": "贡嘎山东坡孢子异常跨季节复测组",
+        "season": "春季",
+        "paired_specimen_id": 2,
+        "is_first_sample": true,
+        "category_change_summary": "首次采集判定为A类疑似新亚种，秋季复测后归属调整为B类环境胁迫"
+      }
     },
     {
       "id": 2,
@@ -82,7 +90,15 @@
       "close_reason": null,
       "close_note": null,
       "created_at": "2026-06-16T13:08:22.785Z",
-      "triaged_at": null
+      "triaged_at": null,
+      "retest_group": {
+        "group_id": "GG-2026-SPORE-01",
+        "group_name": "贡嘎山东坡孢子异常跨季节复测组",
+        "season": "秋季",
+        "paired_specimen_id": 1,
+        "is_first_sample": false,
+        "category_change_summary": "春季首次采集判定为A类疑似新亚种，本次秋季复测后归属调整为B类环境胁迫"
+      }
     },
     {
       "id": 3,

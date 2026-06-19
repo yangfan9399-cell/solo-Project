@@ -300,6 +300,278 @@ body {
   padding: 2px 6px;
   border-radius: 4px;
 }
+.queue-retest-badge {
+  position: absolute;
+  top: 12px;
+  right: 48px;
+  font-size: 10px;
+  background: linear-gradient(135deg, #ff6b35 0%, #d89a3b 100%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(255, 107, 53, 0.4);
+  letter-spacing: 0.3px;
+}
+
+/* ============ 跨季节复测对比面板 ============ */
+.section-retest {
+  background: linear-gradient(135deg, #fffaf0 0%, #fdf3e4 50%, #fef6ed 100%);
+  border: 2px solid #e8b86c;
+  border-radius: var(--radius-lg);
+  padding: 20px 22px 18px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 14px rgba(216, 154, 59, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+.section-retest::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ff8c42 0%, #d89a3b 50%, #ff6b35 100%);
+}
+
+.retest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed #e0c088;
+}
+.retest-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.retest-icon {
+  font-size: 36px;
+  filter: drop-shadow(0 2px 4px rgba(216, 154, 59, 0.35));
+  animation: rotateIcon 8s linear infinite;
+}
+@keyframes rotateIcon {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.retest-title h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #7a4d12;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+.retest-subtitle {
+  font-size: 11px;
+  color: #a67832;
+  margin: 3px 0 0 0;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  opacity: 0.8;
+}
+.retest-season-badge {
+  padding: 6px 14px;
+  background: white;
+  border: 1.5px solid #e8b86c;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #7a4d12;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(216, 154, 59, 0.15);
+}
+.retest-season-badge strong {
+  font-weight: 700;
+  color: #c9651b;
+  margin-left: 4px;
+  font-size: 13px;
+}
+
+.retest-summary {
+  background: linear-gradient(135deg, #fff 0%, #fff8ed 100%);
+  border: 1.5px solid #e8b86c;
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.retest-change-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #a67832;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.retest-change-flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.retest-change-item {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+.retest-change-item.retest-from {
+  background: linear-gradient(135deg, #eef6ef 0%, #dcede0 100%);
+  border: 1.5px solid #6ba87e;
+}
+.retest-change-item.retest-to {
+  background: linear-gradient(135deg, #fdf3e4 0%, #f7dcb0 100%);
+  border: 1.5px solid #d89a3b;
+}
+.retest-change-cat {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+.retest-from .retest-change-cat { color: var(--accent-green); }
+.retest-to .retest-change-cat { color: #c9651b; }
+.retest-change-meta {
+  font-size: 11px;
+  color: #7a7a7a;
+}
+.retest-change-arrow {
+  color: #d89a3b;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  animation: arrowPulse 2s ease-in-out infinite;
+}
+@keyframes arrowPulse {
+  0%, 100% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(4px); opacity: 0.6; }
+}
+.retest-change-summary {
+  font-size: 12.5px;
+  color: #7a4d12;
+  line-height: 1.6;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border-left: 3px solid #d89a3b;
+  border-radius: 0 6px 6px 0;
+}
+
+.retest-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.context-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: white;
+  border: 1px solid #e0c088;
+  border-radius: 16px;
+  font-size: 11.5px;
+  color: #7a4d12;
+  font-weight: 500;
+}
+
+.retest-table-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #7a4d12;
+  margin-bottom: 10px;
+  padding-left: 8px;
+  border-left: 3px solid #d89a3b;
+}
+.retest-compare-table {
+  background: white;
+  border: 1px solid #e0c088;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.retest-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 1fr;
+  border-bottom: 1px solid #f0e0c0;
+}
+.retest-row:last-child { border-bottom: none; }
+.retest-row-header {
+  background: linear-gradient(90deg, #fdf3e4 0%, #faebce 100%);
+}
+.retest-row-header .retest-col {
+  font-weight: 700;
+  color: #7a4d12;
+}
+.retest-row-diff {
+  background: #fffaf0;
+}
+.retest-row-diff .retest-cell:not(.retest-field) {
+  font-weight: 500;
+}
+.retest-cell {
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+}
+.retest-cell.retest-field {
+  font-size: 11.5px;
+  color: #a67832;
+  font-weight: 600;
+  background: rgba(253, 243, 228, 0.5);
+  border-right: 1px solid #f0e0c0;
+}
+.retest-cell.retest-col {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.col-season {
+  font-size: 13px;
+  font-weight: 700;
+}
+.col-season.col-spring { color: #d8506a; }
+.col-season.col-autumn { color: #c9651b; }
+.col-no {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.retest-jump-row {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+.retest-jump-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #ff8c42 0%, #d89a3b 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(216, 154, 59, 0.35);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.retest-jump-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(216, 154, 59, 0.45);
+}
+.retest-jump-btn .mono {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 11.5px;
+  background: rgba(255,255,255,0.25);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
 
 .detail-container {
   display: flex;
