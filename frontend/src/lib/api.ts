@@ -34,6 +34,11 @@ export const specimenApi = {
     return response.data
   },
 
+  updateStatus: async (id: number, status: string): Promise<Specimen> => {
+    const response = await apiClient.post<Specimen>(`/specimens/${id}/status`, { status })
+    return response.data
+  },
+
   reviewSpecimen: async (id: number, data: ReviewRequest): Promise<Specimen> => {
     const response = await apiClient.post<Specimen>(`/specimens/${id}/review`, data)
     return response.data

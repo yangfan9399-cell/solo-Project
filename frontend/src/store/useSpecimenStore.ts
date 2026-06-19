@@ -50,6 +50,7 @@ interface SpecimenState {
 
 interface SpecimenActions {
   fetchSpecimens: (status?: string) => Promise<void>
+  setSpecimens: (specimens: Specimen[]) => void
   fetchSpecimenDetail: (id: number) => Promise<void>
   fetchAssignments: () => Promise<void>
   fetchRejections: () => Promise<void>
@@ -61,6 +62,7 @@ interface SpecimenActions {
   fetchExportPreview: () => Promise<void>
   executeExport: () => Promise<void>
   fetchHistory: (id: number) => Promise<void>
+  updateSpecimenStatus: (id: number, status: string) => Promise<void>
   updateSpecimenStatusOptimistic: (id: number, status: string) => void
   toggleSelectSpecimen: (id: number) => void
   selectAllSpecimens: (ids: number[]) => void
@@ -125,6 +127,10 @@ export const useSpecimenStore = create<SpecimenState & SpecimenActions>((set, ge
       set({ error: '获取标本列表失败', isLoading: false })
       console.error(error)
     }
+  },
+
+  setSpecimens: (specimens: Specimen[]) => {
+    set({ specimens })
   },
 
   fetchSpecimenDetail: async (id: number) => {
@@ -195,12 +201,9 @@ export const useSpecimenStore = create<SpecimenState & SpecimenActions>((set, ge
 
     set({ isLoading: true, error: null })
     try {
-      const requestData = data as Omit<BatchRejectRequest, 'specimen_ids'> & { is_deficient?: boolean }
-      const { is_deficient, ...restData } = requestData
       const result = await rejectionApi.batchReject({
         specimen_ids: selectedSpecimenIds,
-        ...restData,
-        marked_missing: is_deficient,
+        ...data,
       })
       set({
         rejections: [...get().rejections, ...result],
@@ -286,6 +289,32 @@ export const useSpecimenStore = create<SpecimenState & SpecimenActions>((set, ge
       set({ specimenHistory: data, isLoading: false })
     } catch (error) {
       set({ error: '获取历史记录失败', isLoading: false })
+      console.error(error)
+    }
+  },
+
+  updateSpecimenStatus: async (id: number, status: string) => {
+    const { specimens } = get()
+    const originalSpecimen = specimens.find((s) => s.id === id)
+    if (!originalSpecimen) return
+
+    set((state) => ({
+      specimens: state.specimens.map((s) =>
+        s.id === id ? { ...s, status: status as Specimen['status'] } : s
+      ),
+    }))
+
+    try {
+      await specimenApi.updateStatus(id, status)
+    } catch (error) {
+      if (originalSpecimen) {
+        set((state) => ({
+          specimens: state.specimens.map((s) =>
+            s.id === id ? { ...s, status: originalSpecimen.status } : s
+          ),
+          error: '状态更新失败，已回滚',
+        }))
+      }
       console.error(error)
     }
   },

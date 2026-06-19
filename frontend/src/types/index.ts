@@ -123,8 +123,7 @@ export interface BatchRejectRequest {
   specimen_ids: number[]
   reason: string
   rejected_by: string
-  marked_missing?: boolean
-  notes?: string
+  is_deficient?: boolean
 }
 
 export interface ExportRequest {

@@ -7,7 +7,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useSpecimenStore } from '@/store/useSpecimenStore'
-import { specimenApi } from '@/lib/api'
 import type { User } from '@/types'
 import { RefreshCw, User as UserIcon, Leaf } from 'lucide-react'
 
@@ -15,23 +14,14 @@ export function Header() {
   const users = useSpecimenStore((state) => state.users)
   const currentUser = useSpecimenStore((state) => state.currentUser)
   const setCurrentUser = useSpecimenStore((state) => state.setCurrentUser)
-  const setSpecimens = useSpecimenStore((state) => state.setSpecimens)
-  const setLoading = useSpecimenStore((state) => state.setLoading)
-  const setError = useSpecimenStore((state) => state.setError)
+  const fetchSpecimens = useSpecimenStore((state) => state.fetchSpecimens)
   const clearSelection = useSpecimenStore((state) => state.clearSelection)
+  const setError = useSpecimenStore((state) => state.setError)
 
   const handleRefresh = async () => {
-    setLoading(true)
+    clearSelection()
     setError(null)
-    try {
-      const response = await specimenApi.getSpecimens({ page_size: 100 })
-      setSpecimens(response.data)
-      clearSelection()
-    } catch (error) {
-      setError('加载标本列表失败，请重试')
-    } finally {
-      setLoading(false)
-    }
+    await fetchSpecimens()
   }
 
   const handleUserChange = (value: string | null) => {

@@ -128,6 +128,11 @@ class BatchRejectRequest(BaseModel):
     specimen_ids: List[int]
     reason: str
     rejected_by: str
+    is_deficient: Optional[bool] = False
+
+
+class StatusUpdateRequest(BaseModel):
+    status: str
 
 
 class ReviewRequest(BaseModel):

@@ -28,7 +28,7 @@ const STATUSES = ['待接收', '复判中', '已锁定', '已退回'] as const
 export function KanbanBoard() {
   const specimens = useSpecimenStore((state) => state.specimens)
   const selectedSpecimenIds = useSpecimenStore((state) => state.selectedSpecimenIds)
-  const updateSpecimenStatusOptimistic = useSpecimenStore((state) => state.updateSpecimenStatusOptimistic)
+  const updateSpecimenStatus = useSpecimenStore((state) => state.updateSpecimenStatus)
   const selectAllSpecimens = useSpecimenStore((state) => state.selectAllSpecimens)
   const clearSelection = useSpecimenStore((state) => state.clearSelection)
   const openAssignDialog = useSpecimenStore((state) => state.openAssignDialog)
@@ -92,7 +92,7 @@ export function KanbanBoard() {
     const specimen = specimens.find((s) => s.id === specimenId)
     if (!specimen || specimen.status === newStatus) return
 
-    updateSpecimenStatusOptimistic(specimenId, newStatus)
+    updateSpecimenStatus(specimenId, newStatus)
   }
 
   const handleSelectAll = () => {

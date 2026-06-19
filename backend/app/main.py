@@ -58,9 +58,30 @@ def batch_reject(request: schemas.BatchRejectRequest, db: Session = Depends(get_
         db,
         specimen_ids=request.specimen_ids,
         reason=request.reason,
-        rejected_by=request.rejected_by
+        rejected_by=request.rejected_by,
+        is_deficient=request.is_deficient or False
     )
     return rejections
+
+
+@app.post("/api/specimens/{specimen_id}/status", response_model=schemas.Specimen)
+def update_specimen_status(specimen_id: int, request: schemas.StatusUpdateRequest, db: Session = Depends(get_db)):
+    specimen = crud.get_specimen(db, specimen_id=specimen_id)
+    if not specimen:
+        raise HTTPException(status_code=404, detail="Specimen not found")
+
+    valid_statuses = ["待接收", "复判中", "已锁定", "已退回"]
+    if request.status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"无效的状态值，必须是: {', '.join(valid_statuses)}")
+
+    if specimen.status == "已锁定" and request.status != "已锁定":
+        raise HTTPException(status_code=400, detail="已锁定的标本无法通过状态流转修改，请先解锁")
+
+    if request.status == "已锁定":
+        raise HTTPException(status_code=400, detail="锁定操作请使用 /lock 端点")
+
+    updated_specimen = crud.update_specimen_status(db, specimen_id, request.status)
+    return updated_specimen
 
 
 @app.post("/api/specimens/{specimen_id}/review", response_model=schemas.Specimen)
