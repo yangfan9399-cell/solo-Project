@@ -81,14 +81,16 @@ const GameEngine = {
 
         this.pathEdges.push({ from: this.currentNode, to: nodeId });
 
+        const isFirstVisit = !this.visitedNodes.includes(nodeId);
+
         this.currentNode = nodeId;
-        if (!this.visitedNodes.includes(nodeId)) {
+        if (isFirstVisit) {
             this.visitedNodes.push(nodeId);
         }
 
         const node = this.getNode(nodeId);
         let triggeredEvent = null;
-        if (node && node.event) {
+        if (node && node.event && isFirstVisit) {
             const event = GameEvents.getEvent(node.event);
             if (event) {
                 const newState = GameEvents.applyEvent(this.state, node.event);

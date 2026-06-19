@@ -4,7 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 8080;
+const PORT = 8888;
 
 const Levels = {
     zi: {
@@ -354,7 +354,8 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    let filePath = '.' + req.url;
+    let urlPath = req.url.split('?')[0];
+    let filePath = '.' + urlPath;
     if (filePath === './') filePath = './index.html';
     filePath = path.join(__dirname, '..', filePath);
 

@@ -488,6 +488,15 @@ body::before {
     font-family: 'Ma Shan Zheng', cursive;
 }
 
+.result-source {
+    font-size: 0.75em;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    letter-spacing: 2px;
+    opacity: 0.8;
+    font-family: 'ZCOOL XiaoWei', serif;
+}
+
 .action-bar {
     display: flex;
     justify-content: center;

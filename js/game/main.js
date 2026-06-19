@@ -263,39 +263,53 @@ const GameMain = {
         );
     },
 
-    showGameOver() {
-        const details = GameEngine.getSettlementDetails();
-        const score = details.score;
-        Storage.saveBestScore(this.currentLevel, score);
+    async showGameOver() {
+        const backendResult = await this.fetchBackendSettlement();
+        let score, won;
+        
+        if (backendResult && backendResult.valid) {
+            score = backendResult.score;
+            won = backendResult.gameWon;
+            Storage.saveBestScore(this.currentLevel, score);
+            ResultUI.render(this.convertBackendResult(backendResult));
+        } else {
+            const details = GameEngine.getSettlementDetails();
+            score = details.score;
+            won = details.won;
+            Storage.saveBestScore(this.currentLevel, score);
+            ResultUI.render(details);
+        }
 
-        if (details.won === true) {
+        if (won === true) {
             ModalUI.show(
                 '推演成功！',
-                `恭喜你完成了 ${Levels.getLevel(this.currentLevel).name}！<br><br>最终得分：<strong style="font-size: 1.5em; color: #d4a017;">${score} 分</strong><br><br>点击「推演结算」查看详细信息。`
+                `恭喜你完成了 ${Levels.getLevel(this.currentLevel).name}！<br><br>最终得分（后端重算）：<strong style="font-size: 1.5em; color: #d4a017;">${score} 分</strong><br><br>结算簿已显示详细信息。`
             );
-        } else if (details.won === 'partial') {
+        } else if (won === 'partial') {
             ModalUI.show(
                 '航线达成',
-                `你抵达了终点，但似乎还有未解锁的秘密...<br><br>最终得分：<strong style="font-size: 1.2em; color: #d4a017;">${score} 分</strong><br><br>提示：尝试收集更多归并痕以触发隐藏条件。`
+                `你抵达了终点，但似乎还有未解锁的秘密...<br><br>最终得分（后端重算）：<strong style="font-size: 1.2em; color: #d4a017;">${score} 分</strong><br><br>提示：尝试收集更多归并痕以触发隐藏条件。`
             );
         } else {
             ModalUI.show(
                 '推演失败',
-                `这次推演失败了...<br><br>最终得分：<strong style="font-size: 1.2em; color: #c44536;">${score} 分</strong><br><br>不要气馁，再试一次吧！`
+                `这次推演失败了...<br><br>最终得分（后端重算）：<strong style="font-size: 1.2em; color: #c44536;">${score} 分</strong><br><br>不要气馁，再试一次吧！`
             );
         }
-
-        this.showSettlement();
     },
 
-    showSettlement() {
-        const details = GameEngine.getSettlementDetails();
-        ResultUI.render(details);
-
-        this.verifyWithBackend();
+    async showSettlement() {
+        const result = await this.fetchBackendSettlement();
+        
+        if (result && result.valid) {
+            ResultUI.render(this.convertBackendResult(result));
+        } else {
+            const details = GameEngine.getSettlementDetails();
+            ResultUI.render(details);
+        }
     },
 
-    async verifyWithBackend() {
+    async fetchBackendSettlement() {
         try {
             const steps = GameEngine.steps.map(s => ({ toNode: s.toNode }));
             
@@ -312,21 +326,25 @@ const GameMain = {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.valid) {
-                    console.log('后端验证通过');
-                    console.log('后端得分:', result.score);
-                    console.log('前端得分:', GameEngine.calculateScore());
-                    
-                    if (Math.abs(result.score - GameEngine.calculateScore()) > 1) {
-                        console.warn('前后端得分不一致!');
-                    }
-                } else {
-                    console.error('后端验证失败:', result.error);
-                }
+                return result;
             }
+            return null;
         } catch (e) {
-            console.log('后端验证不可用，使用前端结算');
+            console.log('后端结算不可用，使用前端结算');
+            return null;
         }
+    },
+
+    convertBackendResult(backendResult) {
+        return {
+            won: backendResult.gameWon,
+            finalState: backendResult.finalState,
+            steps: GameEngine.steps.length,
+            eventsTriggered: backendResult.eventLog.length,
+            score: backendResult.score,
+            details: backendResult.details,
+            isBackendCalculated: true
+        };
     },
 
     renderAll() {

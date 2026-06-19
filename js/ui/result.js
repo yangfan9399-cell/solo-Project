@@ -95,6 +95,7 @@ const ResultUI = {
             <div class="result-final ${resultClass}">
                 <div class="result-title">${resultTitle}</div>
                 <div class="result-score">${details.score} 分</div>
+                ${details.isBackendCalculated ? '<div class="result-source">后端重算</div>' : ''}
             </div>
         `;
     },
