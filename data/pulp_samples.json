@@ -1,0 +1,793 @@
+[
+  {
+    "id": "sample_mqlaunrk_5drqvf",
+    "sampleCode": "S-PK-20260610-001",
+    "pulpBatch": "PK-HT-2026-06-088",
+    "fiberLength": {
+      "short": 18.5,
+      "medium": 62.3,
+      "long": 19.2,
+      "weightedAverage": 2.29
+    },
+    "whiteness": 84.7,
+    "moistureContent": 5.48,
+    "sourceType": "PURCHASE",
+    "sourceInfo": "供应商：山东华泰纸业 | 合同号：HT-2026-0612",
+    "operatorId": "U001",
+    "operatorName": "张伟",
+    "responsiblePersonId": "U005",
+    "responsiblePersonName": "陈建国",
+    "registeredAt": "2026-06-09T19:06:07.184Z",
+    "status": "JUDGED_PASS",
+    "microPhotos": [
+      {
+        "id": "mp_mqlaunrk_5sihq7",
+        "label": "针叶木浆 · 标准烘干",
+        "magnification": 400,
+        "imageUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20style%3D%22background%3A%23F5F0E8%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22blur%22%3E%3CfeGaussianBlur%20stdDeviation%3D%220.5%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23blur)%22%3E%3Cline%20x1%3D%22363.2%22%20y1%3D%22102.9%22%20x2%3D%22351.1%22%20y2%3D%22141.6%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8078079065122759%22%2F%3E%3Cline%20x1%3D%22166.0%22%20y1%3D%22106.9%22%20x2%3D%22241.4%22%20y2%3D%22210.5%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8566797833428341%22%2F%3E%3Cline%20x1%3D%22259.2%22%20y1%3D%22114.8%22%20x2%3D%22184.5%22%20y2%3D%22160.0%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.980763914188397%22%2F%3E%3Cline%20x1%3D%22251.1%22%20y1%3D%22288.8%22%20x2%3D%22186.4%22%20y2%3D%22321.0%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8504662406507206%22%2F%3E%3Cline%20x1%3D%22240.3%22%20y1%3D%2279.7%22%20x2%3D%22251.2%22%20y2%3D%22119.4%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8262888502308338%22%2F%3E%3Cline%20x1%3D%22208.7%22%20y1%3D%22161.6%22%20x2%3D%22155.2%22%20y2%3D%22235.4%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8479589520985185%22%2F%3E%3Cline%20x1%3D%2233.4%22%20y1%3D%22150.8%22%20x2%3D%2224.5%22%20y2%3D%22286.7%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%224.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7455556972102098%22%2F%3E%3Cline%20x1%3D%22168.1%22%20y1%3D%22110.1%22%20x2%3D%22181.4%22%20y2%3D%22165.1%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6123402605622026%22%2F%3E%3Cline%20x1%3D%2264.5%22%20y1%3D%22139.0%22%20x2%3D%222.7%22%20y2%3D%22151.0%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8855629095517215%22%2F%3E%3Cline%20x1%3D%2217.3%22%20y1%3D%2293.3%22%20x2%3D%22117.6%22%20y2%3D%22153.9%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6408499281200022%22%2F%3E%3Cline%20x1%3D%22320.0%22%20y1%3D%2286.6%22%20x2%3D%22344.6%22%20y2%3D%22120.8%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6734416718390313%22%2F%3E%3Cline%20x1%3D%22210.3%22%20y1%3D%22111.8%22%20x2%3D%22134.1%22%20y2%3D%22113.3%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6976562879872734%22%2F%3E%3Cline%20x1%3D%22133.0%22%20y1%3D%2235.5%22%20x2%3D%22247.0%22%20y2%3D%2257.2%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7674159183053584%22%2F%3E%3Cline%20x1%3D%22367.8%22%20y1%3D%221.3%22%20x2%3D%22417.1%22%20y2%3D%22149.2%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8762042334842716%22%2F%3E%3Cline%20x1%3D%22146.3%22%20y1%3D%22251.9%22%20x2%3D%22216.2%22%20y2%3D%22365.2%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9249382971644708%22%2F%3E%3Cline%20x1%3D%22271.1%22%20y1%3D%22195.0%22%20x2%3D%22223.1%22%20y2%3D%22211.3%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7474884677360568%22%2F%3E%3Cline%20x1%3D%22383.8%22%20y1%3D%22283.5%22%20x2%3D%22469.2%22%20y2%3D%22313.1%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7666128742865108%22%2F%3E%3Cline%20x1%3D%2214.2%22%20y1%3D%22140.9%22%20x2%3D%22-58.7%22%20y2%3D%22219.0%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8988842215136224%22%2F%3E%3Cline%20x1%3D%22275.6%22%20y1%3D%22209.1%22%20x2%3D%22223.1%22%20y2%3D%22324.4%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7393833756631241%22%2F%3E%3Cline%20x1%3D%22233.5%22%20y1%3D%2242.4%22%20x2%3D%22197.2%22%20y2%3D%22107.4%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7018012204453218%22%2F%3E%3Cline%20x1%3D%2251.0%22%20y1%3D%22287.5%22%20x2%3D%2217.8%22%20y2%3D%22335.7%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8738287116128802%22%2F%3E%3Cline%20x1%3D%22233.0%22%20y1%3D%22137.4%22%20x2%3D%22211.8%22%20y2%3D%22251.1%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6216559843255727%22%2F%3E%3Cline%20x1%3D%22245.8%22%20y1%3D%22181.1%22%20x2%3D%2298.2%22%20y2%3D%22205.3%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6202457304769781%22%2F%3E%3Cline%20x1%3D%2285.7%22%20y1%3D%22204.8%22%20x2%3D%22105.6%22%20y2%3D%22260.9%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6882108958755306%22%2F%3E%3Cline%20x1%3D%22292.7%22%20y1%3D%22167.5%22%20x2%3D%22167.2%22%20y2%3D%22238.1%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.666739383579852%22%2F%3E%3Cline%20x1%3D%2216.4%22%20y1%3D%22196.7%22%20x2%3D%22-66.9%22%20y2%3D%22204.3%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8576940118567293%22%2F%3E%3Cline%20x1%3D%22228.5%22%20y1%3D%22247.8%22%20x2%3D%22249.6%22%20y2%3D%22387.5%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6325130810109059%22%2F%3E%3Cline%20x1%3D%22360.7%22%20y1%3D%2224.3%22%20x2%3D%22366.5%22%20y2%3D%22120.6%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.904217470558707%22%2F%3E%3Cline%20x1%3D%2218.6%22%20y1%3D%22299.9%22%20x2%3D%22-36.0%22%20y2%3D%22308.9%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9039729986116728%22%2F%3E%3Cline%20x1%3D%2256.3%22%20y1%3D%22154.4%22%20x2%3D%22-57.1%22%20y2%3D%22157.5%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8769741497666954%22%2F%3E%3Cline%20x1%3D%22335.7%22%20y1%3D%227.5%22%20x2%3D%22426.1%22%20y2%3D%2297.7%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7066765825052952%22%2F%3E%3Cline%20x1%3D%22278.5%22%20y1%3D%22231.9%22%20x2%3D%22324.0%22%20y2%3D%22235.4%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7665520668063758%22%2F%3E%3Cline%20x1%3D%22238.3%22%20y1%3D%22292.1%22%20x2%3D%22129.6%22%20y2%3D%22369.1%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7897203957775198%22%2F%3E%3Cline%20x1%3D%220.4%22%20y1%3D%22261.8%22%20x2%3D%22-29.8%22%20y2%3D%22415.2%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9145679474027175%22%2F%3E%3Cline%20x1%3D%22131.6%22%20y1%3D%2221.0%22%20x2%3D%2210.6%22%20y2%3D%2229.3%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7569680361153489%22%2F%3E%3Cline%20x1%3D%22156.7%22%20y1%3D%2289.8%22%20x2%3D%22201.4%22%20y2%3D%22105.8%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9938714299137648%22%2F%3E%3Cline%20x1%3D%22318.2%22%20y1%3D%2217.8%22%20x2%3D%22270.4%22%20y2%3D%22138.7%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8807966206461361%22%2F%3E%3Cline%20x1%3D%22391.1%22%20y1%3D%22162.1%22%20x2%3D%22460.5%22%20y2%3D%22290.6%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7274007886927499%22%2F%3E%3Cline%20x1%3D%22166.2%22%20y1%3D%2247.2%22%20x2%3D%22144.0%22%20y2%3D%2281.3%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7083050977092986%22%2F%3E%3Cline%20x1%3D%2293.7%22%20y1%3D%22178.2%22%20x2%3D%22-19.9%22%20y2%3D%22180.8%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7411925329097706%22%2F%3E%3Ccircle%20cx%3D%2275.4%22%20cy%3D%22234.1%22%20r%3D%223.8%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22155.6%22%20cy%3D%22251.1%22%20r%3D%226.3%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22229.1%22%20cy%3D%22208.3%22%20r%3D%225.1%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22330.4%22%20cy%3D%22278.1%22%20r%3D%228.9%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22145.3%22%20cy%3D%22126.9%22%20r%3D%227.6%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22297.6%22%20cy%3D%22253.8%22%20r%3D%225.4%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22236.4%22%20cy%3D%2230.3%22%20r%3D%223.5%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2269.5%22%20cy%3D%2275.8%22%20r%3D%227.0%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22177.4%22%20cy%3D%22151.0%22%20r%3D%223.9%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22281.6%22%20cy%3D%2273.6%22%20r%3D%225.3%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2286.8%22%20cy%3D%22265.3%22%20r%3D%223.7%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22260.7%22%20cy%3D%22226.8%22%20r%3D%227.9%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3C%2Fg%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22400%22%20height%3D%224%22%20fill%3D%22rgba(0%2C0%2C0%2C0.1)%22%2F%3E%3Ctext%20x%3D%2210%22%20y%3D%2220%22%20font-size%3D%2210%22%20fill%3D%22%23666%22%20font-family%3D%22monospace%22%3E%E9%92%88%E5%8F%B6%E6%9C%A8%E6%B5%86%20%C2%B7%20%E6%A0%87%E5%87%86%E7%83%98%E5%B9%B2%20%C2%B7%20%C3%97400%3C%2Ftext%3E%3C%2Fsvg%3E",
+        "capturedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "张伟",
+        "notes": ""
+      }
+    ],
+    "dryingRecords": [
+      {
+        "id": "dr_mqlaunrl_s1bzqm",
+        "conditionId": "STD_105",
+        "conditionName": "标准烘干 105℃×2h",
+        "wetWeightG": 100,
+        "dryWeightG": 94.52,
+        "moistureContent": 5.48,
+        "recordedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "张伟",
+        "operatorId": "U001",
+        "notes": ""
+      }
+    ],
+    "auditLogs": [
+      {
+        "id": "a_mqlaunrl_h46jks",
+        "action": "采购入库登记",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-09T19:06:07.185Z",
+        "toStatus": "DRAFT",
+        "remark": "针叶木浆批次 088"
+      },
+      {
+        "id": "a_mqlaunrl_gudno3",
+        "action": "预检通过",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-09T19:06:07.185Z",
+        "fromStatus": "DRAFT",
+        "toStatus": "PRECHECK_PASS",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrl_j6gooq",
+        "action": "提交判读",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-11T19:06:07.185Z",
+        "fromStatus": "PRECHECK_PASS",
+        "toStatus": "PENDING_JUDGE",
+        "remark": "样本齐全"
+      },
+      {
+        "id": "a_mqlaunrl_flo14a",
+        "action": "判读合格",
+        "operatorId": "U002",
+        "operatorName": "李娜",
+        "operatorRole": "主管",
+        "at": "2026-06-14T19:06:07.185Z",
+        "fromStatus": "PENDING_JUDGE",
+        "toStatus": "JUDGED_PASS",
+        "remark": "纤维形态良好，符合标准"
+      }
+    ],
+    "judgeConclusion": "PASS",
+    "judgeRemark": "纤维形态良好，符合采购标准",
+    "judgeBy": "李娜",
+    "judgeAt": "2026-06-14T19:06:07.185Z",
+    "tags": [],
+    "isDuplicate": false,
+    "missingFields": []
+  },
+  {
+    "id": "sample_mqlaunrl_pv8pop",
+    "sampleCode": "S-PD-20260612-014",
+    "pulpBatch": "PD-BH-2026-06-031",
+    "fiberLength": {
+      "short": 22.1,
+      "medium": 58.7,
+      "long": 19.2,
+      "weightedAverage": 2.17
+    },
+    "whiteness": 82.9,
+    "moistureContent": 5.53,
+    "sourceType": "PRODUCTION",
+    "sourceInfo": "车间：二号硫酸盐浆车间 | 工段：洗涤筛选段",
+    "operatorId": "U004",
+    "operatorName": "刘芳",
+    "responsiblePersonId": "U006",
+    "responsiblePersonName": "赵明辉",
+    "registeredAt": "2026-06-11T19:06:07.185Z",
+    "status": "RETURNED_FOR_REVIEW",
+    "microPhotos": [
+      {
+        "id": "mp_mqlaunrl_71lxah",
+        "label": "纤维形态 ×400",
+        "magnification": 400,
+        "imageUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20style%3D%22background%3A%23F5F0E8%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22blur%22%3E%3CfeGaussianBlur%20stdDeviation%3D%220.5%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23blur)%22%3E%3Cline%20x1%3D%22195.6%22%20y1%3D%22297.5%22%20x2%3D%22153.9%22%20y2%3D%22330.1%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6018986551717352%22%2F%3E%3Cline%20x1%3D%22149.5%22%20y1%3D%22249.0%22%20x2%3D%2289.2%22%20y2%3D%22268.7%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9617987792200089%22%2F%3E%3Cline%20x1%3D%22150.4%22%20y1%3D%22258.7%22%20x2%3D%22177.1%22%20y2%3D%22322.5%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%223.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7578103619463658%22%2F%3E%3Cline%20x1%3D%22161.8%22%20y1%3D%22251.7%22%20x2%3D%22218.5%22%20y2%3D%22349.2%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7148994016338848%22%2F%3E%3Cline%20x1%3D%2219.3%22%20y1%3D%2245.1%22%20x2%3D%22-98.4%22%20y2%3D%22145.4%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.826445081175716%22%2F%3E%3Cline%20x1%3D%22157.5%22%20y1%3D%22294.9%22%20x2%3D%22278.5%22%20y2%3D%22305.6%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8225386281862193%22%2F%3E%3Cline%20x1%3D%2218.5%22%20y1%3D%2293.8%22%20x2%3D%228.0%22%20y2%3D%22198.4%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.83664232705826%22%2F%3E%3Cline%20x1%3D%22204.8%22%20y1%3D%22174.1%22%20x2%3D%22242.9%22%20y2%3D%22279.7%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6971221080390355%22%2F%3E%3Cline%20x1%3D%22163.7%22%20y1%3D%2221.1%22%20x2%3D%2296.1%22%20y2%3D%2231.9%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7907364273516887%22%2F%3E%3Cline%20x1%3D%22171.2%22%20y1%3D%226.0%22%20x2%3D%22267.8%22%20y2%3D%2255.3%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7723312112641938%22%2F%3E%3Cline%20x1%3D%223.2%22%20y1%3D%22246.5%22%20x2%3D%2268.6%22%20y2%3D%22317.8%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9757505334083496%22%2F%3E%3Cline%20x1%3D%2267.3%22%20y1%3D%22172.3%22%20x2%3D%2281.5%22%20y2%3D%22292.2%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9720219809568722%22%2F%3E%3Cline%20x1%3D%2294.9%22%20y1%3D%2256.8%22%20x2%3D%22163.2%22%20y2%3D%22129.3%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8942709866268456%22%2F%3E%3Cline%20x1%3D%22206.9%22%20y1%3D%2271.9%22%20x2%3D%22308.9%22%20y2%3D%22162.4%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9899345545976577%22%2F%3E%3Cline%20x1%3D%22328.4%22%20y1%3D%22218.8%22%20x2%3D%22196.0%22%20y2%3D%22225.0%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9207962736461497%22%2F%3E%3Cline%20x1%3D%2246.9%22%20y1%3D%22237.9%22%20x2%3D%223.1%22%20y2%3D%22247.4%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8910741791891316%22%2F%3E%3Cline%20x1%3D%22240.8%22%20y1%3D%22148.4%22%20x2%3D%22198.0%22%20y2%3D%22193.4%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8886738451859018%22%2F%3E%3Cline%20x1%3D%22379.3%22%20y1%3D%22107.1%22%20x2%3D%22331.6%22%20y2%3D%22120.2%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9610206399537093%22%2F%3E%3Cline%20x1%3D%2222.0%22%20y1%3D%2263.6%22%20x2%3D%2261.2%22%20y2%3D%22102.5%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9763419010349565%22%2F%3E%3Cline%20x1%3D%2234.4%22%20y1%3D%22288.0%22%20x2%3D%22148.7%22%20y2%3D%22311.6%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.632564005065538%22%2F%3E%3Cline%20x1%3D%22262.4%22%20y1%3D%22242.8%22%20x2%3D%22380.1%22%20y2%3D%22276.1%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7483199306148822%22%2F%3E%3Cline%20x1%3D%22356.1%22%20y1%3D%22254.9%22%20x2%3D%22268.3%22%20y2%3D%22255.5%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6797955270304862%22%2F%3E%3Cline%20x1%3D%22214.0%22%20y1%3D%2245.1%22%20x2%3D%22329.7%22%20y2%3D%2248.5%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9117949891175309%22%2F%3E%3Cline%20x1%3D%22271.0%22%20y1%3D%2242.2%22%20x2%3D%22258.7%22%20y2%3D%22194.4%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8631611956302807%22%2F%3E%3Cline%20x1%3D%22202.3%22%20y1%3D%22243.2%22%20x2%3D%22255.9%22%20y2%3D%22292.3%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9242539785750846%22%2F%3E%3Cline%20x1%3D%22113.7%22%20y1%3D%22144.7%22%20x2%3D%22204.4%22%20y2%3D%22186.7%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7771098713071558%22%2F%3E%3Cline%20x1%3D%22163.2%22%20y1%3D%22228.3%22%20x2%3D%22126.7%22%20y2%3D%22301.2%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%223.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6575988771594324%22%2F%3E%3Cline%20x1%3D%22316.9%22%20y1%3D%22221.8%22%20x2%3D%22289.5%22%20y2%3D%22320.7%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8445414081882323%22%2F%3E%3Cline%20x1%3D%2243.3%22%20y1%3D%2220.4%22%20x2%3D%22193.9%22%20y2%3D%2246.8%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9267316869867048%22%2F%3E%3Cline%20x1%3D%22149.1%22%20y1%3D%22101.7%22%20x2%3D%22236.2%22%20y2%3D%22186.3%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8605084968657177%22%2F%3E%3Cline%20x1%3D%22196.7%22%20y1%3D%22102.5%22%20x2%3D%22185.7%22%20y2%3D%22141.2%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8767889741674451%22%2F%3E%3Cline%20x1%3D%22243.9%22%20y1%3D%22174.1%22%20x2%3D%22248.1%22%20y2%3D%22262.4%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9117204890714888%22%2F%3E%3Cline%20x1%3D%22157.5%22%20y1%3D%22210.7%22%20x2%3D%22159.3%22%20y2%3D%22286.6%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9368345693080957%22%2F%3E%3Cline%20x1%3D%22233.1%22%20y1%3D%2227.9%22%20x2%3D%22168.0%22%20y2%3D%2240.9%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%222.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6994281123326673%22%2F%3E%3Cline%20x1%3D%22242.7%22%20y1%3D%22232.5%22%20x2%3D%22209.7%22%20y2%3D%22265.0%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7864549811792196%22%2F%3E%3Cline%20x1%3D%2285.3%22%20y1%3D%22258.7%22%20x2%3D%2215.7%22%20y2%3D%22332.8%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8981043916254059%22%2F%3E%3Cline%20x1%3D%22153.1%22%20y1%3D%2259.8%22%20x2%3D%22162.0%22%20y2%3D%22118.7%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.810493016343649%22%2F%3E%3Cline%20x1%3D%22396.5%22%20y1%3D%221.7%22%20x2%3D%22448.1%22%20y2%3D%2253.7%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9025505666191835%22%2F%3E%3Cline%20x1%3D%22238.7%22%20y1%3D%22178.1%22%20x2%3D%22193.5%22%20y2%3D%22185.7%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8835907035258335%22%2F%3E%3Cline%20x1%3D%22363.1%22%20y1%3D%22163.0%22%20x2%3D%22388.1%22%20y2%3D%22262.3%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6778437084000596%22%2F%3E%3Ccircle%20cx%3D%22305.1%22%20cy%3D%22229.9%22%20r%3D%227.7%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22382.8%22%20cy%3D%2241.9%22%20r%3D%224.4%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22182.3%22%20cy%3D%2253.7%22%20r%3D%225.1%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22156.9%22%20cy%3D%22124.4%22%20r%3D%224.3%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22340.7%22%20cy%3D%22259.9%22%20r%3D%225.1%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22187.8%22%20cy%3D%22280.6%22%20r%3D%225.1%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22120.6%22%20cy%3D%22221.8%22%20r%3D%224.0%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22269.9%22%20cy%3D%2283.5%22%20r%3D%226.5%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2262.2%22%20cy%3D%22251.8%22%20r%3D%228.7%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22225.1%22%20cy%3D%2260.8%22%20r%3D%223.2%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22300.5%22%20cy%3D%22268.3%22%20r%3D%228.0%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22276.3%22%20cy%3D%22137.0%22%20r%3D%228.3%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3C%2Fg%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22400%22%20height%3D%224%22%20fill%3D%22rgba(0%2C0%2C0%2C0.1)%22%2F%3E%3Ctext%20x%3D%2210%22%20y%3D%2220%22%20font-size%3D%2210%22%20fill%3D%22%23666%22%20font-family%3D%22monospace%22%3E%E7%BA%A4%E7%BB%B4%E5%BD%A2%E6%80%81%20%C3%97400%20%C2%B7%20%C3%97400%3C%2Ftext%3E%3C%2Fsvg%3E",
+        "capturedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "刘芳",
+        "notes": ""
+      }
+    ],
+    "dryingRecords": [
+      {
+        "id": "dr_mqlaunrl_3xwiwy",
+        "conditionId": "STD_105",
+        "conditionName": "标准烘干 105℃×2h",
+        "wetWeightG": 100,
+        "dryWeightG": 94.47,
+        "moistureContent": 5.53,
+        "recordedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "刘芳",
+        "operatorId": "U004",
+        "notes": ""
+      }
+    ],
+    "auditLogs": [
+      {
+        "id": "a_mqlaunrl_e3j3e3",
+        "action": "生产批次取样",
+        "operatorId": "U004",
+        "operatorName": "刘芳",
+        "operatorRole": "质检员",
+        "at": "2026-06-11T19:06:07.185Z",
+        "toStatus": "DRAFT",
+        "remark": "阔叶木浆生产样"
+      },
+      {
+        "id": "a_mqlaunrl_k8esqd",
+        "action": "预检通过",
+        "operatorId": "U004",
+        "operatorName": "刘芳",
+        "operatorRole": "质检员",
+        "at": "2026-06-11T19:06:07.185Z",
+        "fromStatus": "DRAFT",
+        "toStatus": "PRECHECK_PASS",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrl_c443tt",
+        "action": "提交判读",
+        "operatorId": "U004",
+        "operatorName": "刘芳",
+        "operatorRole": "质检员",
+        "at": "2026-06-13T19:06:07.185Z",
+        "fromStatus": "PRECHECK_PASS",
+        "toStatus": "PENDING_JUDGE",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlb3qie_0dtgra",
+        "action": "状态变更→RETURNED_FOR_REVIEW",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-19T19:13:10.646Z",
+        "fromStatus": "PENDING_JUDGE",
+        "toStatus": "RETURNED_FOR_REVIEW",
+        "remark": "API测试状态变更"
+      }
+    ],
+    "tags": [],
+    "isDuplicate": false,
+    "missingFields": []
+  },
+  {
+    "id": "sample_mqlaunrl_h6pr4d",
+    "sampleCode": "S-PK-20260613-027",
+    "pulpBatch": "PK-FJ-2026-06-042",
+    "fiberLength": {
+      "short": 17.8,
+      "medium": 61.5,
+      "long": 20.7,
+      "weightedAverage": 2.33
+    },
+    "whiteness": null,
+    "moistureContent": 5.62,
+    "sourceType": "PURCHASE",
+    "sourceInfo": "供应商：福建青山纸业",
+    "operatorId": "U001",
+    "operatorName": "张伟",
+    "responsiblePersonId": "U005",
+    "responsiblePersonName": "陈建国",
+    "registeredAt": "2026-06-13T19:06:07.185Z",
+    "status": "PRECHECK_FAIL",
+    "microPhotos": [
+      {
+        "id": "mp_mqlaunrl_vel77c",
+        "label": "竹浆纤维 · 缺白度",
+        "magnification": 400,
+        "imageUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20style%3D%22background%3A%23F5F0E8%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22blur%22%3E%3CfeGaussianBlur%20stdDeviation%3D%220.5%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23blur)%22%3E%3Cline%20x1%3D%22107.4%22%20y1%3D%2266.2%22%20x2%3D%2280.3%22%20y2%3D%22106.6%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7345290565365923%22%2F%3E%3Cline%20x1%3D%22154.2%22%20y1%3D%22215.6%22%20x2%3D%2291.1%22%20y2%3D%22264.0%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9386032436535225%22%2F%3E%3Cline%20x1%3D%22222.5%22%20y1%3D%22165.4%22%20x2%3D%22279.6%22%20y2%3D%22178.3%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8107455555122279%22%2F%3E%3Cline%20x1%3D%22106.5%22%20y1%3D%22276.0%22%20x2%3D%22199.2%22%20y2%3D%22295.0%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6123306885833899%22%2F%3E%3Cline%20x1%3D%2231.8%22%20y1%3D%22259.2%22%20x2%3D%2221.3%22%20y2%3D%22311.1%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.67622423035308%22%2F%3E%3Cline%20x1%3D%22243.3%22%20y1%3D%2218.7%22%20x2%3D%22183.7%22%20y2%3D%2239.0%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6513066398732125%22%2F%3E%3Cline%20x1%3D%22256.4%22%20y1%3D%22112.9%22%20x2%3D%22216.2%22%20y2%3D%22215.6%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7549099132684891%22%2F%3E%3Cline%20x1%3D%22130.8%22%20y1%3D%22245.5%22%20x2%3D%22267.4%22%20y2%3D%22262.7%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7130056678789196%22%2F%3E%3Cline%20x1%3D%22300.9%22%20y1%3D%22282.5%22%20x2%3D%22342.8%22%20y2%3D%22348.1%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8632309442812429%22%2F%3E%3Cline%20x1%3D%22241.7%22%20y1%3D%22251.3%22%20x2%3D%22321.8%22%20y2%3D%22325.0%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.956241607826295%22%2F%3E%3Cline%20x1%3D%22312.9%22%20y1%3D%22255.9%22%20x2%3D%22261.1%22%20y2%3D%22313.1%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8479568226938979%22%2F%3E%3Cline%20x1%3D%22195.7%22%20y1%3D%2282.3%22%20x2%3D%22294.5%22%20y2%3D%2296.9%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7064856554869101%22%2F%3E%3Cline%20x1%3D%22147.0%22%20y1%3D%2293.4%22%20x2%3D%22212.6%22%20y2%3D%22221.1%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6496590497298497%22%2F%3E%3Cline%20x1%3D%22154.8%22%20y1%3D%2223.5%22%20x2%3D%22123.7%22%20y2%3D%2249.6%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.687245158206842%22%2F%3E%3Cline%20x1%3D%22237.2%22%20y1%3D%22111.3%22%20x2%3D%2288.1%22%20y2%3D%22125.6%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8885108180200296%22%2F%3E%3Cline%20x1%3D%22228.4%22%20y1%3D%22110.4%22%20x2%3D%22292.8%22%20y2%3D%22218.7%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7322190983157848%22%2F%3E%3Cline%20x1%3D%2286.4%22%20y1%3D%2283.1%22%20x2%3D%22-14.8%22%20y2%3D%22181.5%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.90242727872161%22%2F%3E%3Cline%20x1%3D%22196.3%22%20y1%3D%22160.2%22%20x2%3D%22189.8%22%20y2%3D%22233.7%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8434710111272311%22%2F%3E%3Cline%20x1%3D%22165.4%22%20y1%3D%22130.0%22%20x2%3D%2279.9%22%20y2%3D%22215.5%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6317310986197512%22%2F%3E%3Cline%20x1%3D%22299.6%22%20y1%3D%2298.5%22%20x2%3D%22303.0%22%20y2%3D%22193.9%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7124061294873081%22%2F%3E%3Cline%20x1%3D%2291.1%22%20y1%3D%22256.6%22%20x2%3D%22120.2%22%20y2%3D%22369.2%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7551982491892391%22%2F%3E%3Cline%20x1%3D%22324.5%22%20y1%3D%2231.6%22%20x2%3D%22279.6%22%20y2%3D%22109.5%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9626618317693368%22%2F%3E%3Cline%20x1%3D%22115.6%22%20y1%3D%2280.1%22%20x2%3D%22172.5%22%20y2%3D%22227.4%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8822954171485365%22%2F%3E%3Cline%20x1%3D%22248.7%22%20y1%3D%22145.5%22%20x2%3D%22173.5%22%20y2%3D%22224.3%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7622005970520156%22%2F%3E%3Cline%20x1%3D%22158.8%22%20y1%3D%22269.5%22%20x2%3D%22140.4%22%20y2%3D%22337.3%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8799741834095212%22%2F%3E%3Cline%20x1%3D%22152.4%22%20y1%3D%22286.8%22%20x2%3D%2224.9%22%20y2%3D%22286.9%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9142603196784114%22%2F%3E%3Cline%20x1%3D%22141.2%22%20y1%3D%22297.8%22%20x2%3D%2264.7%22%20y2%3D%22341.7%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6877509357817695%22%2F%3E%3Cline%20x1%3D%2292.3%22%20y1%3D%22224.9%22%20x2%3D%2238.5%22%20y2%3D%22336.3%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7588805526820637%22%2F%3E%3Cline%20x1%3D%2212.9%22%20y1%3D%2230.3%22%20x2%3D%22-120.8%22%20y2%3D%2269.6%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6443339444105143%22%2F%3E%3Cline%20x1%3D%22227.1%22%20y1%3D%22241.5%22%20x2%3D%22301.5%22%20y2%3D%22254.9%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9429346751637735%22%2F%3E%3Cline%20x1%3D%22238.6%22%20y1%3D%22170.2%22%20x2%3D%22294.5%22%20y2%3D%22221.8%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7532495996965612%22%2F%3E%3Cline%20x1%3D%22194.8%22%20y1%3D%22264.8%22%20x2%3D%22163.2%22%20y2%3D%22292.9%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7005354839528227%22%2F%3E%3Cline%20x1%3D%2299.7%22%20y1%3D%22103.2%22%20x2%3D%22145.2%22%20y2%3D%22253.1%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6363039429925152%22%2F%3E%3Cline%20x1%3D%22377.6%22%20y1%3D%22185.7%22%20x2%3D%22460.2%22%20y2%3D%22287.1%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7951835539753058%22%2F%3E%3Cline%20x1%3D%2274.6%22%20y1%3D%220.2%22%20x2%3D%22-3.9%22%20y2%3D%22137.8%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9777170127581044%22%2F%3E%3Cline%20x1%3D%22148.0%22%20y1%3D%2212.6%22%20x2%3D%22188.6%22%20y2%3D%2224.1%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8190426640879175%22%2F%3E%3Cline%20x1%3D%2231.2%22%20y1%3D%22292.3%22%20x2%3D%22149.9%22%20y2%3D%22326.0%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9589469555810896%22%2F%3E%3Cline%20x1%3D%22141.2%22%20y1%3D%2236.9%22%20x2%3D%2216.5%22%20y2%3D%2260.2%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8724898498689049%22%2F%3E%3Cline%20x1%3D%22111.7%22%20y1%3D%22276.3%22%20x2%3D%2254.3%22%20y2%3D%22317.4%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9119153338678485%22%2F%3E%3Cline%20x1%3D%221.4%22%20y1%3D%22226.6%22%20x2%3D%22113.0%22%20y2%3D%22325.9%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6082316375435727%22%2F%3E%3Ccircle%20cx%3D%2239.8%22%20cy%3D%22228.7%22%20r%3D%223.0%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22302.7%22%20cy%3D%2218.8%22%20r%3D%223.5%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2260.8%22%20cy%3D%22171.2%22%20r%3D%223.4%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22285.4%22%20cy%3D%22239.2%22%20r%3D%224.0%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22163.7%22%20cy%3D%22297.1%22%20r%3D%224.1%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22129.1%22%20cy%3D%2281.7%22%20r%3D%225.4%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22370.0%22%20cy%3D%2224.4%22%20r%3D%226.1%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22360.1%22%20cy%3D%221.6%22%20r%3D%226.2%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22389.5%22%20cy%3D%22206.7%22%20r%3D%225.3%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22164.3%22%20cy%3D%2295.4%22%20r%3D%225.3%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22360.1%22%20cy%3D%22171.3%22%20r%3D%227.7%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2223.4%22%20cy%3D%22201.4%22%20r%3D%223.8%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3C%2Fg%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22400%22%20height%3D%224%22%20fill%3D%22rgba(0%2C0%2C0%2C0.1)%22%2F%3E%3Ctext%20x%3D%2210%22%20y%3D%2220%22%20font-size%3D%2210%22%20fill%3D%22%23666%22%20font-family%3D%22monospace%22%3E%E7%AB%B9%E6%B5%86%E7%BA%A4%E7%BB%B4%20%C2%B7%20%E7%BC%BA%E7%99%BD%E5%BA%A6%20%C2%B7%20%C3%97400%3C%2Ftext%3E%3C%2Fsvg%3E",
+        "capturedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "张伟",
+        "notes": ""
+      }
+    ],
+    "dryingRecords": [
+      {
+        "id": "dr_mqlaunrl_bvrwgo",
+        "conditionId": "STD_105",
+        "conditionName": "标准烘干 105℃×2h",
+        "wetWeightG": 100,
+        "dryWeightG": 94.38,
+        "moistureContent": 5.62,
+        "recordedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "张伟",
+        "operatorId": "U001",
+        "notes": ""
+      }
+    ],
+    "auditLogs": [
+      {
+        "id": "a_mqlaunrl_yb4xql",
+        "action": "采购入库登记",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-13T19:06:07.185Z",
+        "toStatus": "DRAFT",
+        "remark": "白度计故障暂缺"
+      },
+      {
+        "id": "a_mqlaunrl_8frpjt",
+        "action": "预检失败",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-13T19:06:07.185Z",
+        "fromStatus": "DRAFT",
+        "toStatus": "PRECHECK_FAIL",
+        "remark": "缺测：白度"
+      }
+    ],
+    "tags": [
+      "缺测"
+    ],
+    "isDuplicate": false,
+    "missingFields": [
+      "whiteness"
+    ]
+  },
+  {
+    "id": "sample_mqlaunrl_dkgcq3",
+    "sampleCode": "S-RT-20260615-008",
+    "pulpBatch": "PK-GD-2026-05-119",
+    "fiberLength": {
+      "short": null,
+      "medium": null,
+      "long": null
+    },
+    "whiteness": null,
+    "moistureContent": null,
+    "sourceType": "RETURNED",
+    "sourceInfo": "退货原因：质量异议 | 原供应商：广东肇庆纸业",
+    "operatorId": "U003",
+    "operatorName": "王强",
+    "responsiblePersonId": "U007",
+    "responsiblePersonName": "孙丽萍",
+    "registeredAt": "2026-06-15T19:06:07.185Z",
+    "status": "PRECHECK_FAIL",
+    "microPhotos": [],
+    "dryingRecords": [],
+    "auditLogs": [
+      {
+        "id": "a_mqlaunrl_gd27og",
+        "action": "退货复检登记",
+        "operatorId": "U003",
+        "operatorName": "王强",
+        "operatorRole": "化验员",
+        "at": "2026-06-15T19:06:07.185Z",
+        "toStatus": "DRAFT",
+        "remark": "待补测纤维/白度/含水率"
+      },
+      {
+        "id": "a_mqlaunrl_9pg59f",
+        "action": "预检失败",
+        "operatorId": "U003",
+        "operatorName": "王强",
+        "operatorRole": "化验员",
+        "at": "2026-06-15T19:06:07.185Z",
+        "fromStatus": "DRAFT",
+        "toStatus": "PRECHECK_FAIL",
+        "remark": "缺测：纤维分布、白度、含水率"
+      }
+    ],
+    "tags": [
+      "缺测",
+      "退货复检"
+    ],
+    "isDuplicate": false,
+    "missingFields": [
+      "fiberLength.short",
+      "fiberLength.medium",
+      "fiberLength.long",
+      "whiteness",
+      "moistureContent"
+    ]
+  },
+  {
+    "id": "sample_mqlaunrl_hke08p",
+    "sampleCode": "S-PK-20260610-001",
+    "pulpBatch": "PK-HT-2026-06-088",
+    "fiberLength": {
+      "short": 18.5,
+      "medium": 62.3,
+      "long": 19.2,
+      "weightedAverage": 2.29
+    },
+    "whiteness": 84.7,
+    "moistureContent": 5.48,
+    "sourceType": "PURCHASE",
+    "sourceInfo": "供应商：山东华泰纸业 | 合同号：HT-2026-0612",
+    "operatorId": "U001",
+    "operatorName": "张伟",
+    "responsiblePersonId": "U005",
+    "responsiblePersonName": "陈建国",
+    "registeredAt": "2026-06-10T19:06:07.185Z",
+    "status": "PRECHECK_FAIL",
+    "microPhotos": [],
+    "dryingRecords": [],
+    "auditLogs": [
+      {
+        "id": "a_mqlaunrl_ixyl6v",
+        "action": "重复登记",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-10T19:06:07.185Z",
+        "toStatus": "DRAFT",
+        "remark": "操作员误重复录入"
+      },
+      {
+        "id": "a_mqlaunrl_g0w8kn",
+        "action": "预检失败",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-10T19:06:07.185Z",
+        "fromStatus": "DRAFT",
+        "toStatus": "PRECHECK_FAIL",
+        "remark": "与库中样本编号重复"
+      }
+    ],
+    "tags": [
+      "重复样本"
+    ],
+    "isDuplicate": true,
+    "duplicateOfSampleId": "sample_mqlaunrk_5drqvf",
+    "missingFields": []
+  },
+  {
+    "id": "sample_mqlaunrl_rbw9fh",
+    "sampleCode": "S-PK-20260608-019-A",
+    "pulpBatch": "PK-CT-2026-06-055",
+    "fiberLength": {
+      "short": 15.2,
+      "medium": 64.8,
+      "long": 20,
+      "weightedAverage": 2.34
+    },
+    "whiteness": 83.5,
+    "moistureContent": 6.48,
+    "sourceType": "PURCHASE",
+    "sourceInfo": "供应商：福建青山纸业 | 合同号：CT-2026-001",
+    "operatorId": "U001",
+    "operatorName": "张伟",
+    "responsiblePersonId": "U005",
+    "responsiblePersonName": "陈建国",
+    "registeredAt": "2026-06-07T19:06:07.185Z",
+    "status": "JUDGED_PASS",
+    "microPhotos": [
+      {
+        "id": "mp_mqlaunrl_qo19pz",
+        "label": "竹浆纤维 · 标准烘干",
+        "magnification": 400,
+        "imageUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20style%3D%22background%3A%23F5F0E8%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22blur%22%3E%3CfeGaussianBlur%20stdDeviation%3D%220.5%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23blur)%22%3E%3Cline%20x1%3D%2271.6%22%20y1%3D%22110.8%22%20x2%3D%22-26.6%22%20y2%3D%22164.6%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7642508695835631%22%2F%3E%3Cline%20x1%3D%22285.7%22%20y1%3D%2223.3%22%20x2%3D%22377.6%22%20y2%3D%2264.7%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%224.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9507495363018679%22%2F%3E%3Cline%20x1%3D%22265.1%22%20y1%3D%22283.7%22%20x2%3D%22308.1%22%20y2%3D%22386.5%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%224.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6465588484048598%22%2F%3E%3Cline%20x1%3D%22293.8%22%20y1%3D%22191.6%22%20x2%3D%22332.8%22%20y2%3D%22278.6%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9824391824939787%22%2F%3E%3Cline%20x1%3D%22315.1%22%20y1%3D%2283.7%22%20x2%3D%22356.3%22%20y2%3D%2284.1%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7582723207491338%22%2F%3E%3Cline%20x1%3D%2234.5%22%20y1%3D%2246.8%22%20x2%3D%22-95.2%22%20y2%3D%2259.4%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6527740842174424%22%2F%3E%3Cline%20x1%3D%22191.8%22%20y1%3D%22191.5%22%20x2%3D%22106.8%22%20y2%3D%22266.5%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.630206108917391%22%2F%3E%3Cline%20x1%3D%22142.2%22%20y1%3D%2235.5%22%20x2%3D%2221.4%22%20y2%3D%2273.8%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9125944600138809%22%2F%3E%3Cline%20x1%3D%22364.9%22%20y1%3D%22174.5%22%20x2%3D%22455.3%22%20y2%3D%22226.6%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8195142250556546%22%2F%3E%3Cline%20x1%3D%22184.7%22%20y1%3D%2264.0%22%20x2%3D%22318.8%22%20y2%3D%22101.6%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7287111846101617%22%2F%3E%3Cline%20x1%3D%22203.3%22%20y1%3D%2288.5%22%20x2%3D%22261.8%22%20y2%3D%22213.8%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8774623783882977%22%2F%3E%3Cline%20x1%3D%22371.0%22%20y1%3D%22153.9%22%20x2%3D%22404.0%22%20y2%3D%22253.3%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7884402379619356%22%2F%3E%3Cline%20x1%3D%22273.8%22%20y1%3D%22113.5%22%20x2%3D%22317.1%22%20y2%3D%22131.6%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7249329610560371%22%2F%3E%3Cline%20x1%3D%22180.2%22%20y1%3D%22115.2%22%20x2%3D%22210.5%22%20y2%3D%22256.1%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7323897247351434%22%2F%3E%3Cline%20x1%3D%22342.0%22%20y1%3D%22238.2%22%20x2%3D%22405.3%22%20y2%3D%22339.2%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8901758673971353%22%2F%3E%3Cline%20x1%3D%22212.6%22%20y1%3D%2289.5%22%20x2%3D%22257.5%22%20y2%3D%22136.5%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8274216710008555%22%2F%3E%3Cline%20x1%3D%22379.9%22%20y1%3D%22158.2%22%20x2%3D%22341.6%22%20y2%3D%22200.5%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6928159336199649%22%2F%3E%3Cline%20x1%3D%2225.4%22%20y1%3D%22172.7%22%20x2%3D%2284.0%22%20y2%3D%22202.1%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7763093146542795%22%2F%3E%3Cline%20x1%3D%22245.6%22%20y1%3D%22194.3%22%20x2%3D%22291.7%22%20y2%3D%22221.0%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6730945718728879%22%2F%3E%3Cline%20x1%3D%22160.7%22%20y1%3D%22131.6%22%20x2%3D%22122.7%22%20y2%3D%22145.8%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8397504175927042%22%2F%3E%3Cline%20x1%3D%22276.5%22%20y1%3D%2226.5%22%20x2%3D%22193.3%22%20y2%3D%2250.6%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8183917911327041%22%2F%3E%3Cline%20x1%3D%22281.9%22%20y1%3D%2257.3%22%20x2%3D%22352.1%22%20y2%3D%22148.5%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9126748279017138%22%2F%3E%3Cline%20x1%3D%22237.4%22%20y1%3D%2270.9%22%20x2%3D%22253.3%22%20y2%3D%22164.5%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.74898985879743%22%2F%3E%3Cline%20x1%3D%229.7%22%20y1%3D%2240.0%22%20x2%3D%22123.0%22%20y2%3D%22127.2%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9626794471152578%22%2F%3E%3Cline%20x1%3D%22340.0%22%20y1%3D%2222.1%22%20x2%3D%22367.6%22%20y2%3D%2294.8%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7738894642986901%22%2F%3E%3Cline%20x1%3D%22192.9%22%20y1%3D%2277.1%22%20x2%3D%22145.4%22%20y2%3D%22191.3%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7939423621668068%22%2F%3E%3Cline%20x1%3D%22121.3%22%20y1%3D%2221.3%22%20x2%3D%22-14.9%22%20y2%3D%2284.3%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9490915280742975%22%2F%3E%3Cline%20x1%3D%22247.4%22%20y1%3D%22212.9%22%20x2%3D%22272.0%22%20y2%3D%22272.3%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9011539145517995%22%2F%3E%3Cline%20x1%3D%22366.8%22%20y1%3D%2241.1%22%20x2%3D%22313.6%22%20y2%3D%2253.6%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6088458638667783%22%2F%3E%3Cline%20x1%3D%22114.9%22%20y1%3D%22181.5%22%20x2%3D%2244.1%22%20y2%3D%22214.6%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8719709298987646%22%2F%3E%3Cline%20x1%3D%22275.3%22%20y1%3D%22196.5%22%20x2%3D%22223.5%22%20y2%3D%22237.9%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9065577995234506%22%2F%3E%3Cline%20x1%3D%22134.9%22%20y1%3D%22185.4%22%20x2%3D%221.4%22%20y2%3D%22199.0%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8653515889382557%22%2F%3E%3Cline%20x1%3D%2249.4%22%20y1%3D%2259.3%22%20x2%3D%2287.9%22%20y2%3D%22115.4%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9298611639297281%22%2F%3E%3Cline%20x1%3D%22270.8%22%20y1%3D%2273.6%22%20x2%3D%22342.5%22%20y2%3D%2275.0%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9331303743532244%22%2F%3E%3Cline%20x1%3D%22276.0%22%20y1%3D%22272.4%22%20x2%3D%22341.6%22%20y2%3D%22399.1%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7489477125473044%22%2F%3E%3Cline%20x1%3D%22329.2%22%20y1%3D%22278.7%22%20x2%3D%22282.5%22%20y2%3D%22326.5%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.804891597035073%22%2F%3E%3Cline%20x1%3D%22160.9%22%20y1%3D%2227.5%22%20x2%3D%2218.6%22%20y2%3D%2293.1%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6593577710211828%22%2F%3E%3Cline%20x1%3D%22130.4%22%20y1%3D%22256.6%22%20x2%3D%22156.4%22%20y2%3D%22369.2%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8623582366152799%22%2F%3E%3Cline%20x1%3D%22224.7%22%20y1%3D%2244.4%22%20x2%3D%2273.1%22%20y2%3D%2287.6%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9807752118540483%22%2F%3E%3Cline%20x1%3D%22199.7%22%20y1%3D%2238.6%22%20x2%3D%22358.7%22%20y2%3D%2244.7%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8014389543047967%22%2F%3E%3Ccircle%20cx%3D%22176.9%22%20cy%3D%22129.7%22%20r%3D%223.8%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2268.4%22%20cy%3D%2292.9%22%20r%3D%225.7%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22180.8%22%20cy%3D%22236.6%22%20r%3D%225.4%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22144.3%22%20cy%3D%22209.7%22%20r%3D%228.7%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22241.1%22%20cy%3D%2280.3%22%20r%3D%226.3%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22199.9%22%20cy%3D%2291.0%22%20r%3D%225.4%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22317.0%22%20cy%3D%22115.0%22%20r%3D%226.5%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22180.4%22%20cy%3D%22157.4%22%20r%3D%224.9%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22216.4%22%20cy%3D%2280.8%22%20r%3D%224.1%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22248.8%22%20cy%3D%22103.7%22%20r%3D%227.5%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22174.5%22%20cy%3D%22201.4%22%20r%3D%223.0%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22155.4%22%20cy%3D%2250.7%22%20r%3D%227.9%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3C%2Fg%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22400%22%20height%3D%224%22%20fill%3D%22rgba(0%2C0%2C0%2C0.1)%22%2F%3E%3Ctext%20x%3D%2210%22%20y%3D%2220%22%20font-size%3D%2210%22%20fill%3D%22%23666%22%20font-family%3D%22monospace%22%3E%E7%AB%B9%E6%B5%86%E7%BA%A4%E7%BB%B4%20%C2%B7%20%E6%A0%87%E5%87%86%E7%83%98%E5%B9%B2%20%C2%B7%20%C3%97400%3C%2Ftext%3E%3C%2Fsvg%3E",
+        "capturedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "张伟",
+        "notes": ""
+      }
+    ],
+    "dryingRecords": [
+      {
+        "id": "dr_mqlaunrl_1nb6om",
+        "conditionId": "STD_105",
+        "conditionName": "标准烘干 105℃×2h",
+        "wetWeightG": 100,
+        "dryWeightG": 93.52,
+        "moistureContent": 6.48,
+        "recordedAt": "2026-06-07T19:06:07.185Z",
+        "operatorName": "张伟",
+        "operatorId": "U001",
+        "notes": ""
+      }
+    ],
+    "auditLogs": [
+      {
+        "id": "a_mqlaunrl_f8xx5b",
+        "action": "采购入库登记",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-07T19:06:07.185Z",
+        "toStatus": "DRAFT",
+        "remark": "竹浆·标准烘干条件平行样A"
+      },
+      {
+        "id": "a_mqlaunrl_i5c3za",
+        "action": "预检通过",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-07T19:06:07.185Z",
+        "fromStatus": "DRAFT",
+        "toStatus": "PRECHECK_PASS",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrl_honpj9",
+        "action": "提交判读",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-08T19:06:07.185Z",
+        "fromStatus": "PRECHECK_PASS",
+        "toStatus": "PENDING_JUDGE",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrl_81skcq",
+        "action": "判读合格",
+        "operatorId": "U002",
+        "operatorName": "李娜",
+        "operatorRole": "主管",
+        "at": "2026-06-09T19:06:07.185Z",
+        "fromStatus": "PENDING_JUDGE",
+        "toStatus": "JUDGED_PASS",
+        "remark": "标准条件下检测合格"
+      }
+    ],
+    "judgeConclusion": "PASS",
+    "judgeRemark": "标准烘干条件下合格",
+    "judgeBy": "李娜",
+    "judgeAt": "2026-06-09T19:06:07.185Z",
+    "tags": [
+      "冲突组A"
+    ],
+    "isDuplicate": false,
+    "missingFields": []
+  },
+  {
+    "id": "sample_mqlaunrl_jr6k40",
+    "sampleCode": "S-PK-20260608-019-B",
+    "pulpBatch": "PK-CT-2026-06-055",
+    "fiberLength": {
+      "short": 15.2,
+      "medium": 64.8,
+      "long": 20,
+      "weightedAverage": 2.34
+    },
+    "whiteness": 83.5,
+    "moistureContent": 5.35,
+    "sourceType": "PURCHASE",
+    "sourceInfo": "供应商：福建青山纸业 | 平行样B · 快速烘干法",
+    "operatorId": "U001",
+    "operatorName": "张伟",
+    "responsiblePersonId": "U005",
+    "responsiblePersonName": "陈建国",
+    "registeredAt": "2026-06-07T19:06:07.185Z",
+    "status": "RETURNED_FOR_REVIEW",
+    "microPhotos": [
+      {
+        "id": "mp_mqlaunrl_hgkm5r",
+        "label": "竹浆纤维 · 快速烘干",
+        "magnification": 400,
+        "imageUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20style%3D%22background%3A%23F5F0E8%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22blur%22%3E%3CfeGaussianBlur%20stdDeviation%3D%220.5%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23blur)%22%3E%3Cline%20x1%3D%22388.9%22%20y1%3D%22113.9%22%20x2%3D%22415.1%22%20y2%3D%22167.5%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8424458267698894%22%2F%3E%3Cline%20x1%3D%22264.5%22%20y1%3D%221.3%22%20x2%3D%22250.5%22%20y2%3D%2262.2%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9503832072798019%22%2F%3E%3Cline%20x1%3D%22358.3%22%20y1%3D%22207.4%22%20x2%3D%22442.5%22%20y2%3D%22222.7%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%222.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7465524861603985%22%2F%3E%3Cline%20x1%3D%2245.9%22%20y1%3D%22234.7%22%20x2%3D%22182.1%22%20y2%3D%22253.4%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7129111350002416%22%2F%3E%3Cline%20x1%3D%22307.5%22%20y1%3D%22132.0%22%20x2%3D%22362.7%22%20y2%3D%22176.1%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8503994985228222%22%2F%3E%3Cline%20x1%3D%22358.2%22%20y1%3D%22248.1%22%20x2%3D%22399.4%22%20y2%3D%22285.6%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9131842979155774%22%2F%3E%3Cline%20x1%3D%22374.5%22%20y1%3D%22251.3%22%20x2%3D%22389.4%22%20y2%3D%22336.5%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%222.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9669597854341333%22%2F%3E%3Cline%20x1%3D%22339.4%22%20y1%3D%22149.1%22%20x2%3D%22471.8%22%20y2%3D%22187.2%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8237645548197173%22%2F%3E%3Cline%20x1%3D%22396.4%22%20y1%3D%22224.1%22%20x2%3D%22511.2%22%20y2%3D%22265.3%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6604645011532393%22%2F%3E%3Cline%20x1%3D%2237.7%22%20y1%3D%220.9%22%20x2%3D%22129.0%22%20y2%3D%2237.2%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8403914676442348%22%2F%3E%3Cline%20x1%3D%22238.4%22%20y1%3D%22295.6%22%20x2%3D%22300.7%22%20y2%3D%22311.9%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6471006121945302%22%2F%3E%3Cline%20x1%3D%22213.0%22%20y1%3D%22117.5%22%20x2%3D%22140.1%22%20y2%3D%22134.8%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%223.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6900302724964809%22%2F%3E%3Cline%20x1%3D%22194.3%22%20y1%3D%22211.1%22%20x2%3D%22242.6%22%20y2%3D%22212.6%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6134514825657472%22%2F%3E%3Cline%20x1%3D%2232.7%22%20y1%3D%22280.2%22%20x2%3D%2289.6%22%20y2%3D%22303.3%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9966105366387813%22%2F%3E%3Cline%20x1%3D%22197.9%22%20y1%3D%22277.7%22%20x2%3D%22209.1%22%20y2%3D%22395.9%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%224.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9504683700886067%22%2F%3E%3Cline%20x1%3D%2273.8%22%20y1%3D%22298.0%22%20x2%3D%22-56.5%22%20y2%3D%22301.5%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8427699405381366%22%2F%3E%3Cline%20x1%3D%22367.4%22%20y1%3D%22255.8%22%20x2%3D%22488.8%22%20y2%3D%22337.6%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9324000154294814%22%2F%3E%3Cline%20x1%3D%228.0%22%20y1%3D%2272.5%22%20x2%3D%22-13.7%22%20y2%3D%22220.2%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6474835948497338%22%2F%3E%3Cline%20x1%3D%22212.0%22%20y1%3D%22222.9%22%20x2%3D%22170.6%22%20y2%3D%22293.4%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6549118518861875%22%2F%3E%3Cline%20x1%3D%22321.0%22%20y1%3D%2218.8%22%20x2%3D%22291.8%22%20y2%3D%22125.5%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8386856729974483%22%2F%3E%3Cline%20x1%3D%22311.3%22%20y1%3D%22130.3%22%20x2%3D%22233.8%22%20y2%3D%22153.1%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9416691674044617%22%2F%3E%3Cline%20x1%3D%22118.1%22%20y1%3D%22100.7%22%20x2%3D%22189.8%22%20y2%3D%22102.1%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8988595959680691%22%2F%3E%3Cline%20x1%3D%22323.0%22%20y1%3D%22194.6%22%20x2%3D%22306.2%22%20y2%3D%22321.1%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8625977041908435%22%2F%3E%3Cline%20x1%3D%22236.6%22%20y1%3D%22159.5%22%20x2%3D%22287.3%22%20y2%3D%22209.0%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7619191007915501%22%2F%3E%3Cline%20x1%3D%22184.7%22%20y1%3D%22196.5%22%20x2%3D%22128.8%22%20y2%3D%22228.0%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%221.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7855853803749367%22%2F%3E%3Cline%20x1%3D%22116.5%22%20y1%3D%22167.1%22%20x2%3D%22138.8%22%20y2%3D%22304.3%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8054517354947173%22%2F%3E%3Cline%20x1%3D%22337.6%22%20y1%3D%22105.5%22%20x2%3D%22469.5%22%20y2%3D%22132.9%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6264546596005984%22%2F%3E%3Cline%20x1%3D%22105.4%22%20y1%3D%2215.5%22%20x2%3D%22230.5%22%20y2%3D%2224.2%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7575780172342091%22%2F%3E%3Cline%20x1%3D%2266.1%22%20y1%3D%22207.5%22%20x2%3D%22109.9%22%20y2%3D%22335.6%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8806028877789553%22%2F%3E%3Cline%20x1%3D%22112.6%22%20y1%3D%22201.2%22%20x2%3D%22190.5%22%20y2%3D%22258.4%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6923719465104129%22%2F%3E%3Cline%20x1%3D%22171.1%22%20y1%3D%22146.8%22%20x2%3D%2260.8%22%20y2%3D%22184.1%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%223.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7664266462498391%22%2F%3E%3Cline%20x1%3D%22126.8%22%20y1%3D%2271.6%22%20x2%3D%22196.7%22%20y2%3D%2284.8%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%223.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.955213458941907%22%2F%3E%3Cline%20x1%3D%22108.4%22%20y1%3D%22128.8%22%20x2%3D%22208.4%22%20y2%3D%22180.7%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8707830380563835%22%2F%3E%3Cline%20x1%3D%2262.7%22%20y1%3D%2216.6%22%20x2%3D%22110.5%22%20y2%3D%22128.5%22%20stroke%3D%22%23D4C4A8%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7356799820657072%22%2F%3E%3Cline%20x1%3D%22156.8%22%20y1%3D%22272.1%22%20x2%3D%22132.7%22%20y2%3D%22426.4%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6457245462328395%22%2F%3E%3Cline%20x1%3D%2276.3%22%20y1%3D%2227.6%22%20x2%3D%2219.6%22%20y2%3D%2269.2%22%20stroke%3D%22%23F0E6D2%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7214626251732787%22%2F%3E%3Cline%20x1%3D%2282.7%22%20y1%3D%2258.9%22%20x2%3D%2239.9%22%20y2%3D%2275.6%22%20stroke%3D%22%23C9B896%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8213885324243944%22%2F%3E%3Cline%20x1%3D%22332.0%22%20y1%3D%2263.3%22%20x2%3D%22252.0%22%20y2%3D%2269.5%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9450957125362274%22%2F%3E%3Cline%20x1%3D%2298.3%22%20y1%3D%22264.7%22%20x2%3D%222.9%22%20y2%3D%22318.6%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8149844668878121%22%2F%3E%3Cline%20x1%3D%2256.0%22%20y1%3D%22111.0%22%20x2%3D%22176.8%22%20y2%3D%22120.7%22%20stroke%3D%22%23E8DCC8%22%20stroke-width%3D%222.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8142180417402615%22%2F%3E%3Ccircle%20cx%3D%22393.4%22%20cy%3D%22170.6%22%20r%3D%223.8%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22331.9%22%20cy%3D%22247.4%22%20r%3D%226.7%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22266.8%22%20cy%3D%22228.5%22%20r%3D%227.8%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22142.0%22%20cy%3D%2219.5%22%20r%3D%223.0%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22159.7%22%20cy%3D%2214.0%22%20r%3D%226.2%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22387.6%22%20cy%3D%2241.1%22%20r%3D%223.5%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22260.7%22%20cy%3D%22119.9%22%20r%3D%223.2%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22172.0%22%20cy%3D%22177.9%22%20r%3D%224.3%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2220.4%22%20cy%3D%2296.5%22%20r%3D%224.0%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22366.5%22%20cy%3D%22215.7%22%20r%3D%227.8%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22384.7%22%20cy%3D%225.2%22%20r%3D%228.1%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22345.9%22%20cy%3D%221.5%22%20r%3D%227.3%22%20fill%3D%22%23E8DCC8%22%20opacity%3D%220.5%22%2F%3E%3C%2Fg%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22400%22%20height%3D%224%22%20fill%3D%22rgba(0%2C0%2C0%2C0.1)%22%2F%3E%3Ctext%20x%3D%2210%22%20y%3D%2220%22%20font-size%3D%2210%22%20fill%3D%22%23666%22%20font-family%3D%22monospace%22%3E%E7%AB%B9%E6%B5%86%E7%BA%A4%E7%BB%B4%20%C2%B7%20%E5%BF%AB%E9%80%9F%E7%83%98%E5%B9%B2%20%C2%B7%20%C3%97400%3C%2Ftext%3E%3C%2Fsvg%3E",
+        "capturedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "张伟",
+        "notes": ""
+      }
+    ],
+    "dryingRecords": [
+      {
+        "id": "dr_mqlaunrm_ii0crl",
+        "conditionId": "FAST_130",
+        "conditionName": "快速烘干 130℃×45min",
+        "wetWeightG": 100,
+        "dryWeightG": 94.65,
+        "moistureContent": 5.35,
+        "recordedAt": "2026-06-07T19:06:07.186Z",
+        "operatorName": "张伟",
+        "operatorId": "U001",
+        "notes": ""
+      }
+    ],
+    "auditLogs": [
+      {
+        "id": "a_mqlaunrm_ixxd4q",
+        "action": "平行样登记",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-07T19:06:07.186Z",
+        "toStatus": "DRAFT",
+        "remark": "竹浆·快速烘干130℃平行样B"
+      },
+      {
+        "id": "a_mqlaunrm_g575uj",
+        "action": "预检通过",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-07T19:06:07.186Z",
+        "fromStatus": "DRAFT",
+        "toStatus": "PRECHECK_PASS",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrm_9ro4zg",
+        "action": "提交判读",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-08T19:06:07.186Z",
+        "fromStatus": "PRECHECK_PASS",
+        "toStatus": "PENDING_JUDGE",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrm_1w8y08",
+        "action": "判读冲突",
+        "operatorId": "U002",
+        "operatorName": "李娜",
+        "operatorRole": "主管",
+        "at": "2026-06-10T19:06:07.186Z",
+        "fromStatus": "PENDING_JUDGE",
+        "toStatus": "RETURNED_FOR_REVIEW",
+        "remark": "同批次不同烘干条件含水率差异1.13pp，需复判"
+      }
+    ],
+    "judgeConclusion": "CONFLICT",
+    "judgeRemark": "与标准烘干样差异较大，需确认",
+    "judgeBy": "李娜",
+    "judgeAt": "2026-06-10T19:06:07.186Z",
+    "tags": [
+      "冲突组B",
+      "退回复判"
+    ],
+    "isDuplicate": false,
+    "conflictWithSampleId": "sample_mqlaunrl_rbw9fh",
+    "missingFields": []
+  },
+  {
+    "id": "sample_mqlaunrm_0ek5jh",
+    "sampleCode": "S-PD-20260605-007",
+    "pulpBatch": "PD-YA-2026-06-007",
+    "fiberLength": {
+      "short": 20.3,
+      "medium": 60.1,
+      "long": 19.6,
+      "weightedAverage": 2.21
+    },
+    "whiteness": 82.9,
+    "moistureContent": 5.53,
+    "sourceType": "PRODUCTION",
+    "sourceInfo": "车间：二号硫酸盐浆车间 | 审计抽查样",
+    "operatorId": "U006",
+    "operatorName": "赵明辉",
+    "responsiblePersonId": "U006",
+    "responsiblePersonName": "赵明辉",
+    "registeredAt": "2026-06-04T19:06:07.186Z",
+    "status": "LOCKED",
+    "microPhotos": [
+      {
+        "id": "mp_mqlaunrm_rfq7r0",
+        "label": "审计封存样",
+        "magnification": 400,
+        "imageUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20style%3D%22background%3A%23F5F0E8%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22blur%22%3E%3CfeGaussianBlur%20stdDeviation%3D%220.5%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23blur)%22%3E%3Cline%20x1%3D%22383.6%22%20y1%3D%22166.9%22%20x2%3D%22450.3%22%20y2%3D%22186.8%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8135641630866066%22%2F%3E%3Cline%20x1%3D%22181.8%22%20y1%3D%22225.9%22%20x2%3D%22176.9%22%20y2%3D%22348.1%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8309203906064153%22%2F%3E%3Cline%20x1%3D%2214.0%22%20y1%3D%22289.6%22%20x2%3D%22-1.3%22%20y2%3D%22405.8%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9898030510647382%22%2F%3E%3Cline%20x1%3D%22345.2%22%20y1%3D%22121.6%22%20x2%3D%22220.3%22%20y2%3D%22151.4%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8919811543371725%22%2F%3E%3Cline%20x1%3D%22327.6%22%20y1%3D%22276.6%22%20x2%3D%22437.4%22%20y2%3D%22304.3%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.914810866628767%22%2F%3E%3Cline%20x1%3D%22149.6%22%20y1%3D%22250.0%22%20x2%3D%22295.7%22%20y2%3D%22264.6%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6421109033312381%22%2F%3E%3Cline%20x1%3D%22387.2%22%20y1%3D%2245.0%22%20x2%3D%22334.4%22%20y2%3D%22157.6%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8644065974021908%22%2F%3E%3Cline%20x1%3D%2224.3%22%20y1%3D%2210.3%22%20x2%3D%2222.7%22%20y2%3D%22112.1%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6637882048977697%22%2F%3E%3Cline%20x1%3D%223.6%22%20y1%3D%22243.1%22%20x2%3D%22-78.7%22%20y2%3D%22250.1%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7483814168182423%22%2F%3E%3Cline%20x1%3D%22364.4%22%20y1%3D%22123.0%22%20x2%3D%22478.0%22%20y2%3D%22179.7%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9102383632949403%22%2F%3E%3Cline%20x1%3D%22192.3%22%20y1%3D%22164.9%22%20x2%3D%22222.7%22%20y2%3D%22298.6%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7286865563739315%22%2F%3E%3Cline%20x1%3D%22361.6%22%20y1%3D%223.9%22%20x2%3D%22252.5%22%20y2%3D%2297.7%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7978027127587156%22%2F%3E%3Cline%20x1%3D%22282.1%22%20y1%3D%22265.5%22%20x2%3D%22341.3%22%20y2%3D%22336.9%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8667010062580411%22%2F%3E%3Cline%20x1%3D%2245.8%22%20y1%3D%22109.9%22%20x2%3D%22-4.6%22%20y2%3D%22187.6%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8210195963827136%22%2F%3E%3Cline%20x1%3D%22265.0%22%20y1%3D%2275.8%22%20x2%3D%22322.4%22%20y2%3D%22163.4%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8785971848434078%22%2F%3E%3Cline%20x1%3D%22296.2%22%20y1%3D%2273.5%22%20x2%3D%22387.5%22%20y2%3D%22121.1%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7086092193955315%22%2F%3E%3Cline%20x1%3D%2226.9%22%20y1%3D%2236.1%22%20x2%3D%2264.7%22%20y2%3D%22144.5%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6372715307600189%22%2F%3E%3Cline%20x1%3D%2276.2%22%20y1%3D%22254.7%22%20x2%3D%2271.8%22%20y2%3D%22347.5%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9862912616039877%22%2F%3E%3Cline%20x1%3D%2252.0%22%20y1%3D%22163.4%22%20x2%3D%224.9%22%20y2%3D%22291.5%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7880590638071582%22%2F%3E%3Cline%20x1%3D%22389.8%22%20y1%3D%228.6%22%20x2%3D%22413.3%22%20y2%3D%22135.6%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7259627528271694%22%2F%3E%3Cline%20x1%3D%22386.0%22%20y1%3D%22111.3%22%20x2%3D%22295.1%22%20y2%3D%22192.1%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%224.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8065016651713708%22%2F%3E%3Cline%20x1%3D%22360.0%22%20y1%3D%22236.9%22%20x2%3D%22290.6%22%20y2%3D%22351.8%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.702448460391006%22%2F%3E%3Cline%20x1%3D%22198.2%22%20y1%3D%22235.6%22%20x2%3D%22344.4%22%20y2%3D%22259.3%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9037466865121134%22%2F%3E%3Cline%20x1%3D%22297.6%22%20y1%3D%22173.5%22%20x2%3D%22392.9%22%20y2%3D%22187.4%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6549551657136622%22%2F%3E%3Cline%20x1%3D%22230.5%22%20y1%3D%22269.0%22%20x2%3D%22338.5%22%20y2%3D%22364.5%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.693150464573983%22%2F%3E%3Cline%20x1%3D%22375.9%22%20y1%3D%2283.6%22%20x2%3D%22351.3%22%20y2%3D%22146.2%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7866480384395461%22%2F%3E%3Cline%20x1%3D%2231.8%22%20y1%3D%22191.3%22%20x2%3D%2261.1%22%20y2%3D%22227.3%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6323577244873609%22%2F%3E%3Cline%20x1%3D%2267.0%22%20y1%3D%22186.1%22%20x2%3D%2271.8%22%20y2%3D%22240.6%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9878995690010852%22%2F%3E%3Cline%20x1%3D%2243.6%22%20y1%3D%22129.3%22%20x2%3D%2247.4%22%20y2%3D%22200.6%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8319654845825355%22%2F%3E%3Cline%20x1%3D%22279.1%22%20y1%3D%22223.6%22%20x2%3D%22159.0%22%20y2%3D%22286.5%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.3%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.799925083891244%22%2F%3E%3Cline%20x1%3D%22251.4%22%20y1%3D%22290.7%22%20x2%3D%22255.2%22%20y2%3D%22348.6%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8725962212256674%22%2F%3E%3Cline%20x1%3D%2252.8%22%20y1%3D%222.7%22%20x2%3D%2232.0%22%20y2%3D%2242.7%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7642736328118507%22%2F%3E%3Cline%20x1%3D%22156.4%22%20y1%3D%22176.6%22%20x2%3D%2241.8%22%20y2%3D%22188.2%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6300822349804769%22%2F%3E%3Cline%20x1%3D%22211.1%22%20y1%3D%2238.8%22%20x2%3D%22313.2%22%20y2%3D%2290.4%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8669442239597895%22%2F%3E%3Cline%20x1%3D%222.6%22%20y1%3D%22214.5%22%20x2%3D%22-131.6%22%20y2%3D%22293.9%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7993529906317379%22%2F%3E%3Cline%20x1%3D%22268.6%22%20y1%3D%22216.7%22%20x2%3D%22206.2%22%20y2%3D%22281.3%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9239739338994043%22%2F%3E%3Cline%20x1%3D%2255.0%22%20y1%3D%2218.0%22%20x2%3D%22103.1%22%20y2%3D%2222.4%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9994206496216094%22%2F%3E%3Cline%20x1%3D%2237.3%22%20y1%3D%22188.1%22%20x2%3D%22-26.5%22%20y2%3D%22269.5%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6872339367663928%22%2F%3E%3Cline%20x1%3D%2269.4%22%20y1%3D%22204.1%22%20x2%3D%2210.9%22%20y2%3D%22253.3%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7635589057550373%22%2F%3E%3Cline%20x1%3D%2233.7%22%20y1%3D%22135.6%22%20x2%3D%224.1%22%20y2%3D%22210.4%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7561805667831347%22%2F%3E%3Ccircle%20cx%3D%2273.7%22%20cy%3D%22172.9%22%20r%3D%224.0%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22108.2%22%20cy%3D%22187.1%22%20r%3D%227.3%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22275.9%22%20cy%3D%22190.8%22%20r%3D%225.4%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22206.8%22%20cy%3D%2252.4%22%20r%3D%223.8%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22138.9%22%20cy%3D%22104.1%22%20r%3D%224.6%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22157.3%22%20cy%3D%22160.8%22%20r%3D%224.0%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22240.5%22%20cy%3D%22220.4%22%20r%3D%225.4%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22321.9%22%20cy%3D%2278.4%22%20r%3D%227.3%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22141.7%22%20cy%3D%2297.6%22%20r%3D%223.7%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22200.6%22%20cy%3D%22152.5%22%20r%3D%223.4%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22321.4%22%20cy%3D%22300.0%22%20r%3D%227.2%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22376.2%22%20cy%3D%22137.9%22%20r%3D%224.6%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3C%2Fg%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22400%22%20height%3D%224%22%20fill%3D%22rgba(0%2C0%2C0%2C0.1)%22%2F%3E%3Ctext%20x%3D%2210%22%20y%3D%2220%22%20font-size%3D%2210%22%20fill%3D%22%23666%22%20font-family%3D%22monospace%22%3E%E5%AE%A1%E8%AE%A1%E5%B0%81%E5%AD%98%E6%A0%B7%20%C2%B7%20%C3%97400%3C%2Ftext%3E%3C%2Fsvg%3E",
+        "capturedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "赵明辉",
+        "notes": ""
+      }
+    ],
+    "dryingRecords": [
+      {
+        "id": "dr_mqlaunrm_lqmobs",
+        "conditionId": "STD_105",
+        "conditionName": "标准烘干 105℃×2h",
+        "wetWeightG": 100,
+        "dryWeightG": 94.47,
+        "moistureContent": 5.53,
+        "recordedAt": "2026-06-04T19:06:07.186Z",
+        "operatorName": "赵明辉",
+        "operatorId": "U006",
+        "notes": ""
+      }
+    ],
+    "auditLogs": [
+      {
+        "id": "a_mqlaunrm_tnjtvm",
+        "action": "生产取样",
+        "operatorId": "U006",
+        "operatorName": "赵明辉",
+        "operatorRole": "主管",
+        "at": "2026-06-04T19:06:07.186Z",
+        "toStatus": "DRAFT",
+        "remark": "审计抽查"
+      },
+      {
+        "id": "a_mqlaunrm_56ooro",
+        "action": "预检通过",
+        "operatorId": "U006",
+        "operatorName": "赵明辉",
+        "operatorRole": "主管",
+        "at": "2026-06-04T19:06:07.186Z",
+        "fromStatus": "DRAFT",
+        "toStatus": "PRECHECK_PASS",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrm_0iv1d2",
+        "action": "判读合格",
+        "operatorId": "U002",
+        "operatorName": "李娜",
+        "operatorRole": "主管",
+        "at": "2026-06-05T19:06:07.186Z",
+        "fromStatus": "PRECHECK_PASS",
+        "toStatus": "JUDGED_PASS",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrm_dswx7i",
+        "action": "审计锁定",
+        "operatorId": "U002",
+        "operatorName": "李娜",
+        "operatorRole": "主管",
+        "at": "2026-06-16T19:06:07.186Z",
+        "fromStatus": "JUDGED_PASS",
+        "toStatus": "LOCKED",
+        "remark": "季度审计封存，不得修改"
+      }
+    ],
+    "judgeConclusion": "PASS",
+    "judgeRemark": "生产质量正常",
+    "judgeBy": "李娜",
+    "judgeAt": "2026-06-05T19:06:07.186Z",
+    "tags": [
+      "锁定",
+      "审计"
+    ],
+    "isDuplicate": false,
+    "missingFields": []
+  },
+  {
+    "id": "sample_mqlaunrm_oiluw7",
+    "sampleCode": "S-PK-20260603-051",
+    "pulpBatch": "PK-JX-2026-06-076",
+    "fiberLength": {
+      "short": 25.8,
+      "medium": 56.2,
+      "long": 18,
+      "weightedAverage": 2.05
+    },
+    "whiteness": 78.4,
+    "moistureContent": 6.12,
+    "sourceType": "PURCHASE",
+    "sourceInfo": "供应商：江西纸业 | 合同号：JX-2026-034",
+    "operatorId": "U001",
+    "operatorName": "张伟",
+    "responsiblePersonId": "U005",
+    "responsiblePersonName": "陈建国",
+    "registeredAt": "2026-06-01T19:06:07.186Z",
+    "status": "RETURNED_FOR_REVIEW",
+    "microPhotos": [
+      {
+        "id": "mp_mqlaunrm_ypjy5k",
+        "label": "不合格退回复检",
+        "magnification": 400,
+        "imageUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20style%3D%22background%3A%23F5F0E8%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22blur%22%3E%3CfeGaussianBlur%20stdDeviation%3D%220.5%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23blur)%22%3E%3Cline%20x1%3D%22341.6%22%20y1%3D%22198.8%22%20x2%3D%22316.4%22%20y2%3D%22316.5%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6160262808506194%22%2F%3E%3Cline%20x1%3D%22235.9%22%20y1%3D%2248.0%22%20x2%3D%22293.4%22%20y2%3D%22102.4%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9453572020219789%22%2F%3E%3Cline%20x1%3D%22275.4%22%20y1%3D%22105.3%22%20x2%3D%22321.4%22%20y2%3D%22111.6%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8993715467643972%22%2F%3E%3Cline%20x1%3D%22357.5%22%20y1%3D%22275.8%22%20x2%3D%22305.2%22%20y2%3D%22373.2%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6833588762110873%22%2F%3E%3Cline%20x1%3D%22317.8%22%20y1%3D%22243.6%22%20x2%3D%22387.0%22%20y2%3D%22265.9%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9659882101391779%22%2F%3E%3Cline%20x1%3D%22274.9%22%20y1%3D%22212.1%22%20x2%3D%22207.3%22%20y2%3D%22265.6%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9273291910413618%22%2F%3E%3Cline%20x1%3D%22388.0%22%20y1%3D%22278.5%22%20x2%3D%22479.2%22%20y2%3D%22358.9%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9017305746266868%22%2F%3E%3Cline%20x1%3D%22214.3%22%20y1%3D%22271.0%22%20x2%3D%22174.7%22%20y2%3D%22417.5%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6908915387611877%22%2F%3E%3Cline%20x1%3D%22178.6%22%20y1%3D%2273.2%22%20x2%3D%22219.3%22%20y2%3D%22112.5%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9988385357769625%22%2F%3E%3Cline%20x1%3D%22142.1%22%20y1%3D%22228.0%22%20x2%3D%22173.1%22%20y2%3D%22307.9%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6011991954279882%22%2F%3E%3Cline%20x1%3D%22201.5%22%20y1%3D%22151.7%22%20x2%3D%22180.9%22%20y2%3D%22191.0%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6736459522469868%22%2F%3E%3Cline%20x1%3D%22152.3%22%20y1%3D%22265.9%22%20x2%3D%22177.2%22%20y2%3D%22335.7%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6940076763008328%22%2F%3E%3Cline%20x1%3D%2282.5%22%20y1%3D%22191.6%22%20x2%3D%2271.0%22%20y2%3D%22318.7%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8977540081365282%22%2F%3E%3Cline%20x1%3D%22171.2%22%20y1%3D%22218.6%22%20x2%3D%22223.8%22%20y2%3D%22282.2%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7997222785341457%22%2F%3E%3Cline%20x1%3D%22331.3%22%20y1%3D%22270.8%22%20x2%3D%22372.5%22%20y2%3D%22298.3%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8937743789785156%22%2F%3E%3Cline%20x1%3D%2291.9%22%20y1%3D%22229.0%22%20x2%3D%22143.2%22%20y2%3D%22237.1%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6265071225507978%22%2F%3E%3Cline%20x1%3D%22267.5%22%20y1%3D%2250.6%22%20x2%3D%22173.2%22%20y2%3D%22110.8%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6109981826255366%22%2F%3E%3Cline%20x1%3D%2246.3%22%20y1%3D%2232.0%22%20x2%3D%22197.9%22%20y2%3D%2241.4%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6451115013199127%22%2F%3E%3Cline%20x1%3D%2260.8%22%20y1%3D%22288.0%22%20x2%3D%229.5%22%20y2%3D%22433.0%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7379711887208977%22%2F%3E%3Cline%20x1%3D%22251.6%22%20y1%3D%22214.3%22%20x2%3D%22178.2%22%20y2%3D%22349.2%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6304894431032326%22%2F%3E%3Cline%20x1%3D%22130.0%22%20y1%3D%22168.3%22%20x2%3D%22181.8%22%20y2%3D%22264.3%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9117259006175096%22%2F%3E%3Cline%20x1%3D%22368.9%22%20y1%3D%22103.1%22%20x2%3D%22419.6%22%20y2%3D%22178.2%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8218318035750338%22%2F%3E%3Cline%20x1%3D%2287.6%22%20y1%3D%22104.3%22%20x2%3D%22-26.1%22%20y2%3D%22134.0%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8422027854722539%22%2F%3E%3Cline%20x1%3D%22368.8%22%20y1%3D%2247.7%22%20x2%3D%22381.2%22%20y2%3D%22125.3%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6098734762665782%22%2F%3E%3Cline%20x1%3D%22190.6%22%20y1%3D%22224.4%22%20x2%3D%22197.5%22%20y2%3D%22360.0%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.7%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.603446238609649%22%2F%3E%3Cline%20x1%3D%2220.5%22%20y1%3D%22263.6%22%20x2%3D%22115.4%22%20y2%3D%22311.5%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6910602952458241%22%2F%3E%3Cline%20x1%3D%22174.4%22%20y1%3D%22167.5%22%20x2%3D%22222.9%22%20y2%3D%22219.9%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9640057270107912%22%2F%3E%3Cline%20x1%3D%22239.3%22%20y1%3D%22129.7%22%20x2%3D%22102.9%22%20y2%3D%22143.3%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.9%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9103692572850028%22%2F%3E%3Cline%20x1%3D%22184.7%22%20y1%3D%22169.4%22%20x2%3D%22104.7%22%20y2%3D%22214.8%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6024393239056627%22%2F%3E%3Cline%20x1%3D%22131.5%22%20y1%3D%22277.9%22%20x2%3D%22273.8%22%20y2%3D%22280.6%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8551275389725216%22%2F%3E%3Cline%20x1%3D%22295.3%22%20y1%3D%22159.1%22%20x2%3D%22392.2%22%20y2%3D%22181.8%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9531091631143815%22%2F%3E%3Cline%20x1%3D%2227.9%22%20y1%3D%2251.1%22%20x2%3D%229.3%22%20y2%3D%22155.0%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6458468448423462%22%2F%3E%3Cline%20x1%3D%2223.9%22%20y1%3D%22166.9%22%20x2%3D%22100.6%22%20y2%3D%22290.5%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.7513821844369586%22%2F%3E%3Cline%20x1%3D%22363.9%22%20y1%3D%2282.4%22%20x2%3D%22216.5%22%20y2%3D%22106.1%22%20stroke%3D%22%23A0826D%22%20stroke-width%3D%222.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9765981555778075%22%2F%3E%3Cline%20x1%3D%22171.8%22%20y1%3D%22108.1%22%20x2%3D%22233.1%22%20y2%3D%22123.0%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6248326387803357%22%2F%3E%3Cline%20x1%3D%22224.4%22%20y1%3D%2273.2%22%20x2%3D%22184.5%22%20y2%3D%22167.3%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9957553660065346%22%2F%3E%3Cline%20x1%3D%2281.2%22%20y1%3D%2235.6%22%20x2%3D%2248.6%22%20y2%3D%22102.2%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9038792929614698%22%2F%3E%3Cline%20x1%3D%2223.9%22%20y1%3D%22160.1%22%20x2%3D%2246.5%22%20y2%3D%22307.5%22%20stroke%3D%22%238B7355%22%20stroke-width%3D%223.0%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.6548537591952137%22%2F%3E%3Cline%20x1%3D%2225.7%22%20y1%3D%22190.7%22%20x2%3D%2263.1%22%20y2%3D%22263.3%22%20stroke%3D%22%23C4A77D%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.9374393435740246%22%2F%3E%3Cline%20x1%3D%22241.5%22%20y1%3D%2294.9%22%20x2%3D%22109.6%22%20y2%3D%22146.7%22%20stroke%3D%22%236B5344%22%20stroke-width%3D%223.1%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8130130749743415%22%2F%3E%3Ccircle%20cx%3D%22176.3%22%20cy%3D%22275.7%22%20r%3D%223.2%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22361.7%22%20cy%3D%226.4%22%20r%3D%223.9%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22161.3%22%20cy%3D%228.5%22%20r%3D%225.6%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2264.2%22%20cy%3D%2263.4%22%20r%3D%223.3%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22131.5%22%20cy%3D%22277.7%22%20r%3D%223.6%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22274.6%22%20cy%3D%22179.1%22%20r%3D%224.9%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22120.2%22%20cy%3D%2298.5%22%20r%3D%223.0%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2237.8%22%20cy%3D%224.5%22%20r%3D%226.2%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22391.9%22%20cy%3D%22201.9%22%20r%3D%227.6%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%22104.6%22%20cy%3D%22260.5%22%20r%3D%224.7%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2214.6%22%20cy%3D%2224.3%22%20r%3D%225.2%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3Ccircle%20cx%3D%2268.3%22%20cy%3D%22203.8%22%20r%3D%223.6%22%20fill%3D%22%238B7355%22%20opacity%3D%220.5%22%2F%3E%3C%2Fg%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22400%22%20height%3D%224%22%20fill%3D%22rgba(0%2C0%2C0%2C0.1)%22%2F%3E%3Ctext%20x%3D%2210%22%20y%3D%2220%22%20font-size%3D%2210%22%20fill%3D%22%23666%22%20font-family%3D%22monospace%22%3E%E4%B8%8D%E5%90%88%E6%A0%BC%E9%80%80%E5%9B%9E%E5%A4%8D%E6%A3%80%20%C2%B7%20%C3%97400%3C%2Ftext%3E%3C%2Fsvg%3E",
+        "capturedAt": "2026-06-19T19:06:07.184Z",
+        "operatorName": "张伟",
+        "notes": ""
+      }
+    ],
+    "dryingRecords": [
+      {
+        "id": "dr_mqlaunrm_z32tc8",
+        "conditionId": "STD_105",
+        "conditionName": "标准烘干 105℃×2h",
+        "wetWeightG": 100,
+        "dryWeightG": 93.88,
+        "moistureContent": 6.12,
+        "recordedAt": "2026-06-01T19:06:07.186Z",
+        "operatorName": "张伟",
+        "operatorId": "U001",
+        "notes": ""
+      }
+    ],
+    "auditLogs": [
+      {
+        "id": "a_mqlaunrm_z71xb2",
+        "action": "采购入库登记",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-01T19:06:07.186Z",
+        "toStatus": "DRAFT",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrm_yp8l1f",
+        "action": "预检通过",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-01T19:06:07.186Z",
+        "fromStatus": "DRAFT",
+        "toStatus": "PRECHECK_PASS",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrm_ad59w5",
+        "action": "提交判读",
+        "operatorId": "U001",
+        "operatorName": "张伟",
+        "operatorRole": "操作员",
+        "at": "2026-06-02T19:06:07.186Z",
+        "fromStatus": "PRECHECK_PASS",
+        "toStatus": "PENDING_JUDGE",
+        "remark": ""
+      },
+      {
+        "id": "a_mqlaunrm_x2jgwv",
+        "action": "判读不合格",
+        "operatorId": "U002",
+        "operatorName": "李娜",
+        "operatorRole": "主管",
+        "at": "2026-06-03T19:06:07.186Z",
+        "fromStatus": "PENDING_JUDGE",
+        "toStatus": "JUDGED_FAIL",
+        "remark": "白度偏低，短纤维比例偏高"
+      },
+      {
+        "id": "a_mqlaunrm_4t67mq",
+        "action": "质控总监打回复判",
+        "operatorId": "U002",
+        "operatorName": "李娜",
+        "operatorRole": "总监",
+        "at": "2026-06-17T19:06:07.186Z",
+        "fromStatus": "JUDGED_FAIL",
+        "toStatus": "RETURNED_FOR_REVIEW",
+        "remark": "供应商申诉，需重新检验确认"
+      }
+    ],
+    "judgeConclusion": "FAIL",
+    "judgeRemark": "白度偏低，短纤维比例偏高",
+    "judgeBy": "李娜",
+    "judgeAt": "2026-06-03T19:06:07.186Z",
+    "tags": [
+      "退回复判"
+    ],
+    "isDuplicate": false,
+    "missingFields": []
+  }
+]
