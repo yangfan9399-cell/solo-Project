@@ -152,7 +152,96 @@ export async function initDatabase() {
     seedData(db);
   }
 
+  migrateAndRepairData(db);
+
   return db;
+}
+
+function migrateAndRepairData(db: Database) {
+  try {
+    const conflictsB005 = prepare(db, `
+      SELECT c.id, c.resolution, c.resolved_value, c.resolved_at, c.resolver,
+             co.decisions_json, co.consultant, co.created_at as consult_created_at
+      FROM conflicts c
+      LEFT JOIN consultations co ON c.batch_id = co.batch_id
+      WHERE c.batch_id = 'b-005' AND co.decision = 'merge'
+      ORDER BY co.created_at DESC
+      LIMIT 10
+    `).all<{
+      id: string; resolution: string | null; resolved_value: string | null;
+      resolved_at: string | null; resolver: string | null;
+      decisions_json: string; consultant: string; consult_created_at: string;
+    }>();
+
+    if (conflictsB005.length > 0 && conflictsB005[0].resolution === null) {
+      const consult = conflictsB005[0];
+      let decisions: Record<string, { decision: string; custom_value?: string }> = {};
+      try {
+        decisions = JSON.parse(consult.decisions_json);
+      } catch {
+        return;
+      }
+
+      const updateConflict = prepare(db, `
+        UPDATE conflicts
+        SET resolution = ?, resolved_value = ?, resolved_at = ?, resolver = ?
+        WHERE id = ?
+      `);
+
+      const getConflict = prepare(db, 'SELECT * FROM conflicts WHERE id = ?');
+
+      for (const c of conflictsB005) {
+        const conflict = getConflict.get<{
+          id: string; field_name: string; value_a: string; value_b: string;
+        }>(c.id);
+        if (!conflict) continue;
+
+        const decision = decisions[conflict.field_name];
+        if (!decision) continue;
+
+        let resolvedValue: string;
+        if (decision.decision === 'adopt_a') {
+          resolvedValue = conflict.value_a;
+        } else if (decision.decision === 'adopt_b') {
+          resolvedValue = conflict.value_b;
+        } else if (decision.decision === 'merge' && decision.custom_value) {
+          resolvedValue = decision.custom_value;
+        } else {
+          continue;
+        }
+
+        updateConflict.run(
+          decision.decision,
+          resolvedValue,
+          consult.consult_created_at,
+          consult.consultant,
+          conflict.id,
+        );
+      }
+
+      updateBatchFieldsFromDB(db, 'b-005', { status: 'merged', conflict_count: 3 });
+      persistDB();
+      console.log('[DB Migration] Fixed b-005 conflict resolutions');
+    }
+  } catch (e) {
+    console.warn('[DB Migration] skipped:', e);
+  }
+}
+
+function updateBatchFieldsFromDB(
+  db: Database,
+  batchId: string,
+  fields: Partial<{ status: BatchStatus; conflict_count: number }>,
+): void {
+  const keys = Object.keys(fields);
+  if (keys.length === 0) return;
+  const sets = keys.map((k) => `${k} = ?`).join(', ');
+  const values = Object.values(fields);
+  prepare(db, `UPDATE batches SET ${sets}, updated_at = ? WHERE id = ?`).run(
+    ...values,
+    new Date().toISOString(),
+    batchId,
+  );
 }
 
 function initTables(db: Database) {
@@ -225,8 +314,8 @@ function seedData(db: Database) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const insertConflict = prepare(db, `
-    INSERT INTO conflicts (id, batch_id, field_name, value_a, value_b, conflict_type, severity)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO conflicts (id, batch_id, field_name, value_a, value_b, conflict_type, severity, resolution, resolved_value, resolved_at, resolver)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const batches: Batch[] = [
@@ -366,16 +455,16 @@ function seedData(db: Database) {
   for (const r of readings) insertReading.run(r.id, r.batch_id, r.observer, r.rubbing_clarity, r.rust_level, r.inscription_damage, r.well_ring_direction, r.rubbing_image ?? null, r.transcription, r.supplement_reading ?? null, r.supplement_basis ?? null, r.submitted_at);
 
   const conflicts = [
-    ['c-002-1', 'b-002', 'rubbing_clarity', '较清晰', '清晰', 'normal', 'minor'],
-    ['c-002-2', 'b-002', 'well_ring_direction', '东南', '东', 'normal', 'minor'],
-    ['c-003-1', 'b-003', 'rubbing_clarity', '较清晰', '模糊', 'normal', 'minor'],
-    ['c-003-2', 'b-003', 'rust_level', '重度', '中度', 'normal', 'minor'],
-    ['c-003-3', 'b-003', 'well_ring_direction', '西', '西北', 'normal', 'severe'],
-    ['c-003-4', 'b-003', 'transcription', '咸平三年造此井泉以供民汲，双泉并涌，故名双泉。', '元丰三年凿此双井以利行人，岁久不涸。', 'normal', 'severe'],
-    ['c-003-5', 'b-003', 'supplement_reading', '补「双泉并涌」为原碑所缺', '补「元丰三年」为年号', 'supplement', 'severe'],
-    ['c-005-1', 'b-005', 'rubbing_clarity', '清晰', '较清晰', 'normal', 'minor'],
-    ['c-005-2', 'b-005', 'transcription', '涌金井，相传掘时见金沙随水而出，因以为名。', '涌金井，相传掘时见金砂随水而出，因以为名。', 'normal', 'minor'],
-    ['c-005-3', 'b-005', 'well_ring_direction', '东北', '东北', 'normal', 'minor'],
+    ['c-002-1', 'b-002', 'rubbing_clarity', '较清晰', '清晰', 'normal', 'minor', null, null, null, null],
+    ['c-002-2', 'b-002', 'well_ring_direction', '东南', '东', 'normal', 'minor', null, null, null, null],
+    ['c-003-1', 'b-003', 'rubbing_clarity', '较清晰', '模糊', 'normal', 'minor', null, null, null, null],
+    ['c-003-2', 'b-003', 'rust_level', '重度', '中度', 'normal', 'minor', null, null, null, null],
+    ['c-003-3', 'b-003', 'well_ring_direction', '西', '西北', 'normal', 'severe', null, null, null, null],
+    ['c-003-4', 'b-003', 'transcription', '咸平三年造此井泉以供民汲，双泉并涌，故名双泉。', '元丰三年凿此双井以利行人，岁久不涸。', 'normal', 'severe', null, null, null, null],
+    ['c-003-5', 'b-003', 'supplement_reading', '补「双泉并涌」为原碑所缺', '补「元丰三年」为年号', 'supplement', 'severe', null, null, null, null],
+    ['c-005-1', 'b-005', 'rubbing_clarity', '清晰', '较清晰', 'normal', 'minor', 'adopt_b', '较清晰', nowOffset(800), '王审之'],
+    ['c-005-2', 'b-005', 'transcription', '涌金井，相传掘时见金沙随水而出，因以为名。', '涌金井，相传掘时见金砂随水而出，因以为名。', 'normal', 'minor', 'adopt_a', '涌金井，相传掘时见金沙随水而出，因以为名。', nowOffset(800), '王审之'],
+    ['c-005-3', 'b-005', 'well_ring_direction', '东北', '东北', 'normal', 'minor', 'adopt_a', '东北', nowOffset(800), '王审之'],
   ];
 
   for (const c of conflicts) insertConflict.run(...c);

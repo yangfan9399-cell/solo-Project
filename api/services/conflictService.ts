@@ -131,6 +131,31 @@ export function generateConflicts(batchId: string, readingA: Reading, readingB: 
 
 export function recalculateBatchStatus(batchId: string): BatchStatus {
   const db = getDB();
+  
+  const batch = prepare(db, 'SELECT status FROM batches WHERE id = ?').get<{ status: BatchStatus }>(batchId);
+  
+  if (batch?.status === 'merged') {
+    const lastConsult = prepare(
+      db,
+      'SELECT decision FROM consultations WHERE batch_id = ? ORDER BY created_at DESC LIMIT 1',
+    ).get<{ decision: string }>(batchId);
+    if (lastConsult?.decision === 'merge') {
+      const unresolvedCount = prepare(
+        db,
+        'SELECT COUNT(*) as cnt FROM conflicts WHERE batch_id = ? AND resolution IS NULL',
+      ).get<{ cnt: number }>(batchId);
+      const totalConflictCount = prepare(
+        db,
+        'SELECT COUNT(*) as cnt FROM conflicts WHERE batch_id = ?',
+      ).get<{ cnt: number }>(batchId);
+      updateBatchFields(batchId, { 
+        status: 'merged' as BatchStatus, 
+        conflict_count: totalConflictCount?.cnt || 0 
+      });
+      return 'merged';
+    }
+  }
+
   const readings = prepare(db, 'SELECT * FROM readings WHERE batch_id = ?').all<Reading>(batchId);
 
   if (readings.length < 2) {
@@ -143,17 +168,25 @@ export function recalculateBatchStatus(batchId: string): BatchStatus {
     'SELECT * FROM conflicts WHERE batch_id = ? AND resolution IS NULL',
   ).all<Conflict>(batchId);
 
+  const totalConflicts = prepare(
+    db,
+    'SELECT * FROM conflicts WHERE batch_id = ?',
+  ).all<Conflict>(batchId);
+
   const conflictCount = unresolvedConflicts.length;
+  const totalConflictCount = totalConflicts.length;
+  
   let status: BatchStatus;
 
   if (conflictCount === 0) {
-    status = 'consistent';
+    const hasResolved = totalConflictCount > 0;
+    status = hasResolved ? 'merged' : 'consistent';
   } else {
     const hasSevere = unresolvedConflicts.some((c) => c.severity === 'severe');
     status = hasSevere ? 'severe_conflict' : 'minor_deviation';
   }
 
-  updateBatchFields(batchId, { status, conflict_count: conflictCount });
+  updateBatchFields(batchId, { status, conflict_count: totalConflictCount });
   return status;
 }
 

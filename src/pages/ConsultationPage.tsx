@@ -268,13 +268,34 @@ export default function ConsultationPage() {
                   </thead>
                   <tbody>
                     {detail.conflicts.map((c) => (
-                      <tr key={c.id} className="border-b border-[#8B6914]/10 last:border-0 hover:bg-[#8B6914]/5">
+                      <tr key={c.id} className={cn(
+                        'border-b last:border-0 hover:bg-[#8B6914]/5 transition',
+                        c.resolution ? 'bg-emerald-50/40' : '',
+                      )}>
                         <td className="py-3 px-3 font-medium text-[#2C2416]">{FIELD_LABELS[c.field_name] || c.field_name}</td>
-                        <td className="py-3 px-3 text-blue-800 font-mono text-xs max-w-[240px] truncate" title={c.value_a}>
-                          {c.value_a || '—'}
+                        <td className="py-3 px-3 font-mono text-xs max-w-[240px] truncate" title={c.value_a}>
+                          {c.resolution && c.resolved_value ? (
+                            <div className="space-y-1">
+                              <span className="line-through text-slate-400 text-blue-700">{c.value_a || '—'}</span>
+                              <div className="text-emerald-800 font-bold not-italic">
+                                ✓ {c.resolved_value}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-blue-800">{c.value_a || '—'}</span>
+                          )}
                         </td>
-                        <td className="py-3 px-3 text-indigo-800 font-mono text-xs max-w-[240px] truncate" title={c.value_b}>
-                          {c.value_b || '—'}
+                        <td className="py-3 px-3 font-mono text-xs max-w-[240px] truncate" title={c.value_b}>
+                          {c.resolution && c.resolved_value ? (
+                            <div className="space-y-1">
+                              <span className="line-through text-slate-400 text-indigo-700">{c.value_b || '—'}</span>
+                              <div className="text-emerald-800 font-bold not-italic">
+                                ✓ {c.resolved_value}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-indigo-800">{c.value_b || '—'}</span>
+                          )}
                         </td>
                         <td className="py-3 px-3">
                           <span
@@ -297,10 +318,17 @@ export default function ConsultationPage() {
                         </td>
                         <td className="py-3 px-3">
                           {c.resolution ? (
-                            <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              已裁定: {c.resolution === 'adopt_a' ? '采信A' : c.resolution === 'adopt_b' ? '采信B' : c.resolution === 'merge' ? '已合并' : c.resolution}
-                            </span>
+                            <div className="space-y-1">
+                              <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                已裁定: {c.resolution === 'adopt_a' ? '采信A' : c.resolution === 'adopt_b' ? '采信B' : c.resolution === 'merge' ? '已合并' : c.resolution}
+                              </span>
+                              {c.resolver && (
+                                <p className="text-[10px] text-emerald-600">
+                                  裁定人：{c.resolver} · {c.resolved_at ? formatDate(c.resolved_at) : ''}
+                                </p>
+                              )}
+                            </div>
                           ) : (
                             <select
                               value={fieldDecisions[c.field_name]?.decision || 'adopt_a'}
@@ -405,6 +433,7 @@ export default function ConsultationPage() {
                         const conflict = conflictsByField[f.key];
                         const isConflicted = !!conflict && !conflict.resolution;
                         const wasResolved = !!conflict?.resolution;
+                        const isMergedBatch = isMerged;
 
                         return (
                           <div
@@ -414,7 +443,9 @@ export default function ConsultationPage() {
                               isConflicted
                                 ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-200/60'
                                 : wasResolved
-                                  ? 'bg-emerald-50 border-emerald-200'
+                                  ? isMergedBatch
+                                    ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-300 ring-1 ring-emerald-200'
+                                    : 'bg-emerald-50 border-emerald-200'
                                   : 'bg-white border-[#8B6914]/15',
                             )}
                           >
@@ -464,13 +495,39 @@ export default function ConsultationPage() {
                               </p>
                             )}
                             {conflict?.resolution && conflict.resolved_value && (
-                              <div className="mt-3 pt-3 border-t border-dashed border-emerald-300/60">
-                                <p className="text-[10px] text-emerald-700 font-bold mb-1 flex items-center gap-1">
-                                  <Eye className="w-3 h-3" /> 采信结论
-                                </p>
-                                <p className="text-sm text-emerald-900 font-serif bg-white/60 rounded px-2.5 py-1.5 border border-emerald-200/50">
-                                  {conflict.resolved_value}
-                                </p>
+                              <div className={cn(
+                                'mt-3 pt-3 border-t-2 border-dashed flex items-start gap-2',
+                                isMergedBatch ? 'border-emerald-400/70' : 'border-emerald-300/60',
+                              )}>
+                                <div className="mt-0.5">
+                                  <div className={cn(
+                                    'w-7 h-7 rounded-full flex items-center justify-center shrink-0',
+                                    isMergedBatch ? 'bg-emerald-600' : 'bg-emerald-500',
+                                  )}>
+                                    <Sparkles className="w-3.5 h-3.5 text-white" />
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={cn(
+                                    'text-[10px] font-bold mb-1.5 flex items-center gap-1',
+                                    isMergedBatch ? 'text-emerald-800' : 'text-emerald-700',
+                                  )}>
+                                    <Eye className="w-3 h-3" /> 采信结论
+                                    {conflict.resolver && (
+                                      <span className="font-normal opacity-80 ml-1">
+                                        · {conflict.resolver} · {conflict.resolved_at ? formatDate(conflict.resolved_at) : ''}
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className={cn(
+                                    'text-sm font-serif leading-relaxed rounded-lg px-3 py-2 border-2',
+                                    isMergedBatch
+                                      ? 'bg-white text-emerald-900 border-emerald-300 shadow-sm'
+                                      : 'bg-white/60 text-emerald-900 border-emerald-200/50',
+                                  )}>
+                                    {conflict.resolved_value}
+                                  </p>
+                                </div>
                               </div>
                             )}
                           </div>

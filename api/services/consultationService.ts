@@ -41,18 +41,42 @@ export function submitConsultation(payload: ConsultationPayload) {
     now,
   );
 
+  let finalStatus: BatchStatus;
+
   if (payload.decision === 'merge') {
     applyMergeDecision(payload.batch_id, payload.field_decisions, payload.consultant, now);
     updateBatchFields(payload.batch_id, { status: 'merged' as BatchStatus });
+    finalStatus = 'merged';
   } else if (payload.decision === 'keep_divergent') {
     applyKeepDivergent(payload.batch_id, payload.field_decisions, payload.consultant, now);
-    recalculateBatchStatus(payload.batch_id);
-  } else if (payload.decision === 'return_for_evidence') {
+    finalStatus = recalculateBatchStatus(payload.batch_id);
+  } else {
     updateBatchFields(payload.batch_id, { status: 'missing_evidence' as BatchStatus });
+    if (payload.return_targets && payload.return_targets.length > 0) {
+      const db = getDB();
+      for (const target of payload.return_targets) {
+        prepare(db, 'DELETE FROM readings WHERE batch_id = ? AND observer = ?').run(
+          payload.batch_id,
+          target === 'A' ? getObserverForBatch(payload.batch_id, 'A') : getObserverForBatch(payload.batch_id, 'B'),
+        );
+      }
+      prepare(db, 'DELETE FROM conflicts WHERE batch_id = ?').run(payload.batch_id);
+    }
+    finalStatus = 'missing_evidence';
   }
 
-  const finalStatus = recalculateBatchStatus(payload.batch_id);
   return { consultationId, finalStatus };
+}
+
+function getObserverForBatch(batchId: string, which: 'A' | 'B'): string {
+  const db = getDB();
+  const readings = prepare(db, 'SELECT observer FROM readings WHERE batch_id = ? ORDER BY submitted_at').all<{ observer: string }>(batchId);
+  const idx = which === 'A' ? 0 : 1;
+  if (readings.length <= idx) {
+    const batch = prepare(db, 'SELECT observer_a, observer_b FROM batches WHERE id = ?').get<{ observer_a: string; observer_b: string }>(batchId);
+    return which === 'A' ? batch?.observer_a : batch?.observer_b;
+  }
+  return readings[idx]?.observer;
 }
 
 function applyMergeDecision(
