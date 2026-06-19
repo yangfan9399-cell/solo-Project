@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>潮汐钟塔航线推演局</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app">
+  <header class="app-header">
+    <h1>潮汐钟塔航线推演局</h1>
+    <div class="header-controls">
+      <select id="levelSelect">
+        <option value="jia">甲局 · 启蒙教学</option>
+        <option value="ding">丁局 · 资源短缺</option>
+        <option value="yi">乙局 · 隐藏条件</option>
+      </select>
+      <button id="newGameBtn" class="btn btn-primary">启新推演</button>
+      <button id="continueBtn" class="btn btn-secondary" style="display:none;">接续对局</button>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <section class="panel board-panel">
+      <div class="panel-title">
+        <span class="panel-icon">⌘</span>
+        <h2>局面盘</h2>
+        <span id="roundBadge" class="badge">第 0 步</span>
+      </div>
+      <div class="board-stats">
+        <div class="stat stat-light">
+          <label>潮汐钟塔点亮值</label>
+          <div class="stat-bar"><div id="lightBar" class="bar-fill"></div></div>
+          <span id="lightValue" class="stat-value">0 / 100</span>
+        </div>
+        <div class="stat stat-trace">
+          <label>潮汐钟塔描线槽</label>
+          <div id="traceSlots" class="trace-slots"></div>
+        </div>
+        <div class="stat stat-reverse">
+          <label>潮汐钟塔倒排痕</label>
+          <div id="reverseTraces" class="reverse-traces"></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-mini stat-risk">
+            <label>甲号风险</label>
+            <span id="riskA" class="stat-mini-value">0</span>
+          </div>
+          <div class="stat-mini stat-reward">
+            <label>丁号奖励</label>
+            <span id="rewardD" class="stat-mini-value">0</span>
+          </div>
+          <div class="stat-mini stat-fail">
+            <label>乙号失败因子</label>
+            <span id="failB" class="stat-mini-value">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="map-container">
+        <div id="gameMap" class="game-map"></div>
+      </div>
+
+      <div class="action-bar">
+        <button id="moveBtn" class="btn btn-primary">推进航线</button>
+        <button id="undoBtn" class="btn btn-secondary" disabled>撤回一步</button>
+      </div>
+      <div id="gameMessage" class="game-message"></div>
+    </section>
+
+    <section class="panel events-panel">
+      <div class="panel-title">
+        <span class="panel-icon">✦</span>
+        <h2>事件匣</h2>
+      </div>
+      <div id="eventsList" class="events-list">
+        <div class="empty-hint">尚未触发事件……</div>
+      </div>
+    </section>
+
+    <section class="panel replay-panel">
+      <div class="panel-title">
+        <span class="panel-icon">⟲</span>
+        <h2>回放轴</h2>
+        <div class="replay-controls">
+          <button id="playReplayBtn" class="btn-icon" title="自动回放">▶</button>
+          <button id="stepReplayBtn" class="btn-icon" title="单步回放">⏭</button>
+          <button id="resetReplayBtn" class="btn-icon" title="回到起点">⏮</button>
+        </div>
+      </div>
+      <div id="replayTimeline" class="replay-timeline"></div>
+      <div class="replay-info">
+        <span id="replayStatus">已记录 0 步</span>
+        <span id="replayPointer">当前指针：0</span>
+      </div>
+    </section>
+
+    <section class="panel settlement-panel">
+      <div class="panel-title">
+        <span class="panel-icon">☰</span>
+        <h2>结算簿</h2>
+        <button id="recalcBtn" class="btn btn-small">后端重算</button>
+      </div>
+      <div id="settlementContent" class="settlement-content">
+        <div class="empty-hint">推演未完成，暂无结算……</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="js/levels.js"></script>
+<script src="js/board.js"></script>
+<script src="js/events.js"></script>
+<script src="js/replay.js"></script>
+<script src="js/settlement.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
