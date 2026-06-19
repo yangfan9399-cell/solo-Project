@@ -122,6 +122,7 @@ function computeSettlement(levelId, replay) {
   let state = JSON.parse(JSON.stringify(level.initialState));
   const steps = [];
   const hiddenSeq = [];
+  const firedEvents = new Set();
   for (const action of replay.actions) {
     state.turn = (state.turn || 0) + 1;
     const cell = level.map.find(c => c.id === action.cellId);
@@ -193,20 +194,22 @@ function computeSettlement(levelId, replay) {
       state.xinFailFactor += 3;
     }
     for (const ev of level.events) {
-      if (ev.trigger === `turn${state.turn}` && !replay._firedEvents?.includes(ev.id)) {
+      if (firedEvents.has(ev.id)) continue;
+      let match = false;
+      if (ev.trigger === `turn${state.turn}`) {
+        match = true;
+      } else if (ev.trigger === 'risk50' && state.chenRisk >= 50) {
+        match = true;
+      } else if (ev.trigger === 'fail30' && state.xinFailFactor >= 30) {
+        match = true;
+      } else if (ev.trigger === 'marks2' && state.lightMarks >= 2) {
+        match = true;
+      } else if (ev.trigger === 'reward1' && state.maoReward >= 1) {
+        match = true;
+      }
+      if (match) {
+        firedEvents.add(ev.id);
         state = ev.effect(state) || state;
-        steps.push({ turn: state.turn, event: ev.text });
-      }
-      if (ev.trigger === 'risk50' && state.chenRisk >= 50 && !replay._firedEvents?.includes(ev.id)) {
-        steps.push({ turn: state.turn, event: ev.text });
-      }
-      if (ev.trigger === 'fail30' && state.xinFailFactor >= 30 && !replay._firedEvents?.includes(ev.id)) {
-        steps.push({ turn: state.turn, event: ev.text });
-      }
-      if (ev.trigger === 'marks2' && state.lightMarks >= 2 && !replay._firedEvents?.includes(ev.id)) {
-        steps.push({ turn: state.turn, event: ev.text });
-      }
-      if (ev.trigger === 'reward1' && state.maoReward >= 1 && !replay._firedEvents?.includes(ev.id)) {
         steps.push({ turn: state.turn, event: ev.text });
       }
     }

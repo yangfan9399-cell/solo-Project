@@ -17,24 +17,35 @@
     "savedAt": 1781848372040
   },
   "yy_mqkij2qpvhq5e": {
-    "levelId": "chen",
+    "levelId": "xin",
     "actions": [
       {
         "cellId": "A1",
         "players": 2,
         "turn": 1
+      },
+      {
+        "cellId": "A1",
+        "players": 2,
+        "turn": 2
+      },
+      {
+        "cellId": "A1",
+        "players": 2,
+        "turn": 3
       }
     ],
     "state": {
-      "fumigation": 38,
-      "patrolSlots": 4,
+      "fumigation": 84,
+      "patrolSlots": 3,
       "lightMarks": 0,
       "chenRisk": 0,
       "maoReward": 0,
-      "xinFailFactor": 0,
-      "turn": 1,
-      "_levelId": "chen"
+      "xinFailFactor": 21,
+      "hiddenTriggered": false,
+      "turn": 3,
+      "_levelId": "xin"
     },
-    "savedAt": 1781848426834
+    "savedAt": 1781848956143
   }
 }

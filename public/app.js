@@ -325,22 +325,18 @@ function renderMap() {
   });
   const container = document.getElementById('mapGrid');
   container.innerHTML = state.currentLevel.map.map(cell => `
-    <div class="map-cell type-${cell.type} ${state.selectedCellId === cell.id ? 'selected' : ''} ${usedCells[cell.id] ? 'used' : ''}"
+    <div class="map-cell type-${cell.type} ${state.selectedCellId === cell.id ? 'selected' : ''}"
          data-id="${cell.id}">
       <span class="cell-type">${TYPE_LABELS[cell.type] || cell.type}</span>
       <div class="cell-id">${cell.id}</div>
       <div class="cell-name">${cell.name}</div>
       <div class="cell-desc">${cell.desc}</div>
-      ${usedCells[cell.id] ? `<span class="cell-used-badge">已操作 ${usedCells[cell.id]}次</span>` : ''}
+      ${usedCells[cell.id] ? `<span class="cell-used-badge">×${usedCells[cell.id]}</span>` : ''}
     </div>
   `).join('');
   container.querySelectorAll('.map-cell').forEach(el => {
     el.addEventListener('click', () => {
-      const id = el.dataset.id;
-      if (el.classList.contains('used')) {
-        if (!confirm('该格子已操作过，确定再次操作？')) return;
-      }
-      state.selectedCellId = id;
+      state.selectedCellId = el.dataset.id;
       renderMap();
       renderActionBar();
     });
