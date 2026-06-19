@@ -1,0 +1,40 @@
+{
+  "test_001": {
+    "levelId": "mao",
+    "actions": [
+      {
+        "cellId": "B1",
+        "players": 2
+      },
+      {
+        "cellId": "A1",
+        "players": 1
+      }
+    ],
+    "state": {
+      "fumigation": 18
+    },
+    "savedAt": 1781848372040
+  },
+  "yy_mqkij2qpvhq5e": {
+    "levelId": "chen",
+    "actions": [
+      {
+        "cellId": "A1",
+        "players": 2,
+        "turn": 1
+      }
+    ],
+    "state": {
+      "fumigation": 38,
+      "patrolSlots": 4,
+      "lightMarks": 0,
+      "chenRisk": 0,
+      "maoReward": 0,
+      "xinFailFactor": 0,
+      "turn": 1,
+      "_levelId": "chen"
+    },
+    "savedAt": 1781848426834
+  }
+}

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>银盐暗房双人机关局</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <h1 class="title">银盐暗房双人机关局</h1>
+    <div class="session-info">
+      <span id="sessionLabel">会话ID: </span>
+      <button id="newSessionBtn" class="btn-ghost">新会话</button>
+    </div>
+  </header>
+
+  <nav class="level-tabs" id="levelTabs"></nav>
+
+  <main class="main-grid">
+    <section class="panel board-panel" id="boardPanel">
+      <div class="panel-title">
+        <span class="dot"></span>
+        <h2>局面盘</h2>
+        <span class="turn-counter" id="turnCounter">回合 0</span>
+      </div>
+      <div class="state-grid" id="stateGrid"></div>
+      <div class="map-grid" id="mapGrid"></div>
+      <div class="action-bar">
+        <button class="btn" id="actSingleBtn" disabled>单人操作 (1P)</button>
+        <button class="btn btn-coop" id="actCoopBtn" disabled>双人协作 (2P)</button>
+        <button class="btn btn-danger" id="settleBtn">结算本局</button>
+      </div>
+    </section>
+
+    <section class="panel event-panel" id="eventPanel">
+      <div class="panel-title">
+        <span class="dot dot-amber"></span>
+        <h2>事件匣</h2>
+      </div>
+      <div class="level-desc" id="levelDesc"></div>
+      <div class="event-log" id="eventLog"></div>
+    </section>
+
+    <section class="panel replay-panel" id="replayPanel">
+      <div class="panel-title">
+        <span class="dot dot-teal"></span>
+        <h2>回放轴</h2>
+        <span class="sync-status" id="syncStatus">已同步</span>
+      </div>
+      <div class="replay-timeline" id="replayTimeline">
+        <div class="replay-empty">尚无操作记录，开始你的第一步...</div>
+      </div>
+      <div class="replay-actions">
+        <button class="btn-ghost" id="loadReplayBtn">加载上次</button>
+        <button class="btn-ghost" id="clearReplayBtn">清空回放</button>
+      </div>
+    </section>
+
+    <section class="panel settle-panel" id="settlePanel">
+      <div class="panel-title">
+        <span class="dot dot-rose"></span>
+        <h2>结算簿</h2>
+      </div>
+      <div class="settle-content" id="settleContent">
+        <div class="settle-empty">结算簿待启用 — 完成操作后点击「结算本局」由后端重算。</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>双人协作：选中地图格子后，选择「单人操作」或「双人协作」。每一步自动保存至回放轴。</span>
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "yinyan-darkroom-coop",
+  "version": "1.0.0",
+  "description": "银盐暗房双人机关局 - 轻量全栈协作闯关游戏",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
