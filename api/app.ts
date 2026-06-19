@@ -46,7 +46,7 @@ app.use('/api', batchRoutes)
 
 app.use(
   '/api/health',
-  (req: Request, res: Response, next: NextFunction): void => {
+  (req: Request, res: Response): void => {
     res.status(200).json({
       success: true,
       message: 'ok',
@@ -68,7 +68,7 @@ if (fs.existsSync(distPath)) {
   })
 }
 
-app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((error: Error, req: Request, res: Response) => {
   console.error('Server Error:', error)
   res.status(500).json({
     success: false,

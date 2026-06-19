@@ -302,7 +302,6 @@ function initTables(db: Database) {
 }
 
 function seedData(db: Database) {
-  const now = new Date().toISOString();
   const nowOffset = (mins: number) => new Date(Date.now() - mins * 60000).toISOString();
 
   const insertBatch = prepare(db, `

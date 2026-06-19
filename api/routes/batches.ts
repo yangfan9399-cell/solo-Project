@@ -1,6 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { getDB, prepare, exec, type Batch, type Reading, type Conflict, type Consultation, type BatchStatus } from '../db/init.js';
+import { getDB, prepare, type Batch, type Reading, type Conflict, type Consultation, type BatchStatus } from '../db/init.js';
 import { generateConflicts, recalculateBatchStatus, updateBatchFields } from '../services/conflictService.js';
 import {
   submitConsultation,

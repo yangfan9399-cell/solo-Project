@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { getDB, prepare, type BatchStatus, type Reading, type Conflict } from '../db/init.js';
 import {
   recalculateBatchStatus,
@@ -129,9 +128,13 @@ function applyKeepDivergent(
 
   for (const conflict of conflicts) {
     const fd = fieldDecisions[conflict.field_name];
-    if (fd && (fd.decision === 'adopt_a' || fd.decision === 'adopt_b')) {
+    if (!fd) continue;
+    
+    if (fd.decision === 'adopt_a' || fd.decision === 'adopt_b') {
       const resolvedValue = fd.decision === 'adopt_a' ? conflict.value_a : conflict.value_b;
       updateConflict.run(fd.decision, resolvedValue, now, consultant, conflict.id);
+    } else if (fd.decision === 'keep_divergent') {
+      updateConflict.run(null, null, null, null, conflict.id);
     }
   }
 }

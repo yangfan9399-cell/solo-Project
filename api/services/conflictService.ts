@@ -1,5 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
-import { getDB, prepare, exec, type Reading, type Conflict, type BatchStatus } from '../db/init.js';
+import { getDB, prepare, type Reading, type Conflict, type BatchStatus } from '../db/init.js';
 
 export const COMPARABLE_FIELDS: { key: keyof Reading; label: string; type: 'enum' | 'text' }[] = [
   { key: 'rubbing_clarity', label: '拓片清晰度', type: 'enum' },
@@ -134,26 +133,21 @@ export function recalculateBatchStatus(batchId: string): BatchStatus {
   
   const batch = prepare(db, 'SELECT status FROM batches WHERE id = ?').get<{ status: BatchStatus }>(batchId);
   
-  if (batch?.status === 'merged') {
-    const lastConsult = prepare(
+  const lastConsult = prepare(
+    db,
+    'SELECT decision FROM consultations WHERE batch_id = ? ORDER BY created_at DESC LIMIT 1',
+  ).get<{ decision: string }>(batchId);
+  
+  if (batch?.status === 'merged' && lastConsult?.decision === 'merge') {
+    const totalConflictCount = prepare(
       db,
-      'SELECT decision FROM consultations WHERE batch_id = ? ORDER BY created_at DESC LIMIT 1',
-    ).get<{ decision: string }>(batchId);
-    if (lastConsult?.decision === 'merge') {
-      const unresolvedCount = prepare(
-        db,
-        'SELECT COUNT(*) as cnt FROM conflicts WHERE batch_id = ? AND resolution IS NULL',
-      ).get<{ cnt: number }>(batchId);
-      const totalConflictCount = prepare(
-        db,
-        'SELECT COUNT(*) as cnt FROM conflicts WHERE batch_id = ?',
-      ).get<{ cnt: number }>(batchId);
-      updateBatchFields(batchId, { 
-        status: 'merged' as BatchStatus, 
-        conflict_count: totalConflictCount?.cnt || 0 
-      });
-      return 'merged';
-    }
+      'SELECT COUNT(*) as cnt FROM conflicts WHERE batch_id = ?',
+    ).get<{ cnt: number }>(batchId);
+    updateBatchFields(batchId, { 
+      status: 'merged' as BatchStatus, 
+      conflict_count: totalConflictCount?.cnt || 0 
+    });
+    return 'merged';
   }
 
   const readings = prepare(db, 'SELECT * FROM readings WHERE batch_id = ?').all<Reading>(batchId);
@@ -179,8 +173,13 @@ export function recalculateBatchStatus(batchId: string): BatchStatus {
   let status: BatchStatus;
 
   if (conflictCount === 0) {
-    const hasResolved = totalConflictCount > 0;
-    status = hasResolved ? 'merged' : 'consistent';
+    if (lastConsult?.decision === 'keep_divergent') {
+      const hasSevere = totalConflicts.some((c) => c.severity === 'severe');
+      status = hasSevere ? 'severe_conflict' : 'minor_deviation';
+    } else {
+      const hasResolved = totalConflictCount > 0;
+      status = hasResolved ? 'merged' : 'consistent';
+    }
   } else {
     const hasSevere = unresolvedConflicts.some((c) => c.severity === 'severe');
     status = hasSevere ? 'severe_conflict' : 'minor_deviation';

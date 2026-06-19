@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -26,7 +26,6 @@ import {
   type BatchDetail,
   type Conflict,
   type FieldDecision,
-  type Reading,
 } from '../types';
 import { useAppStore } from '../store/appStore';
 import { cn } from '../lib/utils';
@@ -80,7 +79,7 @@ export default function ConsultationPage() {
     return detail?.supplement_conflict.supplementReadings.filter((s) => s.conflictsWithOld) || [];
   }, [detail]);
 
-  const loadDetail = () => {
+  const loadDetail = useCallback(() => {
     if (!id) return;
     setLoading(true);
     api
@@ -107,11 +106,11 @@ export default function ConsultationPage() {
         setFieldDecisions(init);
       })
       .finally(() => setLoading(false));
-  };
+  }, [id]);
 
   useEffect(() => {
     loadDetail();
-  }, [id]);
+  }, [loadDetail]);
 
   const setFieldDecision = (field: string, decision: Decision) => {
     setFieldDecisions((prev) => {
