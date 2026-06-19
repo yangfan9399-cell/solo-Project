@@ -2,16 +2,21 @@ import { create } from 'zustand';
 import type {
   AppState, WorkOrder, PartRequirement, Filters, ApprovalAction, RiskLevel, TowerSection, WorkOrderStatus, AuditLog, ApprovalRecord,
 } from '@/types';
-import {
-  STORAGE_KEYS,
-  saveToStorage,
-  loadFromStorage,
-  isInitialized,
-  markInitialized,
-  saveConflictSnapshot,
-  loadConflictSnapshot,
-} from '@/utils/storage';
 import { detectConflicts, sortConflicts } from '@/utils/conflictEngine';
+import {
+  fetchFullState,
+  createWorkOrder as apiCreateWorkOrder,
+  updateWorkOrder as apiUpdateWorkOrder,
+  deleteWorkOrder as apiDeleteWorkOrder,
+  createApproval as apiCreateApproval,
+  createAuditLog as apiCreateAuditLog,
+  saveConflictSnapshot as apiSaveConflictSnapshot,
+  loadConflictSnapshot as apiLoadConflictSnapshot,
+  updateUI as apiUpdateUI,
+  updateFilters as apiUpdateFilters,
+  clearFilters as apiClearFilters,
+  resetAllData as apiResetAllData,
+} from '@/utils/api';
 import {
   seedWorkOrders, seedPartBatches, seedTeams, seedApprovals, seedAuditLogs,
 } from '@/data/seed';
@@ -19,72 +24,45 @@ import {
 const genId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 const DEFAULT_USER = { name: '检修主管', role: '检修主管' };
+const DEFAULT_UI = {
+  selectedDate: new Date('2026-06-20').toISOString(),
+  showWorkOrderModal: false,
+  showExportModal: false,
+  activeTab: 'calendar' as const,
+  matrixWeekOffset: 0,
+  matrixSelectedPartId: 'all' as const,
+  rightPanelTab: 'approvals' as const,
+};
 
 /**
- * 初始化状态加载策略 (Initial State Strategy):
- *   — 保证「刷新后结果保持」—
+ * 后端持久化架构 (Backend Persistence Architecture):
  *
- *   1. 若系统未初始化（用户首次访问）：
- *      注入预置数据 → 立即执行冲突重算 → 保存冲突快照 → 标记已初始化
- *   2. 若系统已初始化：
- *      (a) 工单/备件/班组/审批/审计/筛选/UI/currentUser 从 localStorage 读取
- *      (b) 冲突 → 优先读取「冲突快照」
- *          ├─ 快照存在 → 直接使用（ID/排序不变，保证刷新一致性）
- *          └─ 快照缺失 → 立即重算并保存新快照
+ *   —— 保证「刷新后结果从后端恢复」——
+ *
+ *   1. initializeStore() 启动时调用，从 /api/state 拉取全景数据
+ *      - 工单 / 备件 / 班组 / 审批 / 审计 / 筛选 / UI / 当前用户 / 冲突快照
+ *      - 冲突快照优先，缺失则前端重算并回写后端
+ *   2. 所有写入操作：
+ *      - 先乐观更新本地 state（保证 UI 即时响应）
+ *      - 再异步调用后端 API 持久化（不阻塞 UI）
+ *   3. 四大域全部落地后端 JSON 文件持久化
  */
-function loadInitialState(): Partial<AppState> {
-  if (!isInitialized()) {
-    const conflicts = sortConflicts(
-      detectConflicts(seedWorkOrders, seedPartBatches),
-    );
-    return {
-      workOrders: seedWorkOrders,
-      partBatches: seedPartBatches,
-      teams: seedTeams,
-      approvals: seedApprovals,
-      auditLogs: seedAuditLogs,
-      filters: {},
-      conflicts,
-      ui: {
-        selectedDate: new Date('2026-06-20').toISOString(),
-        showWorkOrderModal: false,
-        showExportModal: false,
-        activeTab: 'calendar',
-      },
-      currentUser: DEFAULT_USER,
-      __pendingInit: true,
-    } as Partial<AppState> & { __pendingInit: boolean };
-  }
 
-  const workOrders = loadFromStorage(STORAGE_KEYS.workOrders, seedWorkOrders);
-  const partBatches = loadFromStorage(STORAGE_KEYS.partBatches, seedPartBatches);
-
-  // 冲突快照优先，缺失则即时重算
-  let conflicts = loadConflictSnapshot<AppState['conflicts'] | null>(null);
-  if (!conflicts) {
-    conflicts = sortConflicts(detectConflicts(workOrders, partBatches));
-    saveConflictSnapshot(conflicts);
-  }
-
-  return {
-    workOrders,
-    partBatches,
-    teams: loadFromStorage(STORAGE_KEYS.teams, seedTeams),
-    conflicts,
-    approvals: loadFromStorage(STORAGE_KEYS.approvals, seedApprovals),
-    auditLogs: loadFromStorage(STORAGE_KEYS.auditLogs, seedAuditLogs),
-    filters: loadFromStorage<Filters>(STORAGE_KEYS.filters, {}),
-    ui: loadFromStorage(STORAGE_KEYS.ui, {
-      selectedDate: new Date('2026-06-20').toISOString(),
-      showWorkOrderModal: false,
-      showExportModal: false,
-      activeTab: 'calendar',
-    }),
-    currentUser: loadFromStorage(STORAGE_KEYS.currentUser, DEFAULT_USER),
-  };
-}
+const initialState: AppState = {
+  workOrders: [],
+  partBatches: [],
+  teams: [],
+  conflicts: [],
+  approvals: [],
+  auditLogs: [],
+  filters: {},
+  ui: DEFAULT_UI,
+  currentUser: DEFAULT_USER,
+};
 
 export const useAppStore = create<AppState & {
+  initialized: boolean;
+  initializeStore: () => Promise<void>;
   setSelectedDate: (iso: string) => void;
   setActiveTab: (tab: 'calendar' | 'queue' | 'matrix') => void;
   openWorkOrderModal: (editingId?: string) => void;
@@ -120,11 +98,18 @@ export const useAppStore = create<AppState & {
   markCompleted: (id: string) => void;
   recalculateConflicts: () => void;
   addAuditLog: (action: string, entityType: AuditLog['entityType'], details: Record<string, unknown>, entityId?: string) => void;
-  resetAllData: () => void;
+  resetAllData: () => Promise<void>;
   setMatrixWeekOffset: (offset: number) => void;
   setMatrixSelectedPartId: (partId: string | 'all') => void;
   setRightPanelTab: (tab: 'approvals' | 'audit') => void;
+  _persistUI: (ui: AppState['ui']) => void;
 }>((set, get) => {
+  // 内部：UI 变更后异步持久化到后端
+  const _persistUI = (ui: AppState['ui']) => {
+    apiUpdateUI(ui).catch((err) => console.warn('[api] persist UI failed:', err));
+  };
+
+  // 内部：审批记录新增后异步持久化
   const addApproval = (workOrderId: string, action: ApprovalAction, comment: string) => {
     const user = get().currentUser;
     const record: ApprovalRecord = {
@@ -138,103 +123,124 @@ export const useAppStore = create<AppState & {
     };
     const approvals = [...get().approvals, record];
     set({ approvals });
-    saveToStorage(STORAGE_KEYS.approvals, approvals);
+    apiCreateApproval(record).catch((err) => console.warn('[api] create approval failed:', err));
   };
 
-  const initial = loadInitialState() as Partial<AppState> & { __pendingInit?: boolean };
-
-  // 首次初始化 → 落地所有域
-  if ((initial as { __pendingInit?: boolean }).__pendingInit) {
-    markInitialized();
-    saveToStorage(STORAGE_KEYS.workOrders, initial.workOrders);
-    saveToStorage(STORAGE_KEYS.partBatches, initial.partBatches);
-    saveToStorage(STORAGE_KEYS.teams, initial.teams);
-    saveToStorage(STORAGE_KEYS.approvals, initial.approvals);
-    saveToStorage(STORAGE_KEYS.auditLogs, initial.auditLogs);
-    saveToStorage(STORAGE_KEYS.filters, initial.filters);
-    saveToStorage(STORAGE_KEYS.ui, initial.ui);
-    saveToStorage(STORAGE_KEYS.currentUser, initial.currentUser);
-    if (initial.conflicts) saveConflictSnapshot(initial.conflicts);
-  }
-
   return {
-    workOrders: initial.workOrders ?? [],
-    partBatches: initial.partBatches ?? [],
-    teams: initial.teams ?? [],
-    conflicts: initial.conflicts ?? [],
-    approvals: initial.approvals ?? [],
-    auditLogs: initial.auditLogs ?? [],
-    filters: initial.filters ?? {},
-    ui: initial.ui ?? {
-      selectedDate: new Date('2026-06-20').toISOString(),
-      showWorkOrderModal: false,
-      showExportModal: false,
-      activeTab: 'calendar',
-    },
-    currentUser: initial.currentUser ?? DEFAULT_USER,
+    ...initialState,
+    initialized: false,
 
-    /* ========== UI Actions ========== */
+    /**
+     * 初始化：从后端拉取全量状态
+     *  - 若后端有冲突快照则直接使用（保证 ID/排序一致）
+     *  - 若无冲突快照则前端重算并回写后端
+     */
+    initializeStore: async () => {
+      try {
+        const state = await fetchFullState();
+
+        // 冲突快照优先，缺失则即时重算并写回后端
+        let conflicts = state.conflicts || [];
+        if (!conflicts || conflicts.length === 0) {
+          conflicts = sortConflicts(detectConflicts(state.workOrders, state.partBatches));
+          apiSaveConflictSnapshot(conflicts).catch((err) =>
+            console.warn('[api] save initial conflict snapshot failed:', err),
+          );
+        }
+
+        set({
+          workOrders: state.workOrders || seedWorkOrders,
+          partBatches: state.partBatches || seedPartBatches,
+          teams: state.teams || seedTeams,
+          approvals: state.approvals || seedApprovals,
+          auditLogs: state.auditLogs || seedAuditLogs,
+          filters: state.filters || {},
+          conflicts,
+          ui: { ...DEFAULT_UI, ...(state.ui || {}) },
+          currentUser: state.currentUser || DEFAULT_USER,
+          initialized: true,
+        });
+      } catch (err) {
+        console.error('[api] Failed to initialize store from backend:', err);
+        // 后端不可用时降级使用本地预置数据
+        const conflicts = sortConflicts(detectConflicts(seedWorkOrders, seedPartBatches));
+        set({
+          workOrders: seedWorkOrders,
+          partBatches: seedPartBatches,
+          teams: seedTeams,
+          approvals: seedApprovals,
+          auditLogs: seedAuditLogs,
+          filters: {},
+          conflicts,
+          ui: DEFAULT_UI,
+          currentUser: DEFAULT_USER,
+          initialized: true,
+        });
+      }
+    },
+
+    /* ========== UI Actions（乐观更新 + 异步持久化）========== */
     setSelectedDate: (iso) => {
       const ui = { ...get().ui, selectedDate: iso };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
     setActiveTab: (tab) => {
       const ui = { ...get().ui, activeTab: tab };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
     openWorkOrderModal: (editingId) => {
       const ui = { ...get().ui, showWorkOrderModal: true, editingWorkOrderId: editingId };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
     closeWorkOrderModal: () => {
       const ui = { ...get().ui, showWorkOrderModal: false, editingWorkOrderId: undefined };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
     openExportModal: () => {
       const ui = { ...get().ui, showExportModal: true };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
     closeExportModal: () => {
       const ui = { ...get().ui, showExportModal: false };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
     selectWorkOrder: (id) => {
       const ui = { ...get().ui, selectedWorkOrderId: id };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
     setMatrixWeekOffset: (offset) => {
       const ui = { ...get().ui, matrixWeekOffset: offset };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
     setMatrixSelectedPartId: (partId) => {
       const ui = { ...get().ui, matrixSelectedPartId: partId };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
     setRightPanelTab: (tab) => {
       const ui = { ...get().ui, rightPanelTab: tab };
       set({ ui });
-      saveToStorage(STORAGE_KEYS.ui, ui);
+      _persistUI(ui);
     },
 
     /* ========== Filters ========== */
     setFilters: (f) => {
       const filters = { ...get().filters, ...f };
       set({ filters });
-      saveToStorage(STORAGE_KEYS.filters, filters);
+      apiUpdateFilters(filters).catch((err) => console.warn('[api] update filters failed:', err));
       get().addAuditLog('set_filters', 'work_order', { applied: Object.keys(f) });
     },
     clearFilters: () => {
       set({ filters: {} });
-      saveToStorage(STORAGE_KEYS.filters, {});
+      apiClearFilters().catch((err) => console.warn('[api] clear filters failed:', err));
       get().addAuditLog('clear_filters', 'work_order', {});
     },
 
@@ -249,17 +255,19 @@ export const useAppStore = create<AppState & {
         timestamp: new Date().toISOString(),
         details,
       };
-      const auditLogs = [log, ...get().auditLogs];
+      const auditLogs = [log, ...get().auditLogs].slice(0, 500);
       set({ auditLogs });
-      saveToStorage(STORAGE_KEYS.auditLogs, auditLogs);
+      apiCreateAuditLog(log).catch((err) => console.warn('[api] create audit log failed:', err));
     },
 
     recalculateConflicts: () => {
       const { workOrders, partBatches } = get();
       const conflicts = sortConflicts(detectConflicts(workOrders, partBatches));
       set({ conflicts });
-      // 关键：重算结果写入「冲突域」快照，刷新后保留相同 ID/排序
-      saveConflictSnapshot(conflicts);
+      // 关键：重算结果写入后端「冲突域」快照，刷新后保留相同 ID/排序
+      apiSaveConflictSnapshot(conflicts).catch((err) =>
+        console.warn('[api] save conflict snapshot failed:', err),
+      );
       const byType: Record<string, number> = {};
       conflicts.forEach((c) => { byType[c.type] = (byType[c.type] ?? 0) + 1; });
       get().addAuditLog('conflict_recalc', 'conflict_recalc', {
@@ -296,7 +304,7 @@ export const useAppStore = create<AppState & {
       };
       const workOrders = [...get().workOrders, newWo];
       set({ workOrders });
-      saveToStorage(STORAGE_KEYS.workOrders, workOrders);
+      apiCreateWorkOrder(newWo).catch((err) => console.warn('[api] create work order failed:', err));
       get().addAuditLog('create_work_order', 'work_order', {
         code: newWo.code,
         turbineId: newWo.turbineId,
@@ -310,7 +318,7 @@ export const useAppStore = create<AppState & {
         w.id === id ? { ...w, ...patch, updatedAt: new Date().toISOString() } : w,
       );
       set({ workOrders });
-      saveToStorage(STORAGE_KEYS.workOrders, workOrders);
+      apiUpdateWorkOrder(id, patch).catch((err) => console.warn('[api] update work order failed:', err));
       get().addAuditLog('update_work_order', 'work_order', {
         patchKeys: Object.keys(patch),
         toStatus: patch.status ?? undefined,
@@ -322,7 +330,7 @@ export const useAppStore = create<AppState & {
       const wo = get().workOrders.find((x) => x.id === id);
       const workOrders = get().workOrders.filter((w) => w.id !== id);
       set({ workOrders });
-      saveToStorage(STORAGE_KEYS.workOrders, workOrders);
+      apiDeleteWorkOrder(id).catch((err) => console.warn('[api] delete work order failed:', err));
       get().addAuditLog('delete_work_order', 'work_order', {
         code: wo?.code,
         reason: 'manual_delete',
@@ -369,45 +377,56 @@ export const useAppStore = create<AppState & {
       addApproval(id, 'complete', '工单已完成');
     },
 
-    resetAllData: () => {
-      // 重置：清空前记录一条审计（虽然后续会被覆盖）
-      saveToStorage(STORAGE_KEYS.workOrders, seedWorkOrders);
-      saveToStorage(STORAGE_KEYS.partBatches, seedPartBatches);
-      saveToStorage(STORAGE_KEYS.teams, seedTeams);
-      saveToStorage(STORAGE_KEYS.approvals, seedApprovals);
-      saveToStorage(STORAGE_KEYS.auditLogs, seedAuditLogs);
-      saveToStorage(STORAGE_KEYS.filters, {});
-      const defaultUI = {
-        selectedDate: new Date('2026-06-20').toISOString(),
-        showWorkOrderModal: false,
-        showExportModal: false,
-        activeTab: 'calendar' as const,
-      };
-      saveToStorage(STORAGE_KEYS.ui, defaultUI);
-      const conflicts = sortConflicts(detectConflicts(seedWorkOrders, seedPartBatches));
-      saveConflictSnapshot(conflicts);
-      saveToStorage(STORAGE_KEYS.currentUser, DEFAULT_USER);
-      set({
-        workOrders: seedWorkOrders,
-        partBatches: seedPartBatches,
-        teams: seedTeams,
-        approvals: seedApprovals,
-        auditLogs: [
-          {
-            id: genId('log'),
-            action: 'reset_all_data',
-            entityType: 'work_order',
-            operator: DEFAULT_USER.name,
-            timestamp: new Date().toISOString(),
-            details: { note: '用户触发系统重置，所有数据恢复预置' },
-          },
-          ...seedAuditLogs,
-        ],
-        filters: {},
-        ui: defaultUI,
-        conflicts,
-        currentUser: DEFAULT_USER,
-      });
+    /**
+     * 重置所有数据：调用后端 /api/reset
+     * 后端会重建 db.json 为预置种子数据
+     */
+    resetAllData: async () => {
+      try {
+        await apiResetAllData();
+        // 重置后重新拉取状态
+        await get().initializeStore();
+        // 补一条重置审计日志（放在最前面）
+        const resetLog: AuditLog = {
+          id: genId('log'),
+          action: 'reset_all_data',
+          entityType: 'system',
+          entityId: 'system',
+          operator: get().currentUser.name,
+          timestamp: new Date().toISOString(),
+          details: { note: '用户触发系统重置，所有数据恢复预置' },
+        };
+        set((state) => ({ auditLogs: [resetLog, ...state.auditLogs].slice(0, 500) }));
+        apiCreateAuditLog(resetLog).catch(() => {});
+      } catch (err) {
+        console.error('[api] reset failed:', err);
+        // 降级：前端本地重置
+        const conflicts = sortConflicts(detectConflicts(seedWorkOrders, seedPartBatches));
+        set({
+          workOrders: seedWorkOrders,
+          partBatches: seedPartBatches,
+          teams: seedTeams,
+          approvals: seedApprovals,
+          auditLogs: [
+            {
+              id: genId('log'),
+              action: 'reset_all_data',
+              entityType: 'system',
+              entityId: 'system',
+              operator: DEFAULT_USER.name,
+              timestamp: new Date().toISOString(),
+              details: { note: '用户触发系统重置，所有数据恢复预置（本地降级）' },
+            },
+            ...seedAuditLogs,
+          ],
+          filters: {},
+          ui: DEFAULT_UI,
+          conflicts,
+          currentUser: DEFAULT_USER,
+        });
+      }
     },
+
+    _persistUI,
   };
 });
