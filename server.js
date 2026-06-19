@@ -24,6 +24,36 @@ function checkHiddenCondition(state, turn) {
   return turn <= 7 && state.calibration >= 70 && state.shiftMarks >= 3 && state.shenReward >= 40;
 }
 
+function getHiddenConditionProgress(state, turn, hiddenTriggered) {
+  return {
+    name: '碎镜共鸣',
+    description: '第7回合前，定标值≥70 且 换轨痕≥3 且 申号奖励≥40',
+    triggered: hiddenTriggered,
+    turnRemaining: Math.max(0, 7 - turn + 1),
+    turnPassed: turn > 7,
+    requirements: [
+      {
+        field: '定标值',
+        current: state.calibration,
+        target: 70,
+        met: state.calibration >= 70
+      },
+      {
+        field: '换轨痕',
+        current: state.shiftMarks,
+        target: 3,
+        met: state.shiftMarks >= 3
+      },
+      {
+        field: '申号奖励',
+        current: state.shenReward,
+        target: 40,
+        met: state.shenReward >= 40
+      }
+    ]
+  };
+}
+
 app.get('/api/games', (req, res) => {
   const db = readDB();
   const gamesList = Object.values(db.games).map(g => ({
@@ -76,7 +106,15 @@ app.get('/api/sessions/:sessionId', (req, res) => {
   const session = db.sessions[req.params.sessionId];
   if (!session) return res.status(404).json({ error: '会话不存在' });
   const game = db.games[session.gameId];
-  res.json({ session, game });
+  const response = { session, game };
+  if (game.id === 'yin' && !session.finished) {
+    response.hiddenProgress = getHiddenConditionProgress(
+      session.state,
+      session.turn,
+      session.hiddenTriggered
+    );
+  }
+  res.json(response);
 });
 
 app.post('/api/sessions/:sessionId/actions', (req, res) => {
@@ -200,14 +238,22 @@ app.post('/api/sessions/:sessionId/actions', (req, res) => {
   session.turn++;
 
   writeDB(db);
-  res.json({
+  const response = {
     success: true,
     action,
     event: eventResult,
     state: session.state,
     turn: session.turn,
     actionCooldowns: session.actionCooldowns
-  });
+  };
+  if (game.id === 'yin' && !session.finished) {
+    response.hiddenProgress = getHiddenConditionProgress(
+      session.state,
+      session.turn,
+      session.hiddenTriggered
+    );
+  }
+  res.json(response);
 });
 
 app.post('/api/sessions/:sessionId/end', (req, res) => {

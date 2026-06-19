@@ -7,7 +7,8 @@ const state = {
   session: null,
   currentEventIndex: 0,
   replay: null,
-  replayIndex: 0
+  replayIndex: 0,
+  hiddenProgress: null
 };
 
 function toast(msg, type = '') {
@@ -50,6 +51,7 @@ async function loadGames() {
         const data = await res2.json();
         state.session = data.session;
         state.game = data.game;
+        state.hiddenProgress = data.hiddenProgress || null;
         if (!state.session.finished) {
           showResumeCard();
         }
@@ -103,6 +105,7 @@ async function loadSession() {
   const data = await res.json();
   state.session = data.session;
   state.game = data.game;
+  state.hiddenProgress = data.hiddenProgress || null;
   if (state.session.finished) {
     showResult(data.session.result);
   }
@@ -135,6 +138,7 @@ function renderBoard() {
   setMetric('reward', s.shenReward, 100);
   setMetric('yin', s.yinFailure, 5);
 
+  renderHiddenProgress();
   renderMap();
   renderActions();
 }
@@ -142,6 +146,54 @@ function renderBoard() {
 function setMetric(name, value, max) {
   document.getElementById('metric-' + name).textContent = value;
   document.getElementById('bar-' + name).style.width = Math.min(100, value / max * 100) + '%';
+}
+
+function renderHiddenProgress() {
+  const container = document.getElementById('hidden-progress');
+  if (!state.hiddenProgress) {
+    container.style.display = 'none';
+    return;
+  }
+  const p = state.hiddenProgress;
+  container.style.display = 'block';
+
+  let timerHtml = '';
+  if (p.triggered) {
+    timerHtml = '<span class="urgent">★ 已触发！</span>';
+  } else if (p.turnPassed) {
+    timerHtml = '<span class="urgent">已错过触发时机</span>';
+  } else {
+    const urgent = p.turnRemaining <= 2 ? ' class="urgent"' : '';
+    timerHtml = `剩余 <span${urgent}>${p.turnRemaining}</span> 回合`;
+  }
+
+  container.innerHTML = `
+    <div class="hidden-progress-header">
+      <div class="hidden-progress-title">
+        <h3>隐藏条件 · ${p.name}</h3>
+        <span class="hidden-progress-badge ${p.triggered ? 'triggered' : ''}">
+          ${p.triggered ? '★ 已激活' : '未触发'}
+        </span>
+      </div>
+      <div class="hidden-progress-timer">${timerHtml}</div>
+    </div>
+    <div class="hidden-progress-desc">${p.description}</div>
+    <div class="hidden-requirements">
+      ${p.requirements.map(r => `
+        <div class="hidden-req-item ${r.met ? 'met' : ''}">
+          <div class="req-field">${r.field}</div>
+          <div class="req-values">
+            <span class="req-current">${r.current}</span>
+            <span class="req-target">/ ${r.target}</span>
+          </div>
+          <div class="req-status">${r.met ? '✓ 已达成' : '还差 ' + Math.max(0, r.target - r.current)}</div>
+          <div class="req-bar">
+            <div class="req-bar-fill" style="width:${Math.min(100, r.current / r.target * 100)}%"></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
 }
 
 function renderMap() {
@@ -210,6 +262,12 @@ async function executeAction(actionId) {
   state.session.turn = data.turn;
   state.session.actionCooldowns = data.actionCooldowns;
   state.session.history.push({ action: data.action, event: data.event, state: data.state });
+  if (data.hiddenProgress) {
+    state.hiddenProgress = data.hiddenProgress;
+    if (data.hiddenProgress.triggered && !state.session.hiddenTriggered) {
+      state.session.hiddenTriggered = true;
+    }
+  }
 
   let msg = `执行：${data.action.name}`;
   if (data.event) {
