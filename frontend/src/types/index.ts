@@ -147,6 +147,7 @@ export interface ReviewRequest {
 export interface LockRequest {
   locked_by: string
   unlock_reason?: string
+  target_status_after_unlock?: SpecimenStatus
 }
 
 export interface ReMeasureRecord {

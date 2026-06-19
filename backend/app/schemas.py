@@ -144,6 +144,7 @@ class ReviewRequest(BaseModel):
 class LockRequest(BaseModel):
     locked_by: str
     unlock_reason: Optional[str] = None
+    target_status_after_unlock: Optional[str] = None
 
 
 class ExportPreviewResponse(BaseModel):

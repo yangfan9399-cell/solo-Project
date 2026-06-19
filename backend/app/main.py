@@ -110,17 +110,24 @@ def toggle_lock(specimen_id: int, request: schemas.LockRequest, db: Session = De
         raise HTTPException(status_code=404, detail="Specimen not found")
 
     is_locked = crud.is_specimen_locked(db, specimen_id)
+    valid_statuses = ["待接收", "复判中", "已锁定", "已退回"]
 
     if is_locked:
         if not request.unlock_reason:
             raise HTTPException(status_code=400, detail="解锁时必须提供解锁原因")
+        target_status = request.target_status_after_unlock or "复判中"
+        if target_status not in valid_statuses or target_status == "已锁定":
+            raise HTTPException(
+                status_code=400,
+                detail=f"解锁后目标状态无效，必须是: 待接收, 复判中, 已退回"
+            )
         lock_record = schemas.LockRecordCreate(
             specimen_id=specimen_id,
             locked_by=request.locked_by,
             unlock_reason=request.unlock_reason,
             is_locked=False
         )
-        crud.update_specimen_status(db, specimen_id, "复判中")
+        crud.update_specimen_status(db, specimen_id, target_status)
     else:
         if not specimen.interpreter_opinion:
             raise HTTPException(status_code=400, detail="未填写判读意见的标本无法锁定")

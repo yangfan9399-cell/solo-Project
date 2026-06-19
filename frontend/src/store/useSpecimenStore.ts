@@ -3,6 +3,7 @@ import type {
   Specimen,
   SpecimenDetail,
   SpecimenFilter,
+  SpecimenStatus,
   User,
   ExportPreviewResponse,
   ExportBatch,
@@ -295,33 +296,50 @@ export const useSpecimenStore = create<SpecimenState & SpecimenActions>((set, ge
   },
 
   moveSpecimenToStatus: async (id: number, targetStatus: string) => {
-    const { specimens, currentUser } = get()
-    const originalSpecimen = specimens.find((s) => s.id === id)
+    const state = get()
+    const originalSpecimen = state.specimens.find((s) => s.id === id)
     if (!originalSpecimen) return
-    if (originalSpecimen.status === targetStatus) return
+    const sourceStatus = originalSpecimen.status
+    if (sourceStatus === targetStatus) return
 
-    set((state) => ({
-      specimens: state.specimens.map((s) =>
-        s.id === id ? { ...s, status: targetStatus as Specimen['status'] } : s
+    const VALID_TRANSITIONS: Record<SpecimenStatus, SpecimenStatus[]> = {
+      '待接收': ['复判中', '已退回', '已锁定'],
+      '复判中': ['待接收', '已退回', '已锁定'],
+      '已锁定': ['待接收', '复判中', '已退回'],
+      '已退回': ['待接收', '复判中'],
+    }
+
+    const allowed = VALID_TRANSITIONS[sourceStatus] || []
+    if (!allowed.includes(targetStatus as SpecimenStatus)) {
+      set({
+        error: `不支持从"${sourceStatus}"流转到"${targetStatus}"，合法目标: ${allowed.join('、') || '无'}`,
+      })
+      return
+    }
+
+    set((s) => ({
+      specimens: s.specimens.map((sp) =>
+        sp.id === id ? { ...sp, status: targetStatus as Specimen['status'] } : sp
       ),
     }))
 
     try {
-      if (targetStatus === '已锁定' && originalSpecimen.status !== '已锁定') {
-        await specimenApi.toggleLock(id, { locked_by: currentUser.name })
-      } else if (originalSpecimen.status === '已锁定' && targetStatus !== '已锁定') {
+      if (targetStatus === '已锁定') {
+        await specimenApi.toggleLock(id, { locked_by: state.currentUser.name })
+      } else if (sourceStatus === '已锁定') {
         await specimenApi.toggleLock(id, {
-          locked_by: currentUser.name,
-          unlock_reason: '看板拖拽调整状态',
+          locked_by: state.currentUser.name,
+          unlock_reason: `看板拖拽：${sourceStatus} → ${targetStatus}`,
+          target_status_after_unlock: targetStatus as SpecimenStatus,
         })
       } else {
         await specimenApi.updateStatus(id, targetStatus)
       }
     } catch (error: any) {
       if (originalSpecimen) {
-        set((state) => ({
-          specimens: state.specimens.map((s) =>
-            s.id === id ? { ...s, status: originalSpecimen.status } : s
+        set((s) => ({
+          specimens: s.specimens.map((sp) =>
+            sp.id === id ? { ...sp, status: originalSpecimen.status } : sp
           ),
           error: error?.response?.data?.detail || '状态流转失败，已回滚',
         }))
