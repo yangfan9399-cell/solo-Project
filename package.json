@@ -1,0 +1,14 @@
+{
+  "name": "sujing-study-dual-mechanism",
+  "version": "1.0.0",
+  "description": "碎镜书房双人机关局 - 协作闯关挑战",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}

@@ -1,0 +1,165 @@
+const fs = require('fs');
+const path = require('path');
+
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const games = {
+  "you": {
+    id: "you",
+    name: "碎镜书房双人机关局·酉局",
+    subtitle: "教学局·初识碎镜",
+    description: "酉局为新手教学，节奏温和，机关简单。两位玩家需协作理解碎镜书房的基本运作逻辑。",
+    initialState: {
+      calibration: 50,
+      sealingSlots: { total: 6, used: 0 },
+      shiftMarks: 0,
+      unitaryRisk: 10,
+      shenReward: 30,
+      yinFailure: 0
+    },
+    winCondition: {
+      calibration: { min: 80, max: 120 },
+      sealingSlots: { minUsed: 4 },
+      maxTurns: 8,
+      maxRisk: 60
+    },
+    map: [
+      { id: "m1", name: "西窗镜台", type: "start", x: 0, y: 0 },
+      { id: "m2", name: "北案残简", type: "puzzle", x: 1, y: 0 },
+      { id: "m3", name: "东阁铜炉", type: "event", x: 2, y: 0 },
+      { id: "m4", name: "中央璇玑", type: "mechanism", x: 1, y: 1 },
+      { id: "m5", name: "南屏画卷", type: "puzzle", x: 0, y: 2 },
+      { id: "m6", name: "碎镜归位", type: "end", x: 2, y: 2 }
+    ],
+    events: [
+      { id: "e1", name: "镜尘轻拂", turn: 1, effect: { calibration: 5, unitaryRisk: -5 }, hint: "酉局教学：清理镜台上的灰尘，定标值微升。" },
+      { id: "e2", name: "简牍初探", turn: 2, effect: { shiftMarks: 1, calibration: 10 }, hint: "酉局教学：北案残简记载了换轨的基本方法。" },
+      { id: "e3", name: "铜炉微光", turn: 3, effect: { sealingSlots_used: 1, shenReward: 10 }, hint: "酉局教学：第一枚封存物归位，获得申号奖励。" },
+      { id: "e4", name: "璇玑微调", turn: 4, effect: { calibration: 15, unitaryRisk: 5 }, hint: "酉局教学：璇玑是书房的核心，调节它有一定风险。" },
+      { id: "e5", name: "画卷暗纹", turn: 5, effect: { shiftMarks: 2, sealingSlots_used: 1, calibration: 10 }, hint: "酉局教学：南屏画卷隐藏着换轨的关键。" },
+      { id: "e6", name: "双镜共鸣", turn: 6, effect: { calibration: 20, sealingSlots_used: 2, shenReward: 15 }, hint: "酉局教学：双人协作同时激活两面镜子。" }
+    ],
+    actions: [
+      { id: "a1", name: "玩家A·校准镜面", cost: { sealingSlots: 0 }, effect: { calibration: 8 }, cooldown: 0 },
+      { id: "a2", name: "玩家B·封存残片", cost: { sealingSlots: 1 }, effect: { sealingSlots_used: 1, calibration: 5 }, cooldown: 0 },
+      { id: "a3", name: "双人·换轨协同", cost: { shiftMarks: 1 }, effect: { shiftMarks: -1, calibration: 12, shenReward: 8 }, cooldown: 1 },
+      { id: "a4", name: "玩家A·压制酉号风险", cost: { calibration: 3 }, effect: { unitaryRisk: -10 }, cooldown: 1 },
+      { id: "a5", name: "玩家B·抽取申号奖励", cost: { calibration: 5 }, effect: { shenReward: 15, unitaryRisk: 5 }, cooldown: 2 }
+    ]
+  },
+  "shen": {
+    id: "shen",
+    name: "碎镜书房双人机关局·申局",
+    subtitle: "资源局·残镜补垣",
+    description: "申局资源极度短缺，封存槽紧张。两位玩家需精打细算，在有限资源中追求最大收益。",
+    initialState: {
+      calibration: 30,
+      sealingSlots: { total: 3, used: 0 },
+      shiftMarks: 0,
+      unitaryRisk: 20,
+      shenReward: 10,
+      yinFailure: 0
+    },
+    winCondition: {
+      calibration: { min: 70, max: 110 },
+      sealingSlots: { minUsed: 3 },
+      maxTurns: 6,
+      maxRisk: 50,
+      requireAllSlotsUsed: true
+    },
+    map: [
+      { id: "s1", name: "缺角镜阵", type: "start", x: 0, y: 0 },
+      { id: "s2", name: "半残书阁", type: "puzzle", x: 1, y: 0 },
+      { id: "s3", name: "裂纹砖道", type: "hazard", x: 2, y: 0 },
+      { id: "s4", name: "悬案机关", type: "mechanism", x: 0, y: 1 },
+      { id: "s5", name: "漏光天窗", type: "event", x: 2, y: 1 },
+      { id: "s6", name: "封镜之坛", type: "end", x: 1, y: 2 }
+    ],
+    events: [
+      { id: "se1", name: "资源告急", turn: 1, effect: { sealingSlots_total: -1 }, hint: "申局特性：封存槽意外减少一个！资源更加紧张。" },
+      { id: "se2", name: "破镜重圆", turn: 2, effect: { calibration: 10, sealingSlots_used: 1 }, hint: "申局策略：必须抓住每次使用封存槽的机会。" },
+      { id: "se3", name: "天窗裂隙", turn: 3, effect: { unitaryRisk: 15, calibration: 15 }, hint: "申局风险：天窗泄漏的能量带来收益与风险并存。" },
+      { id: "se4", name: "协作换轨", turn: 4, effect: { shiftMarks: 2, shenReward: 20 }, hint: "申局转折：换轨成功带来珍贵的申号奖励。" },
+      { id: "se5", name: "寅号暗涌", turn: 5, effect: { yinFailure: 1, unitaryRisk: 10 }, hint: "申局警告：寅号失败因子开始累积！" }
+    ],
+    actions: [
+      { id: "sa1", name: "玩家A·精准校准", cost: { calibration: 0 }, effect: { calibration: 6 }, cooldown: 0 },
+      { id: "sa2", name: "玩家B·珍惜封存", cost: { sealingSlots: 1 }, effect: { sealingSlots_used: 1, calibration: 12, shenReward: 5 }, cooldown: 0 },
+      { id: "sa3", name: "双人·换轨博弈", cost: { shiftMarks: 2 }, effect: { shiftMarks: -2, calibration: 18, shenReward: 12 }, cooldown: 2 },
+      { id: "sa4", name: "玩家A·风险对冲", cost: { shenReward: 5 }, effect: { unitaryRisk: -15 }, cooldown: 1 },
+      { id: "sa5", name: "玩家B·寅号抑制", cost: { calibration: 8 }, effect: { yinFailure: -1, unitaryRisk: -5 }, cooldown: 2 }
+    ]
+  },
+  "yin": {
+    id: "yin",
+    name: "碎镜书房双人机关局·寅局",
+    subtitle: "终局·碎镜重光",
+    description: "寅局为最终局，隐藏条件深埋局中。两位玩家需在特定条件下触发隐藏机关，方可达成真结局。",
+    initialState: {
+      calibration: 40,
+      sealingSlots: { total: 8, used: 0 },
+      shiftMarks: 0,
+      unitaryRisk: 15,
+      shenReward: 20,
+      yinFailure: 0
+    },
+    winCondition: {
+      calibration: { min: 90, max: 130 },
+      sealingSlots: { minUsed: 5 },
+      shiftMarks: { min: 4 },
+      maxTurns: 10,
+      maxRisk: 55,
+      requireHiddenCondition: true
+    },
+    hiddenCondition: {
+      name: "碎镜共鸣",
+      description: "在第7回合前，累计达到校准值≥70 AND 换轨痕≥3 AND 申号奖励≥40，触发隐藏机关「碎镜共鸣」",
+      check: (state, turn) => turn <= 7 && state.calibration >= 70 && state.shiftMarks >= 3 && state.shenReward >= 40
+    },
+    map: [
+      { id: "y1", name: "尘封镜面", type: "start", x: 0, y: 0 },
+      { id: "y2", name: "倒悬书楼", type: "puzzle", x: 1, y: 0 },
+      { id: "y3", name: "流转回廊", type: "mechanism", x: 2, y: 0 },
+      { id: "y4", name: "虚影书房", type: "event", x: 0, y: 1 },
+      { id: "y5", name: "镜中镜", type: "puzzle", x: 2, y: 1 },
+      { id: "y6", name: "十二地支台", type: "mechanism", x: 1, y: 1 },
+      { id: "y7", name: "寅位枢机", type: "hidden", x: 0, y: 2 },
+      { id: "y8", name: "碎镜重光", type: "end", x: 2, y: 2 }
+    ],
+    events: [
+      { id: "ye1", name: "灰尘记忆", turn: 1, effect: { calibration: 8 }, hint: "寅局开局：尘封的镜面下似乎藏着什么。" },
+      { id: "ye2", name: "倒悬之书", turn: 2, effect: { shiftMarks: 1, calibration: 10, shenReward: 10 }, hint: "寅局线索：倒悬的书籍页码指向「寅」。" },
+      { id: "ye3", name: "回廊流转", turn: 3, effect: { shiftMarks: 2, calibration: 12 }, hint: "寅局提示：换轨痕是寅局的关键指标。" },
+      { id: "ye4", name: "虚影协作", turn: 4, effect: { sealingSlots_used: 2, shenReward: 15, calibration: 8 }, hint: "寅局协作：虚影中的另一位玩家暗示了什么。" },
+      { id: "ye5", name: "镜中对弈", turn: 5, effect: { calibration: 15, unitaryRisk: 10, shiftMarks: 1 }, hint: "寅局中段：与镜中的自己对弈，风险与机遇并存。" },
+      { id: "ye6", name: "地支汇聚", turn: 6, effect: { calibration: 18, sealingSlots_used: 1, shenReward: 20 }, hint: "寅局关键：十二地支台同时校准，奖励丰厚。" },
+      { id: "ye7", name: "碎镜共鸣·判定", turn: 7, effect: { calibration: 0 }, hint: "寅局判定点：若满足条件，「碎镜共鸣」将被触发！", checkCondition: true },
+      { id: "ye8", name: "寅位觉醒", turn: 8, effect: { calibration: 25, sealingSlots_used: 2, yinFailure: 2 }, hint: "寅局后期：寅位枢机开始躁动。" },
+      { id: "ye9", name: "终局抉择", turn: 9, effect: { calibration: 20, unitaryRisk: 15, shiftMarks: 1 }, hint: "寅局终章：是追求完美还是稳妥收官？" }
+    ],
+    actions: [
+      { id: "ya1", name: "玩家A·深度校准", cost: {}, effect: { calibration: 10 }, cooldown: 0 },
+      { id: "ya2", name: "玩家B·寅位封存", cost: { sealingSlots: 1 }, effect: { sealingSlots_used: 1, calibration: 8, shiftMarks: 1 }, cooldown: 0 },
+      { id: "ya3", name: "双人·换轨共鸣", cost: { shiftMarks: 1 }, effect: { shiftMarks: 1, calibration: 15, shenReward: 12 }, cooldown: 1 },
+      { id: "ya4", name: "玩家A·镜中探索", cost: { calibration: 5 }, effect: { shiftMarks: 2, shenReward: 18 }, cooldown: 1 },
+      { id: "ya5", name: "玩家B·地支引导", cost: { sealingSlots: 2 }, effect: { sealingSlots_used: 2, calibration: 20, shiftMarks: 1, shenReward: 10 }, cooldown: 2 },
+      { id: "ya6", name: "双人·寅号压制", cost: { calibration: 10, shenReward: 10 }, effect: { yinFailure: -2, unitaryRisk: -20 }, cooldown: 3 }
+    ]
+  }
+};
+
+const data = {
+  games,
+  sessions: {},
+  replays: {}
+};
+
+fs.writeFileSync(path.join(dataDir, 'db.json'), JSON.stringify(data, null, 2));
+console.log('种子数据已生成！');
+console.log('包含游戏：');
+console.log('  - 酉局（教学局）');
+console.log('  - 申局（资源短缺局）');
+console.log('  - 寅局（隐藏条件局）');

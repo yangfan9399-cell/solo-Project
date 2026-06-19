@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>碎镜书房双人机关局</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="top-bar">
+      <div class="title">
+        <span class="title-icon">🪞</span>
+        <h1>碎镜书房双人机关局</h1>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-view="home">首页</button>
+        <button class="nav-tab" data-view="board" id="tab-board" disabled>局面盘</button>
+        <button class="nav-tab" data-view="events" id="tab-events" disabled>事件匣</button>
+        <button class="nav-tab" data-view="replay" id="tab-replay" disabled>回放轴</button>
+        <button class="nav-tab" data-view="result" id="tab-result" disabled>结算簿</button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="view-home" class="view active">
+        <div class="game-select">
+          <h2>选择局面对局</h2>
+          <div id="game-list" class="game-list"></div>
+        </div>
+        <div class="resume-section" id="resume-section" style="display:none;">
+          <h2>继续当前局</h2>
+          <div id="resume-card" class="resume-card"></div>
+        </div>
+      </section>
+
+      <section id="view-board" class="view">
+        <div class="board-layout">
+          <div class="board-header">
+            <div id="game-info" class="game-info"></div>
+            <div class="turn-indicator">
+              <span class="label">当前回合</span>
+              <span id="turn-number" class="turn-number">1</span>
+            </div>
+          </div>
+
+          <div class="board-metrics">
+            <div class="metric-card calibration">
+              <div class="metric-label">碎镜书房定标值</div>
+              <div class="metric-value" id="metric-calibration">0</div>
+              <div class="metric-bar"><div class="metric-fill" id="bar-calibration"></div></div>
+            </div>
+            <div class="metric-card slots">
+              <div class="metric-label">碎镜书房封存槽</div>
+              <div class="metric-value"><span id="metric-slots-used">0</span>/<span id="metric-slots-total">0</span></div>
+              <div class="metric-bar"><div class="metric-fill" id="bar-slots"></div></div>
+            </div>
+            <div class="metric-card shift">
+              <div class="metric-label">碎镜书房换轨痕</div>
+              <div class="metric-value" id="metric-shift">0</div>
+              <div class="metric-bar"><div class="metric-fill" id="bar-shift"></div></div>
+            </div>
+            <div class="metric-card risk">
+              <div class="metric-label">酉号风险</div>
+              <div class="metric-value" id="metric-risk">0</div>
+              <div class="metric-bar danger"><div class="metric-fill" id="bar-risk"></div></div>
+            </div>
+            <div class="metric-card reward">
+              <div class="metric-label">申号奖励</div>
+              <div class="metric-value" id="metric-reward">0</div>
+              <div class="metric-bar success"><div class="metric-fill" id="bar-reward"></div></div>
+            </div>
+            <div class="metric-card yin">
+              <div class="metric-label">寅号失败因子</div>
+              <div class="metric-value" id="metric-yin">0</div>
+              <div class="metric-bar danger"><div class="metric-fill" id="bar-yin"></div></div>
+            </div>
+          </div>
+
+          <div class="board-map" id="board-map"></div>
+
+          <div class="board-actions">
+            <h3>操作面板</h3>
+            <div id="actions-list" class="actions-list"></div>
+            <button id="btn-end-turn" class="btn btn-danger">结束并结算</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-events" class="view">
+        <div class="events-box">
+          <h2>事件匣</h2>
+          <div id="events-timeline" class="events-timeline"></div>
+        </div>
+      </section>
+
+      <section id="view-replay" class="view">
+        <div class="replay-panel">
+          <h2>回放轴</h2>
+          <div class="replay-controls">
+            <button id="replay-prev" class="btn">◀ 上一步</button>
+            <span id="replay-progress" class="replay-progress">0 / 0</span>
+            <button id="replay-next" class="btn">下一步 ▶</button>
+          </div>
+          <div class="replay-timeline" id="replay-timeline"></div>
+          <div class="replay-state" id="replay-state"></div>
+        </div>
+      </section>
+
+      <section id="view-result" class="view">
+        <div class="result-book">
+          <h2 id="result-title">结算簿</h2>
+          <div id="result-content" class="result-content"></div>
+          <div class="result-actions">
+            <button id="btn-back-home" class="btn">返回首页</button>
+            <button id="btn-new-game" class="btn btn-primary">开启新局</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
