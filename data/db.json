@@ -652,1155 +652,21 @@
     }
   },
   "sessions": {
-    "sess_1781839855887_qfjo80": {
-      "id": "sess_1781839855887_qfjo80",
-      "gameId": "you",
-      "playerA": "玩家A",
-      "playerB": "玩家B",
-      "turn": 7,
-      "state": {
-        "calibration": 135,
-        "sealingSlots": {
-          "total": 6,
-          "used": 5
-        },
-        "shiftMarks": 2,
-        "unitaryRisk": 5,
-        "shenReward": 78,
-        "yinFailure": 0
-      },
-      "actionCooldowns": {
-        "a3": 0,
-        "a4": 0,
-        "a5": 1
-      },
-      "history": [
-        {
-          "turn": 1,
-          "action": {
-            "id": "a1",
-            "name": "玩家A·校准镜面",
-            "cost": {
-              "sealingSlots": 0
-            },
-            "effect": {
-              "calibration": 8
-            },
-            "cooldown": 0
-          },
-          "oldState": {
-            "calibration": 50,
-            "sealingSlots": {
-              "total": 6,
-              "used": 0
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 10,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 63,
-            "sealingSlots": {
-              "total": 6,
-              "used": 0
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 5,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "镜尘轻拂",
-            "hint": "酉局教学：清理镜台上的灰尘，定标值微升。"
-          },
-          "timestamp": 1781839855889
-        },
-        {
-          "turn": 2,
-          "action": {
-            "id": "a2",
-            "name": "玩家B·封存残片",
-            "cost": {
-              "sealingSlots": 1
-            },
-            "effect": {
-              "sealingSlots_used": 1,
-              "calibration": 5
-            },
-            "cooldown": 0
-          },
-          "oldState": {
-            "calibration": 63,
-            "sealingSlots": {
-              "total": 6,
-              "used": 0
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 5,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 78,
-            "sealingSlots": {
-              "total": 6,
-              "used": 1
-            },
-            "shiftMarks": 1,
-            "unitaryRisk": 5,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "简牍初探",
-            "hint": "酉局教学：北案残简记载了换轨的基本方法。"
-          },
-          "timestamp": 1781839855890
-        },
-        {
-          "turn": 3,
-          "action": {
-            "id": "a3",
-            "name": "双人·换轨协同",
-            "cost": {
-              "shiftMarks": 1
-            },
-            "effect": {
-              "shiftMarks": -1,
-              "calibration": 12,
-              "shenReward": 8
-            },
-            "cooldown": 1
-          },
-          "oldState": {
-            "calibration": 78,
-            "sealingSlots": {
-              "total": 6,
-              "used": 1
-            },
-            "shiftMarks": 1,
-            "unitaryRisk": 5,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 90,
-            "sealingSlots": {
-              "total": 6,
-              "used": 2
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 5,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "铜炉微光",
-            "hint": "酉局教学：第一枚封存物归位，获得申号奖励。"
-          },
-          "timestamp": 1781839855891
-        },
-        {
-          "turn": 4,
-          "action": {
-            "id": "a4",
-            "name": "玩家A·压制酉号风险",
-            "cost": {
-              "calibration": 3
-            },
-            "effect": {
-              "unitaryRisk": -10
-            },
-            "cooldown": 1
-          },
-          "oldState": {
-            "calibration": 90,
-            "sealingSlots": {
-              "total": 6,
-              "used": 2
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 5,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 102,
-            "sealingSlots": {
-              "total": 6,
-              "used": 2
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 0,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "璇玑微调",
-            "hint": "酉局教学：璇玑是书房的核心，调节它有一定风险。"
-          },
-          "timestamp": 1781839855895
-        },
-        {
-          "turn": 5,
-          "action": {
-            "id": "a5",
-            "name": "玩家B·抽取申号奖励",
-            "cost": {
-              "calibration": 5
-            },
-            "effect": {
-              "shenReward": 15,
-              "unitaryRisk": 5
-            },
-            "cooldown": 2
-          },
-          "oldState": {
-            "calibration": 102,
-            "sealingSlots": {
-              "total": 6,
-              "used": 2
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 0,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 107,
-            "sealingSlots": {
-              "total": 6,
-              "used": 3
-            },
-            "shiftMarks": 2,
-            "unitaryRisk": 5,
-            "shenReward": 63,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "画卷暗纹",
-            "hint": "酉局教学：南屏画卷隐藏着换轨的关键。"
-          },
-          "timestamp": 1781839855896
-        },
-        {
-          "turn": 6,
-          "action": {
-            "id": "a1",
-            "name": "玩家A·校准镜面",
-            "cost": {
-              "sealingSlots": 0
-            },
-            "effect": {
-              "calibration": 8
-            },
-            "cooldown": 0
-          },
-          "oldState": {
-            "calibration": 107,
-            "sealingSlots": {
-              "total": 6,
-              "used": 3
-            },
-            "shiftMarks": 2,
-            "unitaryRisk": 5,
-            "shenReward": 63,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 135,
-            "sealingSlots": {
-              "total": 6,
-              "used": 5
-            },
-            "shiftMarks": 2,
-            "unitaryRisk": 5,
-            "shenReward": 78,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "双镜共鸣",
-            "hint": "酉局教学：双人协作同时激活两面镜子。"
-          },
-          "timestamp": 1781839855897
-        }
-      ],
-      "hiddenTriggered": false,
-      "finished": true,
-      "result": {
-        "win": false,
-        "totalScore": 64,
-        "rank": "戊·尚需磨炼",
-        "details": [
-          {
-            "field": "碎镜书房定标值",
-            "value": 135,
-            "target": "80~120",
-            "pass": false,
-            "weight": 35
-          },
-          {
-            "field": "碎镜书房封存槽",
-            "value": "5/6",
-            "target": "≥4",
-            "pass": true,
-            "weight": 20
-          },
-          {
-            "field": "酉号风险",
-            "value": 5,
-            "target": "≤60",
-            "pass": true,
-            "weight": 10
-          },
-          {
-            "field": "申号奖励",
-            "value": 78,
-            "target": "越高越好",
-            "pass": true,
-            "weight": 10
-          },
-          {
-            "field": "寅号失败因子",
-            "value": 0,
-            "target": "<3",
-            "pass": true,
-            "weight": 10
-          },
-          {
-            "field": "协作闯关步骤加分",
-            "value": 8,
-            "target": "双人操作越多加分",
-            "pass": true,
-            "weight": 0
-          },
-          {
-            "field": "回合效率奖励",
-            "value": 9,
-            "target": "8回合内完成",
-            "pass": true,
-            "weight": 0
-          }
-        ],
-        "stepsUsed": 6,
-        "cooperationBonus": 8
-      },
-      "createdAt": 1781839855887
-    },
-    "sess_1781839855904_psng62": {
-      "id": "sess_1781839855904_psng62",
+    "sess_1781842071268_ty494p": {
+      "id": "sess_1781842071268_ty494p",
       "gameId": "yin",
-      "playerA": "玩家A",
-      "playerB": "玩家B",
-      "turn": 7,
-      "state": {
-        "calibration": 154,
-        "sealingSlots": {
-          "total": 8,
-          "used": 6
-        },
-        "shiftMarks": 11,
-        "unitaryRisk": 25,
-        "shenReward": 123,
-        "yinFailure": 0
-      },
-      "actionCooldowns": {
-        "ya4": 1,
-        "ya5": 0,
-        "ya3": 0
-      },
-      "history": [
-        {
-          "turn": 1,
-          "action": {
-            "id": "ya4",
-            "name": "玩家A·镜中探索",
-            "cost": {
-              "calibration": 5
-            },
-            "effect": {
-              "shiftMarks": 2,
-              "shenReward": 18
-            },
-            "cooldown": 1
-          },
-          "oldState": {
-            "calibration": 40,
-            "sealingSlots": {
-              "total": 8,
-              "used": 0
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 15,
-            "shenReward": 20,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 43,
-            "sealingSlots": {
-              "total": 8,
-              "used": 0
-            },
-            "shiftMarks": 2,
-            "unitaryRisk": 15,
-            "shenReward": 38,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "灰尘记忆",
-            "hint": "寅局开局：尘封的镜面下似乎藏着什么。"
-          },
-          "timestamp": 1781839855908
-        },
-        {
-          "turn": 2,
-          "action": {
-            "id": "ya2",
-            "name": "玩家B·寅位封存",
-            "cost": {
-              "sealingSlots": 1
-            },
-            "effect": {
-              "sealingSlots_used": 1,
-              "calibration": 8,
-              "shiftMarks": 1
-            },
-            "cooldown": 0
-          },
-          "oldState": {
-            "calibration": 43,
-            "sealingSlots": {
-              "total": 8,
-              "used": 0
-            },
-            "shiftMarks": 2,
-            "unitaryRisk": 15,
-            "shenReward": 38,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 61,
-            "sealingSlots": {
-              "total": 8,
-              "used": 1
-            },
-            "shiftMarks": 4,
-            "unitaryRisk": 15,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "倒悬之书",
-            "hint": "寅局线索：倒悬的书籍页码指向「寅」。"
-          },
-          "timestamp": 1781839855909
-        },
-        {
-          "turn": 3,
-          "action": {
-            "id": "ya5",
-            "name": "玩家B·地支引导",
-            "cost": {
-              "sealingSlots": 2
-            },
-            "effect": {
-              "sealingSlots_used": 2,
-              "calibration": 20,
-              "shiftMarks": 1,
-              "shenReward": 10
-            },
-            "cooldown": 2
-          },
-          "oldState": {
-            "calibration": 61,
-            "sealingSlots": {
-              "total": 8,
-              "used": 1
-            },
-            "shiftMarks": 4,
-            "unitaryRisk": 15,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 93,
-            "sealingSlots": {
-              "total": 8,
-              "used": 3
-            },
-            "shiftMarks": 7,
-            "unitaryRisk": 15,
-            "shenReward": 58,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "回廊流转",
-            "hint": "寅局提示：换轨痕是寅局的关键指标。"
-          },
-          "timestamp": 1781839855910
-        },
-        {
-          "turn": 4,
-          "action": {
-            "id": "ya1",
-            "name": "玩家A·深度校准",
-            "cost": {},
-            "effect": {
-              "calibration": 10
-            },
-            "cooldown": 0
-          },
-          "oldState": {
-            "calibration": 93,
-            "sealingSlots": {
-              "total": 8,
-              "used": 3
-            },
-            "shiftMarks": 7,
-            "unitaryRisk": 15,
-            "shenReward": 58,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 111,
-            "sealingSlots": {
-              "total": 8,
-              "used": 5
-            },
-            "shiftMarks": 7,
-            "unitaryRisk": 15,
-            "shenReward": 73,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "虚影协作",
-            "hint": "寅局协作：虚影中的另一位玩家暗示了什么。"
-          },
-          "timestamp": 1781839855911
-        },
-        {
-          "turn": 5,
-          "action": {
-            "id": "ya3",
-            "name": "双人·换轨共鸣",
-            "cost": {
-              "shiftMarks": 1
-            },
-            "effect": {
-              "shiftMarks": 1,
-              "calibration": 15,
-              "shenReward": 12
-            },
-            "cooldown": 1
-          },
-          "oldState": {
-            "calibration": 111,
-            "sealingSlots": {
-              "total": 8,
-              "used": 5
-            },
-            "shiftMarks": 7,
-            "unitaryRisk": 15,
-            "shenReward": 73,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 141,
-            "sealingSlots": {
-              "total": 8,
-              "used": 5
-            },
-            "shiftMarks": 9,
-            "unitaryRisk": 25,
-            "shenReward": 85,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "镜中对弈",
-            "hint": "寅局中段：与镜中的自己对弈，风险与机遇并存。"
-          },
-          "timestamp": 1781839855911
-        },
-        {
-          "turn": 6,
-          "action": {
-            "id": "ya4",
-            "name": "玩家A·镜中探索",
-            "cost": {
-              "calibration": 5
-            },
-            "effect": {
-              "shiftMarks": 2,
-              "shenReward": 18
-            },
-            "cooldown": 1
-          },
-          "oldState": {
-            "calibration": 141,
-            "sealingSlots": {
-              "total": 8,
-              "used": 5
-            },
-            "shiftMarks": 9,
-            "unitaryRisk": 25,
-            "shenReward": 85,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 154,
-            "sealingSlots": {
-              "total": 8,
-              "used": 6
-            },
-            "shiftMarks": 11,
-            "unitaryRisk": 25,
-            "shenReward": 123,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "地支汇聚",
-            "hint": "寅局关键：十二地支台同时校准，奖励丰厚。"
-          },
-          "timestamp": 1781839855913
-        }
-      ],
-      "hiddenTriggered": false,
-      "finished": false,
-      "result": null,
-      "createdAt": 1781839855904
-    },
-    "sess_1781839935179_2xv7kf": {
-      "id": "sess_1781839935179_2xv7kf",
-      "gameId": "you",
       "playerA": "玩家A",
       "playerB": "玩家B",
       "turn": 5,
       "state": {
-        "calibration": 102,
-        "sealingSlots": {
-          "total": 6,
-          "used": 2
-        },
-        "shiftMarks": 0,
-        "unitaryRisk": 0,
-        "shenReward": 48,
-        "yinFailure": 0
-      },
-      "actionCooldowns": {
-        "a3": 0,
-        "a4": 1
-      },
-      "history": [
-        {
-          "turn": 1,
-          "action": {
-            "id": "a1",
-            "name": "玩家A·校准镜面",
-            "cost": {
-              "sealingSlots": 0
-            },
-            "effect": {
-              "calibration": 8
-            },
-            "cooldown": 0
-          },
-          "oldState": {
-            "calibration": 50,
-            "sealingSlots": {
-              "total": 6,
-              "used": 0
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 10,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 63,
-            "sealingSlots": {
-              "total": 6,
-              "used": 0
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 5,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "镜尘轻拂",
-            "hint": "酉局教学：清理镜台上的灰尘，定标值微升。"
-          },
-          "timestamp": 1781840014933
-        },
-        {
-          "turn": 2,
-          "action": {
-            "id": "a2",
-            "name": "玩家B·封存残片",
-            "cost": {
-              "sealingSlots": 1
-            },
-            "effect": {
-              "sealingSlots_used": 1,
-              "calibration": 5
-            },
-            "cooldown": 0
-          },
-          "oldState": {
-            "calibration": 63,
-            "sealingSlots": {
-              "total": 6,
-              "used": 0
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 5,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 78,
-            "sealingSlots": {
-              "total": 6,
-              "used": 1
-            },
-            "shiftMarks": 1,
-            "unitaryRisk": 5,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "简牍初探",
-            "hint": "酉局教学：北案残简记载了换轨的基本方法。"
-          },
-          "timestamp": 1781840015534
-        },
-        {
-          "turn": 3,
-          "action": {
-            "id": "a3",
-            "name": "双人·换轨协同",
-            "cost": {
-              "shiftMarks": 1
-            },
-            "effect": {
-              "shiftMarks": -1,
-              "calibration": 12,
-              "shenReward": 8
-            },
-            "cooldown": 1
-          },
-          "oldState": {
-            "calibration": 78,
-            "sealingSlots": {
-              "total": 6,
-              "used": 1
-            },
-            "shiftMarks": 1,
-            "unitaryRisk": 5,
-            "shenReward": 30,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 90,
-            "sealingSlots": {
-              "total": 6,
-              "used": 2
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 5,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "铜炉微光",
-            "hint": "酉局教学：第一枚封存物归位，获得申号奖励。"
-          },
-          "timestamp": 1781840016141
-        },
-        {
-          "turn": 4,
-          "action": {
-            "id": "a4",
-            "name": "玩家A·压制酉号风险",
-            "cost": {
-              "calibration": 3
-            },
-            "effect": {
-              "unitaryRisk": -10
-            },
-            "cooldown": 1
-          },
-          "oldState": {
-            "calibration": 90,
-            "sealingSlots": {
-              "total": 6,
-              "used": 2
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 5,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 102,
-            "sealingSlots": {
-              "total": 6,
-              "used": 2
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 0,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "璇玑微调",
-            "hint": "酉局教学：璇玑是书房的核心，调节它有一定风险。"
-          },
-          "timestamp": 1781840016741
-        }
-      ],
-      "hiddenTriggered": false,
-      "finished": true,
-      "result": {
-        "win": true,
-        "totalScore": 92,
-        "rank": "丙·融会贯通",
-        "details": [
-          {
-            "field": "碎镜书房定标值",
-            "value": 102,
-            "target": "80~120",
-            "pass": true,
-            "weight": 35
-          },
-          {
-            "field": "碎镜书房封存槽",
-            "value": "2/6",
-            "target": "≥4",
-            "pass": false,
-            "weight": 20
-          },
-          {
-            "field": "酉号风险",
-            "value": 0,
-            "target": "≤60",
-            "pass": true,
-            "weight": 10
-          },
-          {
-            "field": "申号奖励",
-            "value": 48,
-            "target": "越高越好",
-            "pass": true,
-            "weight": 10
-          },
-          {
-            "field": "寅号失败因子",
-            "value": 0,
-            "target": "<3",
-            "pass": true,
-            "weight": 10
-          },
-          {
-            "field": "协作闯关步骤加分",
-            "value": 8,
-            "target": "双人操作越多加分",
-            "pass": true,
-            "weight": 0
-          },
-          {
-            "field": "回合效率奖励",
-            "value": 15,
-            "target": "8回合内完成",
-            "pass": true,
-            "weight": 0
-          }
-        ],
-        "stepsUsed": 4,
-        "cooperationBonus": 8
-      },
-      "createdAt": 1781839935179
-    },
-    "sess_1781840927524_jf5g8f": {
-      "id": "sess_1781840927524_jf5g8f",
-      "gameId": "yin",
-      "playerA": "玩家A",
-      "playerB": "玩家B",
-      "turn": 6,
-      "state": {
-        "calibration": 141,
+        "calibration": 106,
         "sealingSlots": {
           "total": 8,
-          "used": 5
-        },
-        "shiftMarks": 9,
-        "unitaryRisk": 25,
-        "shenReward": 85,
-        "yinFailure": 0
-      },
-      "actionCooldowns": {
-        "ya4": 0,
-        "ya5": 0,
-        "ya3": 1
-      },
-      "history": [
-        {
-          "turn": 1,
-          "action": {
-            "id": "ya4",
-            "name": "玩家A·镜中探索",
-            "cost": {
-              "calibration": 5
-            },
-            "effect": {
-              "shiftMarks": 2,
-              "shenReward": 18
-            },
-            "cooldown": 1
-          },
-          "oldState": {
-            "calibration": 40,
-            "sealingSlots": {
-              "total": 8,
-              "used": 0
-            },
-            "shiftMarks": 0,
-            "unitaryRisk": 15,
-            "shenReward": 20,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 43,
-            "sealingSlots": {
-              "total": 8,
-              "used": 0
-            },
-            "shiftMarks": 2,
-            "unitaryRisk": 15,
-            "shenReward": 38,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "灰尘记忆",
-            "hint": "寅局开局：尘封的镜面下似乎藏着什么。"
-          },
-          "timestamp": 1781840927537
-        },
-        {
-          "turn": 2,
-          "action": {
-            "id": "ya2",
-            "name": "玩家B·寅位封存",
-            "cost": {
-              "sealingSlots": 1
-            },
-            "effect": {
-              "sealingSlots_used": 1,
-              "calibration": 8,
-              "shiftMarks": 1
-            },
-            "cooldown": 0
-          },
-          "oldState": {
-            "calibration": 43,
-            "sealingSlots": {
-              "total": 8,
-              "used": 0
-            },
-            "shiftMarks": 2,
-            "unitaryRisk": 15,
-            "shenReward": 38,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 61,
-            "sealingSlots": {
-              "total": 8,
-              "used": 1
-            },
-            "shiftMarks": 4,
-            "unitaryRisk": 15,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "倒悬之书",
-            "hint": "寅局线索：倒悬的书籍页码指向「寅」。"
-          },
-          "timestamp": 1781840927538
-        },
-        {
-          "turn": 3,
-          "action": {
-            "id": "ya5",
-            "name": "玩家B·地支引导",
-            "cost": {
-              "sealingSlots": 2
-            },
-            "effect": {
-              "sealingSlots_used": 2,
-              "calibration": 20,
-              "shiftMarks": 1,
-              "shenReward": 10
-            },
-            "cooldown": 2
-          },
-          "oldState": {
-            "calibration": 61,
-            "sealingSlots": {
-              "total": 8,
-              "used": 1
-            },
-            "shiftMarks": 4,
-            "unitaryRisk": 15,
-            "shenReward": 48,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 93,
-            "sealingSlots": {
-              "total": 8,
-              "used": 3
-            },
-            "shiftMarks": 7,
-            "unitaryRisk": 15,
-            "shenReward": 58,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "回廊流转",
-            "hint": "寅局提示：换轨痕是寅局的关键指标。"
-          },
-          "timestamp": 1781840927539
-        },
-        {
-          "turn": 4,
-          "action": {
-            "id": "ya1",
-            "name": "玩家A·深度校准",
-            "cost": {},
-            "effect": {
-              "calibration": 10
-            },
-            "cooldown": 0
-          },
-          "oldState": {
-            "calibration": 93,
-            "sealingSlots": {
-              "total": 8,
-              "used": 3
-            },
-            "shiftMarks": 7,
-            "unitaryRisk": 15,
-            "shenReward": 58,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 111,
-            "sealingSlots": {
-              "total": 8,
-              "used": 5
-            },
-            "shiftMarks": 7,
-            "unitaryRisk": 15,
-            "shenReward": 73,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "虚影协作",
-            "hint": "寅局协作：虚影中的另一位玩家暗示了什么。"
-          },
-          "timestamp": 1781840927540
-        },
-        {
-          "turn": 5,
-          "action": {
-            "id": "ya3",
-            "name": "双人·换轨共鸣",
-            "cost": {
-              "shiftMarks": 1
-            },
-            "effect": {
-              "shiftMarks": 1,
-              "calibration": 15,
-              "shenReward": 12
-            },
-            "cooldown": 1
-          },
-          "oldState": {
-            "calibration": 111,
-            "sealingSlots": {
-              "total": 8,
-              "used": 5
-            },
-            "shiftMarks": 7,
-            "unitaryRisk": 15,
-            "shenReward": 73,
-            "yinFailure": 0
-          },
-          "newState": {
-            "calibration": 141,
-            "sealingSlots": {
-              "total": 8,
-              "used": 5
-            },
-            "shiftMarks": 9,
-            "unitaryRisk": 25,
-            "shenReward": 85,
-            "yinFailure": 0
-          },
-          "event": {
-            "name": "镜中对弈",
-            "hint": "寅局中段：与镜中的自己对弈，风险与机遇并存。"
-          },
-          "timestamp": 1781840927542
-        }
-      ],
-      "hiddenTriggered": false,
-      "finished": false,
-      "result": null,
-      "createdAt": 1781840927524
-    },
-    "sess_1781840927545_60xw0k": {
-      "id": "sess_1781840927545_60xw0k",
-      "gameId": "you",
-      "playerA": "玩家A",
-      "playerB": "玩家B",
-      "turn": 1,
-      "state": {
-        "calibration": 50,
-        "sealingSlots": {
-          "total": 6,
-          "used": 0
-        },
-        "shiftMarks": 0,
-        "unitaryRisk": 10,
-        "shenReward": 30,
-        "yinFailure": 0
-      },
-      "actionCooldowns": {},
-      "history": [],
-      "hiddenTriggered": false,
-      "finished": false,
-      "result": null,
-      "createdAt": 1781840927545
-    },
-    "sess_1781840956811_icegcr": {
-      "id": "sess_1781840956811_icegcr",
-      "gameId": "yin",
-      "playerA": "玩家A",
-      "playerB": "玩家B",
-      "turn": 4,
-      "state": {
-        "calibration": 88,
-        "sealingSlots": {
-          "total": 8,
-          "used": 1
+          "used": 3
         },
         "shiftMarks": 7,
         "unitaryRisk": 15,
-        "shenReward": 60,
+        "shenReward": 75,
         "yinFailure": 0
       },
       "actionCooldowns": {
@@ -1811,15 +677,11 @@
         {
           "turn": 1,
           "action": {
-            "id": "ya2",
-            "name": "玩家B·寅位封存",
-            "cost": {
-              "sealingSlots": 1
-            },
+            "id": "ya1",
+            "name": "玩家A·深度校准",
+            "cost": {},
             "effect": {
-              "sealingSlots_used": 1,
-              "calibration": 8,
-              "shiftMarks": 1
+              "calibration": 10
             },
             "cooldown": 0
           },
@@ -1835,12 +697,12 @@
             "yinFailure": 0
           },
           "newState": {
-            "calibration": 56,
+            "calibration": 58,
             "sealingSlots": {
               "total": 8,
-              "used": 1
+              "used": 0
             },
-            "shiftMarks": 1,
+            "shiftMarks": 0,
             "unitaryRisk": 15,
             "shenReward": 20,
             "yinFailure": 0
@@ -1849,10 +711,53 @@
             "name": "灰尘记忆",
             "hint": "寅局开局：尘封的镜面下似乎藏着什么。"
           },
-          "timestamp": 1781841011755
+          "timestamp": 1781842107492
         },
         {
           "turn": 2,
+          "action": {
+            "id": "ya2",
+            "name": "玩家B·寅位封存",
+            "cost": {
+              "sealingSlots": 1
+            },
+            "effect": {
+              "sealingSlots_used": 1,
+              "calibration": 8,
+              "shiftMarks": 1
+            },
+            "cooldown": 0
+          },
+          "oldState": {
+            "calibration": 58,
+            "sealingSlots": {
+              "total": 8,
+              "used": 0
+            },
+            "shiftMarks": 0,
+            "unitaryRisk": 15,
+            "shenReward": 20,
+            "yinFailure": 0
+          },
+          "newState": {
+            "calibration": 76,
+            "sealingSlots": {
+              "total": 8,
+              "used": 1
+            },
+            "shiftMarks": 2,
+            "unitaryRisk": 15,
+            "shenReward": 30,
+            "yinFailure": 0
+          },
+          "event": {
+            "name": "倒悬之书",
+            "hint": "寅局线索：倒悬的书籍页码指向「寅」。"
+          },
+          "timestamp": 1781842107994
+        },
+        {
+          "turn": 3,
           "action": {
             "id": "ya3",
             "name": "双人·换轨共鸣",
@@ -1867,35 +772,35 @@
             "cooldown": 1
           },
           "oldState": {
-            "calibration": 56,
+            "calibration": 76,
             "sealingSlots": {
               "total": 8,
               "used": 1
             },
-            "shiftMarks": 1,
+            "shiftMarks": 2,
             "unitaryRisk": 15,
-            "shenReward": 20,
+            "shenReward": 30,
             "yinFailure": 0
           },
           "newState": {
-            "calibration": 81,
+            "calibration": 103,
             "sealingSlots": {
               "total": 8,
               "used": 1
             },
-            "shiftMarks": 3,
+            "shiftMarks": 5,
             "unitaryRisk": 15,
             "shenReward": 42,
             "yinFailure": 0
           },
           "event": {
-            "name": "倒悬之书",
-            "hint": "寅局线索：倒悬的书籍页码指向「寅」。"
+            "name": "回廊流转",
+            "hint": "寅局提示：换轨痕是寅局的关键指标。"
           },
-          "timestamp": 1781841012256
+          "timestamp": 1781842108497
         },
         {
-          "turn": 3,
+          "turn": 4,
           "action": {
             "id": "ya4",
             "name": "玩家A·镜中探索",
@@ -1909,551 +814,53 @@
             "cooldown": 1
           },
           "oldState": {
-            "calibration": 81,
+            "calibration": 103,
             "sealingSlots": {
               "total": 8,
               "used": 1
             },
-            "shiftMarks": 3,
+            "shiftMarks": 5,
             "unitaryRisk": 15,
             "shenReward": 42,
             "yinFailure": 0
           },
           "newState": {
-            "calibration": 88,
+            "calibration": 106,
             "sealingSlots": {
               "total": 8,
-              "used": 1
+              "used": 3
             },
             "shiftMarks": 7,
             "unitaryRisk": 15,
-            "shenReward": 60,
+            "shenReward": 75,
             "yinFailure": 0
           },
           "event": {
-            "name": "回廊流转",
-            "hint": "寅局提示：换轨痕是寅局的关键指标。"
+            "name": "虚影协作",
+            "hint": "寅局协作：虚影中的另一位玩家暗示了什么。"
           },
-          "timestamp": 1781841012761
+          "timestamp": 1781842109001
         }
       ],
       "hiddenTriggered": false,
       "finished": false,
       "result": null,
-      "createdAt": 1781840956811
-    },
-    "sess_1781841215527_a0cpbp": {
-      "id": "sess_1781841215527_a0cpbp",
-      "gameId": "you",
-      "playerA": "玩家A",
-      "playerB": "玩家B",
-      "turn": 1,
-      "state": {
-        "calibration": 50,
-        "sealingSlots": {
-          "total": 6,
-          "used": 0
-        },
-        "shiftMarks": 0,
-        "unitaryRisk": 10,
-        "shenReward": 30,
-        "yinFailure": 0
-      },
-      "actionCooldowns": {},
-      "history": [],
-      "hiddenTriggered": false,
-      "finished": false,
-      "result": null,
-      "createdAt": 1781841215527
-    },
-    "sess_1781841281734_vg6fk4": {
-      "id": "sess_1781841281734_vg6fk4",
-      "gameId": "you",
-      "playerA": "玩家A",
-      "playerB": "玩家B",
-      "turn": 1,
-      "state": {
-        "calibration": 50,
-        "sealingSlots": {
-          "total": 6,
-          "used": 0
-        },
-        "shiftMarks": 0,
-        "unitaryRisk": 10,
-        "shenReward": 30,
-        "yinFailure": 0
-      },
-      "actionCooldowns": {},
-      "history": [],
-      "hiddenTriggered": false,
-      "finished": false,
-      "result": null,
-      "createdAt": 1781841281734
+      "createdAt": 1781842071268
     }
   },
   "replays": {
-    "sess_1781839855887_qfjo80": [
+    "sess_1781842071268_ty494p": [
       {
         "turn": 1,
-        "actionId": "a1",
-        "actionName": "玩家A·校准镜面",
-        "state": {
-          "calibration": 63,
-          "sealingSlots": {
-            "total": 6,
-            "used": 0
-          },
-          "shiftMarks": 0,
-          "unitaryRisk": 5,
-          "shenReward": 30,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "镜尘轻拂",
-          "hint": "酉局教学：清理镜台上的灰尘，定标值微升。"
-        },
-        "timestamp": 1781839855889
-      },
-      {
-        "turn": 2,
-        "actionId": "a2",
-        "actionName": "玩家B·封存残片",
-        "state": {
-          "calibration": 78,
-          "sealingSlots": {
-            "total": 6,
-            "used": 1
-          },
-          "shiftMarks": 1,
-          "unitaryRisk": 5,
-          "shenReward": 30,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "简牍初探",
-          "hint": "酉局教学：北案残简记载了换轨的基本方法。"
-        },
-        "timestamp": 1781839855890
-      },
-      {
-        "turn": 3,
-        "actionId": "a3",
-        "actionName": "双人·换轨协同",
-        "state": {
-          "calibration": 90,
-          "sealingSlots": {
-            "total": 6,
-            "used": 2
-          },
-          "shiftMarks": 0,
-          "unitaryRisk": 5,
-          "shenReward": 48,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "铜炉微光",
-          "hint": "酉局教学：第一枚封存物归位，获得申号奖励。"
-        },
-        "timestamp": 1781839855891
-      },
-      {
-        "turn": 4,
-        "actionId": "a4",
-        "actionName": "玩家A·压制酉号风险",
-        "state": {
-          "calibration": 102,
-          "sealingSlots": {
-            "total": 6,
-            "used": 2
-          },
-          "shiftMarks": 0,
-          "unitaryRisk": 0,
-          "shenReward": 48,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "璇玑微调",
-          "hint": "酉局教学：璇玑是书房的核心，调节它有一定风险。"
-        },
-        "timestamp": 1781839855895
-      },
-      {
-        "turn": 5,
-        "actionId": "a5",
-        "actionName": "玩家B·抽取申号奖励",
-        "state": {
-          "calibration": 107,
-          "sealingSlots": {
-            "total": 6,
-            "used": 3
-          },
-          "shiftMarks": 2,
-          "unitaryRisk": 5,
-          "shenReward": 63,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "画卷暗纹",
-          "hint": "酉局教学：南屏画卷隐藏着换轨的关键。"
-        },
-        "timestamp": 1781839855896
-      },
-      {
-        "turn": 6,
-        "actionId": "a1",
-        "actionName": "玩家A·校准镜面",
-        "state": {
-          "calibration": 135,
-          "sealingSlots": {
-            "total": 6,
-            "used": 5
-          },
-          "shiftMarks": 2,
-          "unitaryRisk": 5,
-          "shenReward": 78,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "双镜共鸣",
-          "hint": "酉局教学：双人协作同时激活两面镜子。"
-        },
-        "timestamp": 1781839855897
-      }
-    ],
-    "sess_1781839855904_psng62": [
-      {
-        "turn": 1,
-        "actionId": "ya4",
-        "actionName": "玩家A·镜中探索",
-        "state": {
-          "calibration": 43,
-          "sealingSlots": {
-            "total": 8,
-            "used": 0
-          },
-          "shiftMarks": 2,
-          "unitaryRisk": 15,
-          "shenReward": 38,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "灰尘记忆",
-          "hint": "寅局开局：尘封的镜面下似乎藏着什么。"
-        },
-        "timestamp": 1781839855908
-      },
-      {
-        "turn": 2,
-        "actionId": "ya2",
-        "actionName": "玩家B·寅位封存",
-        "state": {
-          "calibration": 61,
-          "sealingSlots": {
-            "total": 8,
-            "used": 1
-          },
-          "shiftMarks": 4,
-          "unitaryRisk": 15,
-          "shenReward": 48,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "倒悬之书",
-          "hint": "寅局线索：倒悬的书籍页码指向「寅」。"
-        },
-        "timestamp": 1781839855909
-      },
-      {
-        "turn": 3,
-        "actionId": "ya5",
-        "actionName": "玩家B·地支引导",
-        "state": {
-          "calibration": 93,
-          "sealingSlots": {
-            "total": 8,
-            "used": 3
-          },
-          "shiftMarks": 7,
-          "unitaryRisk": 15,
-          "shenReward": 58,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "回廊流转",
-          "hint": "寅局提示：换轨痕是寅局的关键指标。"
-        },
-        "timestamp": 1781839855910
-      },
-      {
-        "turn": 4,
         "actionId": "ya1",
         "actionName": "玩家A·深度校准",
         "state": {
-          "calibration": 111,
-          "sealingSlots": {
-            "total": 8,
-            "used": 5
-          },
-          "shiftMarks": 7,
-          "unitaryRisk": 15,
-          "shenReward": 73,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "虚影协作",
-          "hint": "寅局协作：虚影中的另一位玩家暗示了什么。"
-        },
-        "timestamp": 1781839855911
-      },
-      {
-        "turn": 5,
-        "actionId": "ya3",
-        "actionName": "双人·换轨共鸣",
-        "state": {
-          "calibration": 141,
-          "sealingSlots": {
-            "total": 8,
-            "used": 5
-          },
-          "shiftMarks": 9,
-          "unitaryRisk": 25,
-          "shenReward": 85,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "镜中对弈",
-          "hint": "寅局中段：与镜中的自己对弈，风险与机遇并存。"
-        },
-        "timestamp": 1781839855911
-      },
-      {
-        "turn": 6,
-        "actionId": "ya4",
-        "actionName": "玩家A·镜中探索",
-        "state": {
-          "calibration": 154,
-          "sealingSlots": {
-            "total": 8,
-            "used": 6
-          },
-          "shiftMarks": 11,
-          "unitaryRisk": 25,
-          "shenReward": 123,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "地支汇聚",
-          "hint": "寅局关键：十二地支台同时校准，奖励丰厚。"
-        },
-        "timestamp": 1781839855913
-      }
-    ],
-    "sess_1781839935179_2xv7kf": [
-      {
-        "turn": 1,
-        "actionId": "a1",
-        "actionName": "玩家A·校准镜面",
-        "state": {
-          "calibration": 63,
-          "sealingSlots": {
-            "total": 6,
-            "used": 0
-          },
-          "shiftMarks": 0,
-          "unitaryRisk": 5,
-          "shenReward": 30,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "镜尘轻拂",
-          "hint": "酉局教学：清理镜台上的灰尘，定标值微升。"
-        },
-        "timestamp": 1781840014933
-      },
-      {
-        "turn": 2,
-        "actionId": "a2",
-        "actionName": "玩家B·封存残片",
-        "state": {
-          "calibration": 78,
-          "sealingSlots": {
-            "total": 6,
-            "used": 1
-          },
-          "shiftMarks": 1,
-          "unitaryRisk": 5,
-          "shenReward": 30,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "简牍初探",
-          "hint": "酉局教学：北案残简记载了换轨的基本方法。"
-        },
-        "timestamp": 1781840015534
-      },
-      {
-        "turn": 3,
-        "actionId": "a3",
-        "actionName": "双人·换轨协同",
-        "state": {
-          "calibration": 90,
-          "sealingSlots": {
-            "total": 6,
-            "used": 2
-          },
-          "shiftMarks": 0,
-          "unitaryRisk": 5,
-          "shenReward": 48,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "铜炉微光",
-          "hint": "酉局教学：第一枚封存物归位，获得申号奖励。"
-        },
-        "timestamp": 1781840016141
-      },
-      {
-        "turn": 4,
-        "actionId": "a4",
-        "actionName": "玩家A·压制酉号风险",
-        "state": {
-          "calibration": 102,
-          "sealingSlots": {
-            "total": 6,
-            "used": 2
-          },
-          "shiftMarks": 0,
-          "unitaryRisk": 0,
-          "shenReward": 48,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "璇玑微调",
-          "hint": "酉局教学：璇玑是书房的核心，调节它有一定风险。"
-        },
-        "timestamp": 1781840016741
-      }
-    ],
-    "sess_1781840927524_jf5g8f": [
-      {
-        "turn": 1,
-        "actionId": "ya4",
-        "actionName": "玩家A·镜中探索",
-        "state": {
-          "calibration": 43,
+          "calibration": 58,
           "sealingSlots": {
             "total": 8,
             "used": 0
           },
-          "shiftMarks": 2,
-          "unitaryRisk": 15,
-          "shenReward": 38,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "灰尘记忆",
-          "hint": "寅局开局：尘封的镜面下似乎藏着什么。"
-        },
-        "timestamp": 1781840927537
-      },
-      {
-        "turn": 2,
-        "actionId": "ya2",
-        "actionName": "玩家B·寅位封存",
-        "state": {
-          "calibration": 61,
-          "sealingSlots": {
-            "total": 8,
-            "used": 1
-          },
-          "shiftMarks": 4,
-          "unitaryRisk": 15,
-          "shenReward": 48,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "倒悬之书",
-          "hint": "寅局线索：倒悬的书籍页码指向「寅」。"
-        },
-        "timestamp": 1781840927538
-      },
-      {
-        "turn": 3,
-        "actionId": "ya5",
-        "actionName": "玩家B·地支引导",
-        "state": {
-          "calibration": 93,
-          "sealingSlots": {
-            "total": 8,
-            "used": 3
-          },
-          "shiftMarks": 7,
-          "unitaryRisk": 15,
-          "shenReward": 58,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "回廊流转",
-          "hint": "寅局提示：换轨痕是寅局的关键指标。"
-        },
-        "timestamp": 1781840927539
-      },
-      {
-        "turn": 4,
-        "actionId": "ya1",
-        "actionName": "玩家A·深度校准",
-        "state": {
-          "calibration": 111,
-          "sealingSlots": {
-            "total": 8,
-            "used": 5
-          },
-          "shiftMarks": 7,
-          "unitaryRisk": 15,
-          "shenReward": 73,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "虚影协作",
-          "hint": "寅局协作：虚影中的另一位玩家暗示了什么。"
-        },
-        "timestamp": 1781840927540
-      },
-      {
-        "turn": 5,
-        "actionId": "ya3",
-        "actionName": "双人·换轨共鸣",
-        "state": {
-          "calibration": 141,
-          "sealingSlots": {
-            "total": 8,
-            "used": 5
-          },
-          "shiftMarks": 9,
-          "unitaryRisk": 25,
-          "shenReward": 85,
-          "yinFailure": 0
-        },
-        "event": {
-          "name": "镜中对弈",
-          "hint": "寅局中段：与镜中的自己对弈，风险与机遇并存。"
-        },
-        "timestamp": 1781840927542
-      }
-    ],
-    "sess_1781840927545_60xw0k": [],
-    "sess_1781840956811_icegcr": [
-      {
-        "turn": 1,
-        "actionId": "ya2",
-        "actionName": "玩家B·寅位封存",
-        "state": {
-          "calibration": 56,
-          "sealingSlots": {
-            "total": 8,
-            "used": 1
-          },
-          "shiftMarks": 1,
+          "shiftMarks": 0,
           "unitaryRisk": 15,
           "shenReward": 20,
           "yinFailure": 0
@@ -2462,52 +869,179 @@
           "name": "灰尘记忆",
           "hint": "寅局开局：尘封的镜面下似乎藏着什么。"
         },
-        "timestamp": 1781841011755
+        "timestamp": 1781842107492,
+        "hiddenProgress": {
+          "name": "碎镜共鸣",
+          "description": "第7回合前，定标值≥70 且 换轨痕≥3 且 申号奖励≥40",
+          "triggered": false,
+          "turnRemaining": 7,
+          "turnPassed": false,
+          "requirements": [
+            {
+              "field": "定标值",
+              "current": 58,
+              "target": 70,
+              "met": false
+            },
+            {
+              "field": "换轨痕",
+              "current": 0,
+              "target": 3,
+              "met": false
+            },
+            {
+              "field": "申号奖励",
+              "current": 20,
+              "target": 40,
+              "met": false
+            }
+          ]
+        }
       },
       {
         "turn": 2,
-        "actionId": "ya3",
-        "actionName": "双人·换轨共鸣",
+        "actionId": "ya2",
+        "actionName": "玩家B·寅位封存",
         "state": {
-          "calibration": 81,
+          "calibration": 76,
           "sealingSlots": {
             "total": 8,
             "used": 1
           },
-          "shiftMarks": 3,
+          "shiftMarks": 2,
           "unitaryRisk": 15,
-          "shenReward": 42,
+          "shenReward": 30,
           "yinFailure": 0
         },
         "event": {
           "name": "倒悬之书",
           "hint": "寅局线索：倒悬的书籍页码指向「寅」。"
         },
-        "timestamp": 1781841012256
+        "timestamp": 1781842107994,
+        "hiddenProgress": {
+          "name": "碎镜共鸣",
+          "description": "第7回合前，定标值≥70 且 换轨痕≥3 且 申号奖励≥40",
+          "triggered": false,
+          "turnRemaining": 6,
+          "turnPassed": false,
+          "requirements": [
+            {
+              "field": "定标值",
+              "current": 76,
+              "target": 70,
+              "met": true
+            },
+            {
+              "field": "换轨痕",
+              "current": 2,
+              "target": 3,
+              "met": false
+            },
+            {
+              "field": "申号奖励",
+              "current": 30,
+              "target": 40,
+              "met": false
+            }
+          ]
+        }
       },
       {
         "turn": 3,
-        "actionId": "ya4",
-        "actionName": "玩家A·镜中探索",
+        "actionId": "ya3",
+        "actionName": "双人·换轨共鸣",
         "state": {
-          "calibration": 88,
+          "calibration": 103,
           "sealingSlots": {
             "total": 8,
             "used": 1
           },
-          "shiftMarks": 7,
+          "shiftMarks": 5,
           "unitaryRisk": 15,
-          "shenReward": 60,
+          "shenReward": 42,
           "yinFailure": 0
         },
         "event": {
           "name": "回廊流转",
           "hint": "寅局提示：换轨痕是寅局的关键指标。"
         },
-        "timestamp": 1781841012761
+        "timestamp": 1781842108497,
+        "hiddenProgress": {
+          "name": "碎镜共鸣",
+          "description": "第7回合前，定标值≥70 且 换轨痕≥3 且 申号奖励≥40",
+          "triggered": false,
+          "turnRemaining": 5,
+          "turnPassed": false,
+          "requirements": [
+            {
+              "field": "定标值",
+              "current": 103,
+              "target": 70,
+              "met": true
+            },
+            {
+              "field": "换轨痕",
+              "current": 5,
+              "target": 3,
+              "met": true
+            },
+            {
+              "field": "申号奖励",
+              "current": 42,
+              "target": 40,
+              "met": true
+            }
+          ]
+        }
+      },
+      {
+        "turn": 4,
+        "actionId": "ya4",
+        "actionName": "玩家A·镜中探索",
+        "state": {
+          "calibration": 106,
+          "sealingSlots": {
+            "total": 8,
+            "used": 3
+          },
+          "shiftMarks": 7,
+          "unitaryRisk": 15,
+          "shenReward": 75,
+          "yinFailure": 0
+        },
+        "event": {
+          "name": "虚影协作",
+          "hint": "寅局协作：虚影中的另一位玩家暗示了什么。"
+        },
+        "timestamp": 1781842109001,
+        "hiddenProgress": {
+          "name": "碎镜共鸣",
+          "description": "第7回合前，定标值≥70 且 换轨痕≥3 且 申号奖励≥40",
+          "triggered": false,
+          "turnRemaining": 4,
+          "turnPassed": false,
+          "requirements": [
+            {
+              "field": "定标值",
+              "current": 106,
+              "target": 70,
+              "met": true
+            },
+            {
+              "field": "换轨痕",
+              "current": 7,
+              "target": 3,
+              "met": true
+            },
+            {
+              "field": "申号奖励",
+              "current": 75,
+              "target": 40,
+              "met": true
+            }
+          ]
+        }
       }
-    ],
-    "sess_1781841215527_a0cpbp": [],
-    "sess_1781841281734_vg6fk4": []
+    ]
   }
 }

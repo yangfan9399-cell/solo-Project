@@ -391,12 +391,21 @@ function renderReplay() {
   const timeline = document.getElementById('replay-timeline');
   timeline.innerHTML = state.replay.length === 0
     ? '<p style="color:var(--text-muted); text-align:center; padding:20px;">暂无回放记录</p>'
-    : state.replay.map((step, idx) => `
-      <div class="replay-step ${idx === state.replayIndex ? 'active' : ''}" data-idx="${idx}">
-        <div class="step-turn">第 ${step.turn} 回合</div>
-        <div class="step-action">${step.actionName}</div>
-      </div>
-    `).join('');
+    : state.replay.map((step, idx) => {
+        let hiddenBadge = '';
+        if (step.hiddenProgress) {
+          const metCount = step.hiddenProgress.requirements.filter(r => r.met).length;
+          const triggered = step.hiddenProgress.triggered;
+          hiddenBadge = `<div class="step-hidden ${triggered ? 'triggered' : ''}">${triggered ? '★ ' : ''}隐藏 ${metCount}/3</div>`;
+        }
+        return `
+          <div class="replay-step ${idx === state.replayIndex ? 'active' : ''}" data-idx="${idx}">
+            <div class="step-turn">第 ${step.turn} 回合</div>
+            <div class="step-action">${step.actionName}</div>
+            ${hiddenBadge}
+          </div>
+        `;
+      }).join('');
   timeline.querySelectorAll('.replay-step').forEach(step => {
     step.addEventListener('click', () => {
       state.replayIndex = parseInt(step.dataset.idx);
@@ -411,6 +420,29 @@ function renderReplay() {
   if (state.replay.length > 0) {
     const step = state.replay[state.replayIndex];
     const s = step.state;
+    let hiddenHtml = '';
+    if (step.hiddenProgress) {
+      const p = step.hiddenProgress;
+      hiddenHtml = `
+        <div class="replay-hidden-section">
+          <div class="replay-hidden-header">
+            <strong>隐藏条件 · ${p.name}</strong>
+            <span class="replay-hidden-badge ${p.triggered ? 'triggered' : ''}">
+              ${p.triggered ? '★ 已触发' : (p.turnPassed ? '已错过' : '未触发')}
+            </span>
+          </div>
+          <div class="replay-hidden-reqs">
+            ${p.requirements.map(r => `
+              <div class="replay-hidden-req ${r.met ? 'met' : ''}">
+                <span class="req-field">${r.field}</span>
+                <span class="req-value">${r.current}/${r.target}</span>
+                <span class="req-status">${r.met ? '✓' : '✗'}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
     statePanel.innerHTML = `
       <h4>第 ${step.turn} 回合状态快照</h4>
       <div class="state-grid">
@@ -421,6 +453,7 @@ function renderReplay() {
         <div class="state-item"><div class="state-label">申号奖励</div><div class="state-value">${s.shenReward}</div></div>
         <div class="state-item"><div class="state-label">寅号失败因子</div><div class="state-value">${s.yinFailure}</div></div>
       </div>
+      ${hiddenHtml}
       ${step.event ? `<p style="margin-top:16px; color:var(--accent-gold); font-size:13px;">事件：${step.event.name} — ${step.event.hint}</p>` : ''}
     `;
   } else {

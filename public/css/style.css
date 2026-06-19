@@ -607,6 +607,19 @@ main {
   text-overflow: ellipsis;
 }
 
+.replay-step .step-hidden {
+  font-size: 10px;
+  color: var(--accent-purple);
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.replay-step .step-hidden.triggered {
+  color: var(--accent-gold);
+  font-weight: bold;
+}
+
 .replay-state {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -642,6 +655,92 @@ main {
   font-size: 20px;
   font-family: "Courier New", monospace;
   color: var(--accent-cyan);
+}
+
+.replay-hidden-section {
+  margin-top: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(159, 122, 234, 0.15), rgba(212, 168, 87, 0.1));
+  border: 1px solid var(--accent-purple);
+  border-radius: 8px;
+}
+
+.replay-hidden-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  color: var(--accent-gold);
+}
+
+.replay-hidden-badge {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--accent-purple);
+  border: 1px solid var(--accent-purple);
+}
+
+.replay-hidden-badge.triggered {
+  background: rgba(212, 168, 87, 0.2);
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+}
+
+.replay-hidden-reqs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.replay-hidden-req {
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+
+.replay-hidden-req.met {
+  border-color: var(--accent-emerald);
+  background: rgba(72, 187, 120, 0.1);
+}
+
+.replay-hidden-req .req-field {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.replay-hidden-req .req-value {
+  font-family: "Courier New", monospace;
+  color: var(--text-secondary);
+}
+
+.replay-hidden-req.met .req-value {
+  color: var(--accent-emerald);
+}
+
+.replay-hidden-req .req-status {
+  text-align: right;
+  font-size: 14px;
+}
+
+.replay-hidden-req.met .req-status {
+  color: var(--accent-emerald);
+}
+
+.replay-hidden-req:not(.met) .req-status {
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .replay-hidden-reqs {
+    grid-template-columns: 1fr;
+  }
 }
 
 .result-book h2 {

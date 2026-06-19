@@ -222,14 +222,22 @@ app.post('/api/sessions/:sessionId/actions', (req, res) => {
   });
 
   if (!db.replays[req.params.sessionId]) db.replays[req.params.sessionId] = [];
-  db.replays[req.params.sessionId].push({
+  const replayEntry = {
     turn: session.turn,
     actionId: action.id,
     actionName: action.name,
     state: JSON.parse(JSON.stringify(session.state)),
     event: eventResult,
     timestamp: Date.now()
-  });
+  };
+  if (game.id === 'yin') {
+    replayEntry.hiddenProgress = getHiddenConditionProgress(
+      session.state,
+      session.turn,
+      session.hiddenTriggered
+    );
+  }
+  db.replays[req.params.sessionId].push(replayEntry);
 
   Object.keys(session.actionCooldowns).forEach(k => {
     if (session.actionCooldowns[k] > 0) session.actionCooldowns[k]--;
