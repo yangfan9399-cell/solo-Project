@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAppStore } from '@/store';
 import { AppHeader } from '@/components/AppHeader';
 import { RepairCalendar } from '@/components/RepairCalendar';
@@ -12,11 +11,9 @@ import { WorkOrderForm } from '@/components/WorkOrderForm';
 import { ExportModal } from '@/components/ExportModal';
 import { Calendar, ListFilter, Grid3x3, ScrollText, FileText } from 'lucide-react';
 
-type RightTab = 'approvals' | 'audit';
-
 export default function Home() {
-  const { ui, setActiveTab } = useAppStore();
-  const [rightTab, setRightTab] = useState<RightTab>('approvals');
+  const { ui, setActiveTab, setRightPanelTab } = useAppStore();
+  const rightTab = ui.rightPanelTab ?? 'approvals';
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -47,7 +44,7 @@ export default function Home() {
           ] as const).map(([key, label, Icon]) => (
             <button
               key={key}
-              onClick={() => setRightTab(key)}
+              onClick={() => setRightPanelTab(key)}
               className={`flex items-center gap-1.5 px-3 py-2 font-mono text-[11px] border-b-2 transition-all -mb-px
                 ${rightTab === key
                   ? 'border-industrial-copper-500 text-industrial-copper-300'

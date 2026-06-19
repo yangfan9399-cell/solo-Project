@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useAppStore } from '@/store';
 import type { WorkOrder, PartBatch } from '@/types';
 import { Grid3x3, AlertTriangle } from 'lucide-react';
@@ -8,9 +8,11 @@ import {
 import { zhCN } from 'date-fns/locale';
 
 export function PartsMatrix() {
-  const { workOrders, partBatches, conflicts, selectWorkOrder } = useAppStore();
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [selectedPartId, setSelectedPartId] = useState<string | 'all'>('all');
+  const {
+    workOrders, partBatches, conflicts, selectWorkOrder, setMatrixWeekOffset, setMatrixSelectedPartId, ui,
+  } = useAppStore();
+  const weekOffset = ui.matrixWeekOffset ?? 0;
+  const selectedPartId = ui.matrixSelectedPartId ?? 'all';
 
   const days = useMemo(() => {
     const base = new Date('2026-06-20');
@@ -20,7 +22,7 @@ export function PartsMatrix() {
   }, [weekOffset]);
 
   const activeWOs = useMemo(
-    () => workOrders.filter((w) => !['draft', 'rejected', 'completed'].includes(w.status)),
+    () => workOrders.filter((w) => !['rejected', 'completed'].includes(w.status)),
     [workOrders],
   );
 
@@ -62,16 +64,16 @@ export function PartsMatrix() {
           <select
             className="text-[11px] bg-deep-sea-800 border border-deep-sea-600 text-deep-sea-100 px-2 py-1 font-mono"
             value={selectedPartId}
-            onChange={(e) => setSelectedPartId(e.target.value)}
+            onChange={(e) => setMatrixSelectedPartId(e.target.value)}
           >
             <option value="all">全部备件</option>
             {partBatches.map((p) => <option key={p.id} value={p.id}>{p.id} {p.name}</option>)}
           </select>
-          <button className="btn btn-ghost !py-1 !px-2 text-[11px]" onClick={() => setWeekOffset((w) => w - 1)}>上一周</button>
+          <button className="btn btn-ghost !py-1 !px-2 text-[11px]" onClick={() => setMatrixWeekOffset(weekOffset - 1)}>上一周</button>
           <span className="font-mono text-xs text-deep-sea-200 min-w-[180px] text-center">
             {format(days[0], 'MM/dd', { locale: zhCN })} – {format(days[6], 'MM/dd', { locale: zhCN })}
           </span>
-          <button className="btn btn-ghost !py-1 !px-2 text-[11px]" onClick={() => setWeekOffset((w) => w + 1)}>下一周</button>
+          <button className="btn btn-ghost !py-1 !px-2 text-[11px]" onClick={() => setMatrixWeekOffset(weekOffset + 1)}>下一周</button>
         </div>
       </div>
 

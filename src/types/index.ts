@@ -136,6 +136,9 @@ export interface UIState {
   showExportModal: boolean;
   activeTab: 'calendar' | 'queue' | 'matrix';
   editingWorkOrderId?: string;
+  matrixWeekOffset?: number;
+  matrixSelectedPartId?: string | 'all';
+  rightPanelTab?: 'approvals' | 'audit';
 }
 
 export interface AppState {
