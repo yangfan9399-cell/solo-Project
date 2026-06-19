@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>银盐暗房航线推演局</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="darkroom-container">
+        <header class="darkroom-header">
+            <h1 class="title-main">银盐暗房航线推演局</h1>
+            <p class="title-sub">—— 在光与影的裂隙中，推演你的航线 ——</p>
+        </header>
+
+        <nav class="level-selector">
+            <button class="level-btn active" data-level="zi">子局 · 启蒙</button>
+            <button class="level-btn" data-level="mao">卯局 · 匮乏</button>
+            <button class="level-btn" data-level="chou">丑局 · 隐秘</button>
+        </nav>
+
+        <main class="game-main">
+            <section class="panel board-panel">
+                <div class="panel-header">
+                    <h2>局面盘</h2>
+                    <div class="level-name" id="levelName">子局 · 银盐启蒙</div>
+                </div>
+                <div class="board-container">
+                    <svg id="gameBoard" class="game-board" viewBox="0 0 800 500"></svg>
+                </div>
+                <div class="status-bar">
+                    <div class="status-item">
+                        <span class="status-label">配平值</span>
+                        <span class="status-value" id="balanceValue">100</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">熏染槽</span>
+                        <span class="status-value" id="infectionTank">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">归并痕</span>
+                        <span class="status-value" id="mergeMark">0</span>
+                    </div>
+                    <div class="status-item risk">
+                        <span class="status-label">子号风险</span>
+                        <span class="status-value" id="ziRisk">0</span>
+                    </div>
+                    <div class="status-item reward">
+                        <span class="status-label">卯号奖励</span>
+                        <span class="status-value" id="maoReward">0</span>
+                    </div>
+                    <div class="status-item fail">
+                        <span class="status-label">丑号失败</span>
+                        <span class="status-value" id="chouFailFactor">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="side-panels">
+                <section class="panel event-panel">
+                    <div class="panel-header">
+                        <h2>事件匣</h2>
+                        <span class="event-count" id="eventCount">0</span>
+                    </div>
+                    <div class="event-list" id="eventList">
+                        <div class="event-empty">尚无事件触发</div>
+                    </div>
+                </section>
+
+                <section class="panel replay-panel">
+                    <div class="panel-header">
+                        <h2>回放轴</h2>
+                        <div class="replay-controls">
+                            <button id="replayBtn" class="control-btn" title="回放">⏮</button>
+                            <button id="resetBtn" class="control-btn" title="重置">↻</button>
+                        </div>
+                    </div>
+                    <div class="replay-timeline" id="replayTimeline">
+                        <div class="timeline-empty">暂无记录</div>
+                    </div>
+                </section>
+
+                <section class="panel result-panel">
+                    <div class="panel-header">
+                        <h2>结算簿</h2>
+                        <button id="settleBtn" class="settle-btn">推演结算</button>
+                    </div>
+                    <div class="result-content" id="resultContent">
+                        <div class="result-empty">完成航线后进行结算</div>
+                    </div>
+                </section>
+            </aside>
+        </main>
+
+        <div class="action-bar">
+            <button id="undoBtn" class="action-btn">撤销一步</button>
+            <button id="hintBtn" class="action-btn">提示</button>
+            <span class="step-counter">步骤: <span id="stepCount">0</span></span>
+        </div>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">提示</h3>
+            <p id="modalText"></p>
+            <button id="modalClose" class="modal-btn">确定</button>
+        </div>
+    </div>
+
+    <script src="js/utils/storage.js"></script>
+    <script src="js/game/levels.js"></script>
+    <script src="js/game/events.js"></script>
+    <script src="js/game/engine.js"></script>
+    <script src="js/ui/board.js"></script>
+    <script src="js/ui/events.js"></script>
+    <script src="js/ui/replay.js"></script>
+    <script src="js/ui/result.js"></script>
+    <script src="js/ui/modal.js"></script>
+    <script src="js/game/main.js"></script>
+</body>
+</html>
