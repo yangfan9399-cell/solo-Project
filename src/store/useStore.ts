@@ -80,9 +80,18 @@ export const useStore = create<AppState>((set, get) => ({
   createAnomaly: async (data) => {
     set({ loading: true, error: null })
     try {
+      const payload = {
+        sensorCode: data.sensor_code,
+        towerPosition: data.tower_position,
+        preCalibration: data.pre_calibration,
+        postCalibration: data.post_calibration,
+        threshold: data.threshold,
+        handler: data.handler,
+        reviewOpinion: data.review_opinion ?? null,
+      }
       await api<Anomaly>('/api/anomalies', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       await get().fetchAnomalies()
     } catch (e: any) {
@@ -151,9 +160,15 @@ export const useStore = create<AppState>((set, get) => ({
   createRetest: async (data) => {
     set({ loading: true, error: null })
     try {
+      const payload = {
+        anomalyId: data.anomalyId,
+        preCalibration: data.pre_calibration,
+        postCalibration: data.post_calibration,
+        retester: data.retester,
+      }
       await api<RetestRecord>('/api/retests', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       await get().fetchRetestRecords(data.anomalyId)
       await get().fetchAnomalies()
@@ -178,9 +193,15 @@ export const useStore = create<AppState>((set, get) => ({
   createRule: async (data) => {
     set({ loading: true, error: null })
     try {
+      const payload = {
+        name: data.name,
+        minValue: data.min_value,
+        maxValue: data.max_value,
+        threshold: data.threshold,
+      }
       await api<ThresholdRule>('/api/rules', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       await get().fetchRules()
     } catch (e: any) {

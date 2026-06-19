@@ -159,7 +159,7 @@ export default function RetestRecords() {
                         <RefreshCw className="w-4 h-4 text-[#F59E0B]" />
                         复测历史
                       </h3>
-                      {a.status === 'retest_needed' && (
+                      {a.status !== 'closed' && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setShowRetestModal(a.id) }}
                           className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"

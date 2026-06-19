@@ -283,17 +283,16 @@ export function createRetestRecord(anomalyId: string, preCalibration: number, po
     updated_at: now,
   }
 
-  if (oldStatus !== newStatus) {
-    statusTransitions.push({
-      id: uuidv4(),
-      anomaly_id: anomalyId,
-      from_status: oldStatus,
-      to_status: newStatus,
-      operator: retester,
-      comment: '复测更新',
-      created_at: now,
-    })
-  }
+  const transitionComment = `复测提交（偏差 ${deviation}，阈值 ${anomaly.threshold}）${oldStatus !== newStatus ? `，状态变更` : ''}`
+  statusTransitions.push({
+    id: uuidv4(),
+    anomaly_id: anomalyId,
+    from_status: oldStatus,
+    to_status: newStatus,
+    operator: retester,
+    comment: transitionComment,
+    created_at: now,
+  })
 
   return retestRecords[retestRecords.length - 1]
 }
@@ -328,16 +327,40 @@ export function createRule(name: string, minValue: number, maxValue: number, thr
 }
 
 export function updateRule(id: string, data: Partial<ThresholdRuleRecord>) {
-  const idx = thresholdRules.findIndex(r => r.id === id)
-  if (idx === -1) return null
+  const existing = thresholdRules.find(r => r.id === id)
+  if (!existing) return null
 
-  thresholdRules[idx] = {
-    ...thresholdRules[idx],
-    min_value: data.min_value ?? thresholdRules[idx].min_value,
-    max_value: data.max_value ?? thresholdRules[idx].max_value,
-    threshold: data.threshold ?? thresholdRules[idx].threshold,
+  const newMin = data.min_value ?? existing.min_value
+  const newMax = data.max_value ?? existing.max_value
+  const newThreshold = data.threshold ?? existing.threshold
+
+  if (newMin === existing.min_value && newMax === existing.max_value && newThreshold === existing.threshold) {
+    return existing
   }
-  return thresholdRules[idx]
+
+  const versions = thresholdRules.filter(r => r.name === existing.name)
+  const nextVersion = Math.max(...versions.map(r => r.version)) + 1
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 19)
+  const newId = uuidv4()
+
+  for (const r of thresholdRules) {
+    if (r.name === existing.name && r.is_active) {
+      r.is_active = 0
+    }
+  }
+
+  const record: ThresholdRuleRecord = {
+    id: newId,
+    name: existing.name,
+    min_value: newMin,
+    max_value: newMax,
+    threshold: newThreshold,
+    version: nextVersion,
+    is_active: 1,
+    created_at: now,
+  }
+  thresholdRules.push(record)
+  return record
 }
 
 export function getRuleVersions(id: string) {

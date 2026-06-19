@@ -334,7 +334,7 @@ export default function CalibrationDetail() {
                 <Activity className="h-5 w-5 text-[#38BDF8]" />
                 <h2 className="text-lg font-semibold text-white">复测记录</h2>
               </div>
-              {currentAnomaly.status === 'retest_needed' && (
+              {currentAnomaly.status !== 'closed' && (
                 <button
                   onClick={() => setShowRetestModal(true)}
                   className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm text-white transition hover:bg-amber-700"
