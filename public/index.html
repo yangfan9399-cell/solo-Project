@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地衣标本异常分诊台</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon">🍄</span>
+        <div>
+          <h1>地衣标本异常分诊台</h1>
+          <p class="subtitle">Lichen Specimen Abnormality Triage Station</p>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="stat-cards">
+        <div class="stat-card stat-pending">
+          <div class="stat-num" id="stat-pending">0</div>
+          <div class="stat-label">待分诊</div>
+        </div>
+        <div class="stat-card stat-processing">
+          <div class="stat-num" id="stat-processing">0</div>
+          <div class="stat-label">处理中</div>
+        </div>
+        <div class="stat-card stat-closed">
+          <div class="stat-num" id="stat-closed">0</div>
+          <div class="stat-label">已关闭</div>
+        </div>
+        <div class="stat-card stat-warning" id="warning-card" style="display:none;">
+          <div class="stat-num" id="stat-warning">0</div>
+          <div class="stat-label">临期限</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="panel panel-queue">
+      <div class="panel-header">
+        <h2>待分诊队列</h2>
+        <div class="queue-filters">
+          <button class="filter-btn active" data-status="">全部</button>
+          <button class="filter-btn" data-status="待分诊">待分诊</button>
+          <button class="filter-btn" data-status="处理中">处理中</button>
+          <button class="filter-btn" data-status="已关闭">已关闭</button>
+        </div>
+      </div>
+      <div class="queue-list" id="queue-list">
+        <div class="loading">加载中...</div>
+      </div>
+    </section>
+
+    <section class="panel panel-detail">
+      <div class="panel-header" id="detail-header">
+        <h2>标本详情</h2>
+        <div class="no-selection" id="no-selection-hint">请从左侧队列选择一条异常记录</div>
+      </div>
+
+      <div class="detail-container" id="detail-container" style="display:none;">
+        <div class="detail-scroll">
+          <div class="detail-section specimen-basic">
+            <div class="section-title">
+              <span class="section-icon">📋</span>基础信息
+            </div>
+            <div class="basic-grid">
+              <div class="basic-item">
+                <label>标本编号</label>
+                <span id="d-specimen-no" class="mono">-</span>
+              </div>
+              <div class="basic-item">
+                <label>物种</label>
+                <span id="d-species" class="species">-</span>
+              </div>
+              <div class="basic-item">
+                <label>异常类型</label>
+                <span id="d-abnormal-type" class="tag tag-warning">-</span>
+              </div>
+              <div class="basic-item">
+                <label>归属分类</label>
+                <span id="d-category" class="tag tag-category">-</span>
+              </div>
+              <div class="basic-item">
+                <label>分诊状态</label>
+                <span id="d-status" class="status-tag">-</span>
+              </div>
+              <div class="basic-item">
+                <label>分诊结论</label>
+                <span id="d-result" class="tag">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-title">
+              <span class="section-icon">📍</span>采集信息
+            </div>
+            <div class="info-grid">
+              <div class="info-card highlight-alt">
+                <div class="info-label">采集海拔</div>
+                <div class="info-value big-value"><span id="d-altitude">-</span><small>m</small></div>
+              </div>
+              <div class="info-card highlight-sub">
+                <div class="info-label">附着基质</div>
+                <div class="info-value" id="d-substrate">-</div>
+              </div>
+              <div class="info-card highlight-spore">
+                <div class="info-label">孢子密度</div>
+                <div class="info-value" id="d-spore">-</div>
+              </div>
+              <div class="info-card highlight-hum">
+                <div class="info-label">湿度暴露</div>
+                <div class="info-value" id="d-humidity">-</div>
+              </div>
+              <div class="info-card highlight-micro">
+                <div class="info-label">显微切片</div>
+                <div class="info-value" id="d-micro">-</div>
+              </div>
+              <div class="info-card highlight-coord">
+                <div class="info-label">采集坐标</div>
+                <div class="info-value mono"><i class="coord-icon">🌐</i><span id="d-coords">-</span></div>
+                <div class="info-sub" id="d-location">-</div>
+              </div>
+            </div>
+            <div class="collect-row">
+              <span><strong>采集日期：</strong><span id="d-date">-</span></span>
+              <span><strong>采集人：</strong><span id="d-collector">-</span></span>
+            </div>
+            <div class="abnormal-desc">
+              <strong>异常描述：</strong>
+              <span id="d-desc">-</span>
+            </div>
+          </div>
+
+          <div class="detail-section section-similar" id="section-similar">
+            <div class="section-title">
+              <span class="section-icon">🔗</span>历史相似案例
+              <span class="badge" id="similar-count">0</span>
+            </div>
+            <div class="similar-list" id="similar-list">
+              <div class="empty-similar">暂无相似案例</div>
+            </div>
+          </div>
+
+          <div class="detail-section section-timeline">
+            <div class="section-title">
+              <span class="section-icon">📜</span>分诊记录时间线
+            </div>
+            <div class="timeline" id="timeline">
+            </div>
+          </div>
+        </div>
+
+        <div class="action-panel">
+          <div class="action-header">
+            <h3>分诊处理</h3>
+            <div class="deadline-control">
+              <label for="deadline">处理时限：</label>
+              <input type="date" id="deadline">
+              <button class="btn-mini" id="set-deadline-btn">设置</button>
+            </div>
+          </div>
+
+          <div class="assigned-section">
+            <div class="assigned-info">
+              <span>当前责任人：</span>
+              <span class="assigned-person" id="current-responsible">
+                <span id="resp-name">-</span>
+                <small id="resp-role">-</small>
+              </span>
+            </div>
+            <button class="btn-outline" id="reassign-btn">
+              <span>🔄</span>改派
+            </button>
+          </div>
+
+          <div class="triage-buttons">
+            <button class="triage-btn btn-false" data-result="误报">
+              <span class="btn-icon">❌</span>误报
+            </button>
+            <button class="triage-btn btn-supplement" data-result="需补证">
+              <span class="btn-icon">📎</span>需补证
+            </button>
+            <button class="triage-btn btn-review" data-result="需复核">
+              <span class="btn-icon">🔍</span>需复核
+            </button>
+            <button class="triage-btn btn-confirm" data-result="已确认">
+              <span class="btn-icon">✅</span>已确认
+            </button>
+          </div>
+
+          <div class="note-section" id="note-section" style="display:none;">
+            <textarea id="triage-note" placeholder="填写分诊备注或补证要求..."></textarea>
+            <div class="close-options" id="close-options" style="display:none;">
+              <label>关闭原因：</label>
+              <select id="close-reason">
+                <option value="">请选择</option>
+                <option value="数据录入错误">数据录入错误</option>
+                <option value="鉴定误差">鉴定误差</option>
+                <option value="正常变异范围">正常变异范围</option>
+                <option value="采样污染">采样污染</option>
+                <option value="环境临时波动">环境临时波动</option>
+                <option value="已确认异常归档">已确认异常归档</option>
+              </select>
+              <input type="text" id="close-note" placeholder="补充说明...">
+            </div>
+            <div class="action-footer">
+              <button class="btn-cancel" id="cancel-triage">取消</button>
+              <button class="btn-submit" id="submit-triage">提交分诊结论</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-mask" id="reassign-modal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>改派责任人</h3>
+        <button class="modal-close" id="close-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>选择新责任人</label>
+          <select id="new-responsible"></select>
+        </div>
+        <div class="form-group">
+          <label>改派原因</label>
+          <textarea id="reassign-reason" placeholder="请说明改派原因..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="cancel-reassign">取消</button>
+        <button class="btn-submit" id="confirm-reassign">确认改派</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
