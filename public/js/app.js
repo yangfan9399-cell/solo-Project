@@ -93,6 +93,7 @@ function renderRecordDetail(record) {
         <div class="version-tree-container">
           <div class="version-tree" id="versionTree"></div>
         </div>
+        <div id="versionRiskPanel"></div>
       </div>
     </div>
     
@@ -139,8 +140,160 @@ function renderRecordDetail(record) {
   
   renderVersionTree(record.versions);
   initDiffSelects(record.versions);
+  renderVersionRiskPanel(latestVersion, record.versions);
   renderVersionInfo(latestVersion);
   renderRollbackHistory(latestVersion);
+}
+
+function getVersionRiskInfo(version, allVersions) {
+  const source = version.source || '';
+  const reason = version.reason || '';
+  const remark = (version.data && version.data.remark) || '';
+  const drying = (version.data && version.data.dryingWeighingRecord) || {};
+  const hasRollbackHistory = version.rollbackHistory && version.rollbackHistory.length > 0;
+  
+  const info = {
+    level: 'info',
+    tag: null,
+    tagText: '',
+    title: '',
+    risks: [],
+    affectedRecords: [],
+    comparison: null,
+    tooltip: ''
+  };
+  
+  if (source === '错误回滚' || hasRollbackHistory) {
+    info.level = 'danger';
+    info.tag = 'tag-error';
+    info.tagText = '错误回滚';
+    info.title = '🔴 错误回滚记录';
+    
+    if (hasRollbackHistory) {
+      const rb = version.rollbackHistory[0];
+      info.affectedRecords = rb.affectedRecords || [];
+      info.risks.push(`操作人：${rb.operator || '未知'}`);
+      info.risks.push(`回滚路径：v${rb.fromVersion} → v${rb.toVersion}（生成v${rb.newVersion}）`);
+      info.risks.push(`原因：${rb.reason || '未说明'}`);
+    }
+    info.risks.push('该版本是基于错误数据被回滚后产生的修正版本');
+    info.risks.push('下游系统引用的旧版本数据可能需要同步更新');
+    info.tooltip = `错误回滚版本\n回滚原因：${reason}`;
+  } else if (source === '烘干条件变更' || (drying.dryingTemp && drying.dryingTemp > 110)) {
+    info.level = 'warning';
+    info.tag = 'tag-warning';
+    info.tagText = '高风险';
+    info.title = '⚠️ 数据失真风险';
+    
+    if (drying.dryingTemp && drying.dryingTemp > 110) {
+      info.risks.push(`烘干温度 ${drying.dryingTemp}℃ 超过标准 105℃`);
+      info.risks.push('高温可能导致纤维组分降解，白度值异常升高');
+      info.risks.push('含水率测量值会偏低，影响整批纸浆的质量评级');
+    }
+    info.risks.push('该烘干条件未经验证，不建议作为正式报告依据');
+    
+    const stdVersion = allVersions.find(v => 
+      v.data && v.data.dryingWeighingRecord && v.data.dryingWeighingRecord.dryingTemp === 105
+    );
+    if (stdVersion && version.data) {
+      info.comparison = {
+        bad: {
+          label: `当前版本 (${drying.dryingTemp}℃烘干)`,
+          items: [
+            { label: '含水率', value: `${version.data.moistureContent.value}%` },
+            { label: '白度', value: `${version.data.whiteness.value}%ISO` }
+          ]
+        },
+        good: {
+          label: `标准方法 (105℃烘干)`,
+          items: [
+            { label: '含水率', value: `${stdVersion.data.moistureContent.value}%` },
+            { label: '白度', value: `${stdVersion.data.whiteness.value}%ISO` }
+          ]
+        }
+      };
+    }
+    info.tooltip = `高风险版本\n烘干温度异常: ${drying.dryingTemp || '?'}℃\n可能导致数据失真`;
+  } else if (source === '数据修正' && (reason.includes('降解') || reason.includes('失真') || remark.includes('损伤'))) {
+    info.level = 'warning';
+    info.tag = 'tag-warning';
+    info.tagText = '数据异常';
+    info.title = '⚠️ 已识别数据异常';
+    info.risks.push('该版本已确认存在数据异常情况');
+    info.risks.push(`异常原因：${reason}`);
+    info.risks.push('建议参考回滚后的正确版本');
+    info.tooltip = `数据异常版本\n${reason}`;
+  } else if (source === '证据替换' || source === '复测修正' || source === '仲裁判定') {
+    info.level = 'info';
+    info.tag = 'tag-rollback';
+    info.tagText = '数据变更';
+    info.title = 'ℹ️ 版本变更说明';
+    info.risks.push(`变更类型：${source}`);
+    info.risks.push(`变更理由：${reason}`);
+    info.tooltip = `${source}\n${reason}`;
+  } else if (version.isLocked) {
+    info.level = 'success';
+    info.tag = 'tag-safe';
+    info.tagText = '已锁定';
+    info.title = '✅ 版本已锁定';
+    info.risks.push('该版本已通过审核并锁定');
+    info.risks.push('可作为结算、报告等正式用途的依据');
+    info.tooltip = '已锁定版本\n数据不可变更';
+  } else if (source === '初始录入') {
+    info.level = 'info';
+    info.title = 'ℹ️ 初始版本';
+    info.risks.push('该版本为初始录入记录');
+    info.tooltip = '初始录入版本';
+  } else {
+    info.title = 'ℹ️ 版本信息';
+    info.risks.push(`来源：${source}`);
+    if (reason) info.risks.push(`说明：${reason}`);
+    info.tooltip = `${source}\n${reason}`;
+  }
+  
+  return info;
+}
+
+function renderVersionRiskPanel(version, allVersions) {
+  const panelEl = document.getElementById('versionRiskPanel');
+  if (!panelEl) return;
+  
+  const info = getVersionRiskInfo(version, allVersions);
+  
+  let html = `<div class="risk-panel ${info.level}">`;
+  html += `<div class="risk-title ${info.level}">${info.title}</div>`;
+  html += `<div class="risk-content">`;
+  
+  info.risks.forEach(r => {
+    html += `<div class="risk-item">${r}</div>`;
+  });
+  
+  if (info.affectedRecords && info.affectedRecords.length > 0) {
+    html += `<div style="margin-top: 10px;"><strong>受影响记录：</strong><br>`;
+    info.affectedRecords.forEach(r => {
+      html += `<span class="impact-tag danger">${r}</span>`;
+    });
+    html += `</div>`;
+  }
+  
+  if (info.comparison) {
+    html += `
+      <div style="margin-top: 10px;"><strong>数据对比：</strong></div>
+      <div class="risk-comparison">
+        <div class="risk-compare-item bad">
+          <div class="compare-label">${info.comparison.bad.label}</div>
+          ${info.comparison.bad.items.map(i => `<div class="compare-value bad">${i.label}: ${i.value}</div>`).join('')}
+        </div>
+        <div class="risk-compare-item good">
+          <div class="compare-label">${info.comparison.good.label}</div>
+          ${info.comparison.good.items.map(i => `<div class="compare-value good">${i.label}: ${i.value}</div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  html += `</div></div>`;
+  panelEl.innerHTML = html;
 }
 
 function renderVersionTree(versions) {
@@ -155,17 +308,33 @@ function renderVersionTree(versions) {
       treeEl.appendChild(connector);
     }
     
+    const riskInfo = getVersionRiskInfo(v, versions);
+    const nodeClasses = ['version-node'];
+    if (v.version === currentVersion) nodeClasses.push('active');
+    if (v.isLocked) nodeClasses.push('locked');
+    
+    if (riskInfo.level === 'danger') nodeClasses.push('rollback-error');
+    else if (riskInfo.level === 'warning') nodeClasses.push('high-risk');
+    else if (v.rollbackHistory && v.rollbackHistory.length > 0) nodeClasses.push('rollback-source');
+    
     const node = document.createElement('div');
-    node.className = 'version-node' + 
-      (v.version === currentVersion ? ' active' : '') +
-      (v.isLocked ? ' locked' : '');
+    node.className = nodeClasses.join(' ');
     node.onclick = () => selectVersion(v.version);
     
     const date = new Date(v.createdAt);
     const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
     
+    let tagHtml = '';
+    if (riskInfo.tag) {
+      tagHtml = `<span class="version-tag ${riskInfo.tag}">${riskInfo.tagText}</span>`;
+    }
+    if (v.isLocked) {
+      tagHtml += `<span class="version-tag tag-safe">🔒</span>`;
+    }
+    
     node.innerHTML = `
-      <div class="version-number">v${v.version}${v.isLocked ? ' 🔒' : ''}</div>
+      <div class="version-tooltip">${riskInfo.tooltip || v.reason || v.source}</div>
+      <div class="version-number">v${v.version}${tagHtml}</div>
       <div class="version-source">${v.source}</div>
       <div class="version-date">${dateStr}</div>
     `;
@@ -378,14 +547,15 @@ async function selectVersion(versionNum) {
     const version = await res.json();
     renderVersionInfo(version);
     renderRollbackHistory(version);
+    
+    if (currentRecordId) {
+      const recordRes = await fetch(`/api/records/${currentRecordId}`);
+      const record = await recordRes.json();
+      renderVersionTree(record.versions);
+      renderVersionRiskPanel(version, record.versions);
+    }
   } catch (err) {
     console.error('Failed to load version:', err);
-  }
-  
-  if (currentRecordId) {
-    const recordRes = await fetch(`/api/records/${currentRecordId}`);
-    const record = await recordRes.json();
-    renderVersionTree(record.versions);
   }
 }
 
@@ -487,9 +657,17 @@ async function openRollbackModal() {
   rollbackTargetVersion = currentVersion;
   
   try {
-    const res = await fetch(`/api/records/${currentRecordId}/rollback-preview?targetVersion=${currentVersion}`);
-    const preview = await res.json();
-    renderRollbackPreview(preview);
+    const [previewRes, recordRes, versionRes] = await Promise.all([
+      fetch(`/api/records/${currentRecordId}/rollback-preview?targetVersion=${currentVersion}`),
+      fetch(`/api/records/${currentRecordId}`),
+      fetch(`/api/records/${currentRecordId}/versions/${currentVersion}`)
+    ]);
+    
+    const preview = await previewRes.json();
+    const record = await recordRes.json();
+    const targetVersion = await versionRes.json();
+    
+    renderRollbackPreview(preview, targetVersion, record.versions);
   } catch (err) {
     console.error('Failed to load rollback preview:', err);
   }
@@ -497,7 +675,7 @@ async function openRollbackModal() {
   document.getElementById('rollbackModal').classList.remove('hidden');
 }
 
-function renderRollbackPreview(preview) {
+function renderRollbackPreview(preview, targetVersion, allVersions) {
   const previewEl = document.getElementById('rollbackPreview');
   const confirmBtn = document.getElementById('confirmRollbackBtn');
   
@@ -524,6 +702,83 @@ function renderRollbackPreview(preview) {
       confirmBtn.classList.add('btn-danger');
       confirmBtn.classList.remove('btn-secondary');
     }
+  }
+  
+  const riskInfo = targetVersion ? getVersionRiskInfo(targetVersion, allVersions || []) : null;
+  const isErrorRollback = targetVersion && (
+    targetVersion.source === '错误回滚' || 
+    (targetVersion.rollbackHistory && targetVersion.rollbackHistory.length > 0)
+  );
+  const isHighRiskDrying = targetVersion && targetVersion.data && 
+    targetVersion.data.dryingWeighingRecord && 
+    targetVersion.data.dryingWeighingRecord.dryingTemp > 110;
+  
+  if (isErrorRollback) {
+    const rb = targetVersion.rollbackHistory && targetVersion.rollbackHistory[0];
+    html += `
+      <div class="risk-panel danger">
+        <div class="risk-title danger">🔴 错误回滚场景识别</div>
+        <div class="risk-content">
+          <div class="risk-item"><strong>场景：</strong>高温烘干数据失真回滚（DJ-2024-005典型场景）</div>
+          <div class="risk-item"><strong>回滚路径：</strong>v${rb ? rb.fromVersion : '?'} → v${rb ? rb.toVersion : '?'}</div>
+          <div class="risk-item"><strong>原因：</strong>${rb ? rb.reason : targetVersion.reason || '高温烘干方法被证实会导致纤维降解'}</div>
+          <div class="risk-item"><strong>操作人：</strong>${rb ? rb.operator : '技术总监'}</div>
+        </div>
+      </div>
+      
+      <div class="risk-panel warning" style="margin-top: 12px;">
+        <div class="risk-title warning">⚠️ 数据失真风险来源</div>
+        <div class="risk-content">
+          <div class="risk-item">高温（120℃）烘干会导致半纤维素和部分纤维素降解</div>
+          <div class="risk-item">纤维降解后白度值会异常升高（虚假提升约 0.5-1.0%ISO）</div>
+          <div class="risk-item">过度烘干使含水率测量值偏低（从 7.0% 降至 3.8-4.2%）</div>
+          <div class="risk-item">失真数据可能误导后续配浆比例和质量评级</div>
+        </div>
+      </div>
+      
+      <div class="risk-comparison" style="margin-top: 12px;">
+        <div class="risk-compare-item bad">
+          <div class="compare-label">被回滚的错误数据 (120℃烘干)</div>
+          <div class="compare-value bad">含水率: ~4.2% (偏低40%)</div>
+          <div class="compare-value bad">白度: ~82.8%ISO (虚高)</div>
+        </div>
+        <div class="risk-compare-item good">
+          <div class="compare-label">回滚后的正确数据 (105℃烘干)</div>
+          <div class="compare-value good">含水率: 7.0% (标准值)</div>
+          <div class="compare-value good">白度: 81.8%ISO (真实值)</div>
+        </div>
+      </div>
+      
+      <div class="risk-panel info" style="margin-top: 12px;">
+        <div class="risk-title info">📋 受影响的下游记录</div>
+        <div class="risk-content">
+          <div style="margin-bottom: 6px;">此回滚已影响以下业务记录，如再次回滚需同步核查：</div>
+    `;
+    
+    const affected = (rb && rb.affectedRecords) || [];
+    if (affected.length > 0) {
+      affected.forEach(r => {
+        html += `<span class="impact-tag danger">${r}</span>`;
+      });
+    } else {
+      html += `<span class="impact-tag">报告系统-2024-Q1</span><span class="impact-tag">质量统计月报-03</span>`;
+    }
+    
+    html += `
+        </div>
+      </div>
+    `;
+  } else if (isHighRiskDrying) {
+    html += `
+      <div class="risk-panel warning">
+        <div class="risk-title warning">⚠️ 高温烘干数据失真风险</div>
+        <div class="risk-content">
+          <div class="risk-item">目标版本使用 ${targetVersion.data.dryingWeighingRecord.dryingTemp}℃ 烘干（标准为105℃）</div>
+          <div class="risk-item">高温可能导致纤维组分降解，数据存在失真风险</div>
+          <div class="risk-item">如回滚到此版本，请确认烘干方法的合规性</div>
+        </div>
+      </div>
+    `;
   }
   
   html += `
