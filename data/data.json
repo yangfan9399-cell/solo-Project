@@ -1,0 +1,738 @@
+[
+  {
+    "id": "id_zw0ypzg11",
+    "title": "DJ-2024-001 针叶木浆纤维检测",
+    "currentVersion": 3,
+    "versions": [
+      {
+        "id": "id_skpkxfz2u",
+        "recordId": "id_zw0ypzg11",
+        "version": 1,
+        "parentVersion": null,
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.35,
+            "min": 0.8,
+            "max": 4.2,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 82.5,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 7.2,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-001",
+          "micrographUrl": "/images/micrograph-001-v1.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.23,
+            "dryWeight": 4.85,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "初始检测记录，样品来自一号生产线"
+        },
+        "source": "初始录入",
+        "reason": "纸浆批次DJ-2024-001首次质量检测",
+        "isLocked": false,
+        "createdAt": "2026-06-15T18:27:36.115Z",
+        "createdBy": "实验室操作员2",
+        "comments": [],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_24c5mpwff",
+        "recordId": "id_zw0ypzg11",
+        "version": 2,
+        "parentVersion": "id_skpkxfz2u",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.41,
+            "min": 0.75,
+            "max": 4.35,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 83.1,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 6.8,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-001",
+          "micrographUrl": "/images/micrograph-001-v2.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.23,
+            "dryWeight": 4.87,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "复测记录，调整了纤维分散方法"
+        },
+        "source": "复测修正",
+        "reason": "测试员B复测，发现纤维分散更均匀后平均值提升",
+        "isLocked": false,
+        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdBy": "实验室操作员3",
+        "comments": [
+          {
+            "id": "id_4xsogfsyk",
+            "author": "测试员A",
+            "content": "我认为我的初始测量是准确的，纤维没有明显结团",
+            "createdAt": "2026-06-16T18:27:36.116Z"
+          }
+        ],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_yzjl5q15a",
+        "recordId": "id_zw0ypzg11",
+        "version": 3,
+        "parentVersion": "id_24c5mpwff",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.38,
+            "min": 0.78,
+            "max": 4.28,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 82.8,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 7,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-001",
+          "micrographUrl": "/images/micrograph-001-v3.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.23,
+            "dryWeight": 4.86,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "仲裁结果，取三次测量平均值"
+        },
+        "source": "仲裁判定",
+        "reason": "两次测量存在差异，由高级技师进行仲裁测量",
+        "isLocked": false,
+        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdBy": "实验室操作员1",
+        "comments": [
+          {
+            "id": "id_7rh7i7t8j",
+            "author": "高级技师王工",
+            "content": "仲裁结果基于三次独立测量取平均，建议统一使用标准分散方法",
+            "createdAt": "2026-06-18T18:27:36.116Z"
+          }
+        ],
+        "rollbackHistory": []
+      }
+    ]
+  },
+  {
+    "id": "id_5mf94n5vl",
+    "title": "DJ-2024-002 阔叶木浆纤维检测",
+    "currentVersion": 3,
+    "versions": [
+      {
+        "id": "id_7cf6qpei5",
+        "recordId": "id_5mf94n5vl",
+        "version": 1,
+        "parentVersion": null,
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 1.85,
+            "min": 0.5,
+            "max": 3.6,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 78.2,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 8.1,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-002",
+          "micrographUrl": "/images/micrograph-002-v1-old.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 4.98,
+            "dryWeight": 4.58,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "阔叶木浆检测，显微照片清晰度不足"
+        },
+        "source": "初始录入",
+        "reason": "阔叶木浆批次DJ-2024-002检测",
+        "isLocked": false,
+        "createdAt": "2026-06-15T18:27:36.116Z",
+        "createdBy": "实验室操作员2",
+        "comments": [],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_0k031tny5",
+        "recordId": "id_5mf94n5vl",
+        "version": 2,
+        "parentVersion": "id_7cf6qpei5",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 1.85,
+            "min": 0.5,
+            "max": 3.6,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 78.2,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 8.1,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-002",
+          "micrographUrl": "/images/micrograph-002-v2-new.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 4.98,
+            "dryWeight": 4.58,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "重新拍摄显微照片，提高分辨率"
+        },
+        "source": "证据替换",
+        "reason": "原显微照片模糊，重新制片后拍摄高清照片",
+        "isLocked": false,
+        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdBy": "实验室操作员3",
+        "comments": [
+          {
+            "id": "id_s75poymva",
+            "author": "质量主管",
+            "content": "照片更换已审核通过，原照片存档保留",
+            "createdAt": "2026-06-17T18:27:36.116Z"
+          }
+        ],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_rcib9y1l4",
+        "recordId": "id_5mf94n5vl",
+        "version": 3,
+        "parentVersion": "id_0k031tny5",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 1.82,
+            "min": 0.48,
+            "max": 3.55,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 78.2,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 8.1,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-002",
+          "micrographUrl": "/images/micrograph-002-v3-final.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 4.98,
+            "dryWeight": 4.58,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "基于高清照片重新测量纤维长度"
+        },
+        "source": "数据修正",
+        "reason": "高清照片下发现更多短纤维，重新统计分布",
+        "isLocked": false,
+        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdBy": "实验室操作员1",
+        "comments": [],
+        "rollbackHistory": []
+      }
+    ]
+  },
+  {
+    "id": "id_baz95widu",
+    "title": "DJ-2024-003 漂白针叶木浆检测",
+    "currentVersion": 3,
+    "versions": [
+      {
+        "id": "id_91zf9oxg5",
+        "recordId": "id_baz95widu",
+        "version": 1,
+        "parentVersion": null,
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.1,
+            "min": 0.6,
+            "max": 4,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 85.3,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 6.5,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-003",
+          "micrographUrl": "/images/micrograph-003-v1.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.12,
+            "dryWeight": 4.79,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "高质量漂白浆，可用于高档纸张生产"
+        },
+        "source": "初始录入",
+        "reason": "漂白针叶木浆检测",
+        "isLocked": false,
+        "createdAt": "2026-06-15T18:27:36.116Z",
+        "createdBy": "实验室操作员2",
+        "comments": [],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_lhuhnsnfg",
+        "recordId": "id_baz95widu",
+        "version": 2,
+        "parentVersion": "id_91zf9oxg5",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.1,
+            "min": 0.6,
+            "max": 4,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 85.3,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 6.5,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-003",
+          "micrographUrl": "/images/micrograph-003-v1.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.12,
+            "dryWeight": 4.79,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "高质量漂白浆，可用于高档纸张生产。注意：该批次含有少量杂细胞。"
+        },
+        "source": "备注补充",
+        "reason": "添加杂细胞含量备注，提醒下游工序注意",
+        "isLocked": false,
+        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdBy": "实验室操作员3",
+        "comments": [],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_6wmdllbsy",
+        "recordId": "id_baz95widu",
+        "version": 3,
+        "parentVersion": "id_lhuhnsnfg",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.1,
+            "min": 0.6,
+            "max": 4,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 85.3,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 6.5,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-003",
+          "micrographUrl": "/images/micrograph-003-v1.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.12,
+            "dryWeight": 4.79,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "高质量漂白浆，可用于高档纸张生产。"
+        },
+        "source": "备注撤回",
+        "reason": "经核查，杂细胞含量在标准范围内，之前备注有误，予以撤回",
+        "isLocked": false,
+        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdBy": "实验室操作员1",
+        "comments": [
+          {
+            "id": "id_t67y0mvba",
+            "author": "审核员李工",
+            "content": "备注撤回已确认，误报已记录在案，请测试员加强复核",
+            "createdAt": "2026-06-18T18:27:36.116Z"
+          }
+        ],
+        "rollbackHistory": [
+          {
+            "fromVersion": 2,
+            "toVersion": 3,
+            "reason": "错误备注撤回",
+            "operator": "审核员李工",
+            "timestamp": "2026-06-18T18:27:36.116Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "id_00xsrr7u5",
+    "title": "DJ-2024-004 进口针叶木浆检测",
+    "currentVersion": 3,
+    "versions": [
+      {
+        "id": "id_ehai4aveh",
+        "recordId": "id_00xsrr7u5",
+        "version": 1,
+        "parentVersion": null,
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.55,
+            "min": 0.9,
+            "max": 4.8,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 80.1,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 7.8,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-004",
+          "micrographUrl": "/images/micrograph-004-v1.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.35,
+            "dryWeight": 4.93,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "进口针叶木浆，纤维较长"
+        },
+        "source": "初始录入",
+        "reason": "进口俄罗斯针叶木浆检测",
+        "isLocked": false,
+        "createdAt": "2026-06-15T18:27:36.116Z",
+        "createdBy": "实验室操作员2",
+        "comments": [],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_7wrvxqghl",
+        "recordId": "id_00xsrr7u5",
+        "version": 2,
+        "parentVersion": "id_ehai4aveh",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.58,
+            "min": 0.85,
+            "max": 4.9,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 80.5,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 7.5,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-004",
+          "micrographUrl": "/images/micrograph-004-v2.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.35,
+            "dryWeight": 4.95,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "进口针叶木浆，纤维较长。补充平行样检测结果。"
+        },
+        "source": "平行样补充",
+        "reason": "增加第二个平行样数据，取平均值",
+        "isLocked": false,
+        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdBy": "实验室操作员3",
+        "comments": [],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_lxyvgzhu9",
+        "recordId": "id_00xsrr7u5",
+        "version": 3,
+        "parentVersion": "id_7wrvxqghl",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.58,
+            "min": 0.85,
+            "max": 4.9,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 80.5,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 7.5,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-004",
+          "micrographUrl": "/images/micrograph-004-v2.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.35,
+            "dryWeight": 4.95,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "进口针叶木浆，纤维较长。补充平行样检测结果。"
+        },
+        "source": "审核锁定",
+        "reason": "质量部审核通过，版本锁定作为结算依据",
+        "isLocked": true,
+        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdBy": "实验室操作员1",
+        "comments": [
+          {
+            "id": "id_pmpurzlq7",
+            "author": "质量部经理",
+            "content": "该批次数据已审核，作为与供应商结算的最终依据，版本锁定。",
+            "createdAt": "2026-06-18T18:27:36.116Z"
+          }
+        ],
+        "rollbackHistory": []
+      }
+    ]
+  },
+  {
+    "id": "id_qgoooo3nh",
+    "title": "DJ-2024-005 混合浆检测（烘干条件对比）",
+    "currentVersion": 4,
+    "versions": [
+      {
+        "id": "id_f6xjy25yu",
+        "recordId": "id_qgoooo3nh",
+        "version": 1,
+        "parentVersion": null,
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.2,
+            "min": 0.7,
+            "max": 4.1,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 81.8,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 7,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-005",
+          "micrographUrl": "/images/micrograph-005-v1.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.08,
+            "dryWeight": 4.72,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "标准烘干条件下的检测结果"
+        },
+        "source": "初始录入",
+        "reason": "混合浆检测，标准105℃烘干",
+        "isLocked": false,
+        "createdAt": "2026-06-15T18:27:36.116Z",
+        "createdBy": "实验室操作员2",
+        "comments": [],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_rmrr3mm8p",
+        "recordId": "id_qgoooo3nh",
+        "version": 2,
+        "parentVersion": "id_f6xjy25yu",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.2,
+            "min": 0.7,
+            "max": 4.1,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 82.5,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 4.2,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-005",
+          "micrographUrl": "/images/micrograph-005-v1.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.08,
+            "dryWeight": 4.87,
+            "dryingTemp": 120,
+            "dryingTime": 180,
+            "unit": "g"
+          },
+          "remark": "高温快速烘干条件下的检测结果，含水率明显降低"
+        },
+        "source": "烘干条件变更",
+        "reason": "使用120℃快速烘干法，缩短检测时间",
+        "isLocked": false,
+        "createdAt": "2026-06-16T18:27:36.116Z",
+        "createdBy": "实验室操作员3",
+        "comments": [
+          {
+            "id": "id_9ep59uqst",
+            "author": "测试员小陈",
+            "content": "新方法效率提升很多，建议推广使用",
+            "createdAt": "2026-06-15T18:27:36.116Z"
+          }
+        ],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_8rolylhlv",
+        "recordId": "id_qgoooo3nh",
+        "version": 3,
+        "parentVersion": "id_rmrr3mm8p",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.25,
+            "min": 0.68,
+            "max": 4.15,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 82.8,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 3.8,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-005",
+          "micrographUrl": "/images/micrograph-005-v3.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.08,
+            "dryWeight": 4.89,
+            "dryingTemp": 120,
+            "dryingTime": 180,
+            "unit": "g"
+          },
+          "remark": "高温烘干数据修正，发现过度烘干导致纤维损伤"
+        },
+        "source": "数据修正",
+        "reason": "高温下纤维有轻微降解，白度异常升高",
+        "isLocked": false,
+        "createdAt": "2026-06-17T18:27:36.116Z",
+        "createdBy": "实验室操作员1",
+        "comments": [
+          {
+            "id": "id_gjt8glsvu",
+            "author": "资深技师",
+            "content": "白度异常升高可疑，高温可能导致纤维组分变化",
+            "createdAt": "2026-06-16T18:27:36.116Z"
+          }
+        ],
+        "rollbackHistory": []
+      },
+      {
+        "id": "id_jyvbvx7xq",
+        "recordId": "id_qgoooo3nh",
+        "version": 4,
+        "parentVersion": "id_f6xjy25yu",
+        "data": {
+          "fiberLengthDistribution": {
+            "avg": 2.2,
+            "min": 0.7,
+            "max": 4.1,
+            "unit": "mm"
+          },
+          "whiteness": {
+            "value": 81.8,
+            "unit": "%ISO"
+          },
+          "moistureContent": {
+            "value": 7,
+            "unit": "%"
+          },
+          "beatingBatchNo": "DJ-2024-005",
+          "micrographUrl": "/images/micrograph-005-v1.jpg",
+          "dryingWeighingRecord": {
+            "sampleWeight": 5.08,
+            "dryWeight": 4.72,
+            "dryingTemp": 105,
+            "dryingTime": 240,
+            "unit": "g"
+          },
+          "remark": "回滚至标准烘干条件数据，高温法结果不予采用"
+        },
+        "source": "错误回滚",
+        "reason": "高温烘干会导致纤维降解和数据失真，回滚至标准方法版本",
+        "isLocked": false,
+        "createdAt": "2026-06-18T18:27:36.116Z",
+        "createdBy": "实验室操作员2",
+        "comments": [
+          {
+            "id": "id_wi9nrzgb5",
+            "author": "技术总监",
+            "content": "确认回滚。高温烘干仅作参考，正式报告必须使用标准方法。",
+            "createdAt": "2026-06-18T18:27:36.116Z"
+          }
+        ],
+        "rollbackHistory": [
+          {
+            "fromVersion": 3,
+            "toVersion": 1,
+            "newVersion": 4,
+            "reason": "高温烘干方法被证实会导致纤维降解，数据失真，回滚至标准方法版本",
+            "operator": "技术总监",
+            "timestamp": "2026-06-18T18:27:36.116Z",
+            "affectedRecords": [
+              "报告系统-2024-Q1",
+              "质量统计月报-03"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

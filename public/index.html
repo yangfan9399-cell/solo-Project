@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>纸浆纤维版本差异册</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>📄 纸浆纤维版本差异册</h1>
+      <p class="subtitle">多版本比对 · 证据追溯 · 安全回滚</p>
+    </header>
+
+    <div class="main-layout">
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <h2>记录列表</h2>
+          <div id="recordList" class="record-list"></div>
+        </div>
+      </aside>
+
+      <main class="content-area">
+        <div id="recordDetail" class="record-detail">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>请从左侧选择一条记录查看详情</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="rollbackModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🔄 回滚预览</h3>
+        <button class="close-btn" onclick="closeRollbackModal()">&times;</button>
+      </div>
+      <div id="rollbackPreview" class="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeRollbackModal()">取消</button>
+        <button id="confirmRollbackBtn" class="btn btn-danger">确认回滚</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="commentModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>💬 评论线程</h3>
+        <button class="close-btn" onclick="closeCommentModal()">&times;</button>
+      </div>
+      <div id="commentList" class="modal-body comment-list"></div>
+      <div class="modal-footer">
+        <div class="comment-input">
+          <input type="text" id="commentAuthor" placeholder="你的名字" value="访客">
+          <input type="text" id="commentText" placeholder="输入评论内容...">
+          <button class="btn btn-primary" onclick="submitComment()">发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
