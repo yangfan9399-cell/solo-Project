@@ -1,0 +1,19 @@
+{
+  "name": "silver-salt-darkroom-beat-repair",
+  "version": "1.0.0",
+  "description": "银盐暗房节拍修复场 - 时序修复挑战游戏",
+  "scripts": {
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev": "concurrently -n SERVER,CLIENT -c cyan,magenta \"npm run dev:server\" \"npm run dev:client\"",
+    "build": "cd server && npm run build && cd ../client && npm run build",
+    "start": "cd server && npm start"
+  },
+  "keywords": ["game", "darkroom", "rhythm"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
