@@ -115,6 +115,7 @@ export interface ApiResponse<T> {
 
 export interface BatchAssignRequest {
   specimen_ids: number[]
+  assign_from?: string
   assign_to: string
   notes?: string
 }

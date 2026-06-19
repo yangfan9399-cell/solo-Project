@@ -62,6 +62,7 @@ interface SpecimenActions {
   fetchExportPreview: () => Promise<void>
   executeExport: () => Promise<void>
   fetchHistory: (id: number) => Promise<void>
+  moveSpecimenToStatus: (id: number, targetStatus: string) => Promise<void>
   updateSpecimenStatus: (id: number, status: string) => Promise<void>
   updateSpecimenStatusOptimistic: (id: number, status: string) => void
   toggleSelectSpecimen: (id: number) => void
@@ -289,6 +290,42 @@ export const useSpecimenStore = create<SpecimenState & SpecimenActions>((set, ge
       set({ specimenHistory: data, isLoading: false })
     } catch (error) {
       set({ error: '获取历史记录失败', isLoading: false })
+      console.error(error)
+    }
+  },
+
+  moveSpecimenToStatus: async (id: number, targetStatus: string) => {
+    const { specimens, currentUser } = get()
+    const originalSpecimen = specimens.find((s) => s.id === id)
+    if (!originalSpecimen) return
+    if (originalSpecimen.status === targetStatus) return
+
+    set((state) => ({
+      specimens: state.specimens.map((s) =>
+        s.id === id ? { ...s, status: targetStatus as Specimen['status'] } : s
+      ),
+    }))
+
+    try {
+      if (targetStatus === '已锁定' && originalSpecimen.status !== '已锁定') {
+        await specimenApi.toggleLock(id, { locked_by: currentUser.name })
+      } else if (originalSpecimen.status === '已锁定' && targetStatus !== '已锁定') {
+        await specimenApi.toggleLock(id, {
+          locked_by: currentUser.name,
+          unlock_reason: '看板拖拽调整状态',
+        })
+      } else {
+        await specimenApi.updateStatus(id, targetStatus)
+      }
+    } catch (error: any) {
+      if (originalSpecimen) {
+        set((state) => ({
+          specimens: state.specimens.map((s) =>
+            s.id === id ? { ...s, status: originalSpecimen.status } : s
+          ),
+          error: error?.response?.data?.detail || '状态流转失败，已回滚',
+        }))
+      }
       console.error(error)
     }
   },

@@ -18,7 +18,6 @@ function App() {
     fetchRejections,
     fetchExportBatches,
     showDetailSidebar,
-    showHistory,
     isLoading,
     error,
     setError,
