@@ -174,6 +174,7 @@ async function loadDetail() {
       document.getElementById('retest-ctx-coords').textContent = rc.shared_context.collection_coords;
       document.getElementById('retest-ctx-altitude').textContent = rc.shared_context.altitude;
       document.getElementById('retest-ctx-substrate').textContent = rc.shared_context.substrate;
+      document.getElementById('retest-ctx-humidity').textContent = rc.shared_context.humidity_exposure;
 
       document.getElementById('retest-spring-no').textContent = rc.first.specimen_no;
       document.getElementById('retest-autumn-no').textContent = rc.second.specimen_no;
