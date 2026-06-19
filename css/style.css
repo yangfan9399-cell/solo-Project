@@ -497,6 +497,50 @@ body::before {
     font-family: 'ZCOOL XiaoWei', serif;
 }
 
+.result-source-fail {
+    color: var(--accent-red) !important;
+    opacity: 1 !important;
+    font-weight: bold;
+}
+
+.result-backend-error {
+    background: rgba(196, 69, 54, 0.08);
+    border: 1px solid var(--accent-red);
+    border-radius: 2px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+}
+
+.result-backend-error-icon {
+    font-weight: bold;
+    font-size: 1.05em;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    font-family: 'ZCOOL XiaoWei', serif;
+}
+
+.result-backend-error-reason {
+    font-size: 0.85em;
+    color: var(--accent-red);
+    margin-bottom: 6px;
+    word-break: break-all;
+}
+
+.result-backend-error-notice {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.result-final.backend-fail {
+    border-top: 2px solid var(--accent-red);
+}
+
+.result-final.backend-fail .result-score {
+    opacity: 0.6;
+    font-size: 1.6em;
+}
+
 .action-bar {
     display: flex;
     justify-content: center;

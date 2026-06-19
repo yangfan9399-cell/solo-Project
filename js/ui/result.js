@@ -30,8 +30,16 @@ const ResultUI = {
         }
 
         const d = details.details;
+        const backendFail = !details.isBackendCalculated && details.backendFailReason;
 
         this.contentElement.innerHTML = `
+            ${backendFail ? `
+            <div class="result-backend-error">
+                <div class="result-backend-error-icon" style="color: #c44536;">⚠ 后端结算失败</div>
+                <div class="result-backend-error-reason">${details.backendFailReason}</div>
+                <div class="result-backend-error-notice">以下为前端临时参考分，仅供参考不作为最终结算</div>
+            </div>
+            ` : ''}
             <div class="result-item">
                 <span class="result-label">最终配平值</span>
                 <span class="result-value">${details.finalState.balanceValue}</span>
@@ -92,10 +100,10 @@ const ResultUI = {
                 </div>
             </div>
 
-            <div class="result-final ${resultClass}">
+            <div class="result-final ${resultClass} ${backendFail ? 'backend-fail' : ''}">
                 <div class="result-title">${resultTitle}</div>
                 <div class="result-score">${details.score} 分</div>
-                ${details.isBackendCalculated ? '<div class="result-source">后端重算</div>' : ''}
+                ${details.isBackendCalculated ? '<div class="result-source">后端重算</div>' : '<div class="result-source result-source-fail">前端临时分数</div>'}
             </div>
         `;
     },

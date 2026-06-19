@@ -264,55 +264,62 @@ const GameMain = {
     },
 
     async showGameOver() {
-        const backendResult = await this.fetchBackendSettlement();
-        let score, won;
-        
-        if (backendResult && backendResult.valid) {
+        const backendResp = await this.fetchBackendSettlement();
+        let score, won, displayDetails;
+
+        if (backendResp.success) {
+            const backendResult = backendResp.result;
             score = backendResult.score;
             won = backendResult.gameWon;
-            Storage.saveBestScore(this.currentLevel, score);
-            ResultUI.render(this.convertBackendResult(backendResult));
+            displayDetails = this.convertBackendResult(backendResult);
         } else {
-            const details = GameEngine.getSettlementDetails();
-            score = details.score;
-            won = details.won;
-            Storage.saveBestScore(this.currentLevel, score);
-            ResultUI.render(details);
+            displayDetails = this.makeFrontendResult(backendResp.failReason);
+            score = displayDetails.score;
+            won = displayDetails.won;
         }
+
+        Storage.saveBestScore(this.currentLevel, score);
+        ResultUI.render(displayDetails);
+
+        const scoreTag = backendResp.success
+            ? `<span style="color: #4a8c5c;">后端重算</span>`
+            : `<span style="color: #c44536;">后端结算失败，前端临时分数</span>`;
+        const failNotice = backendResp.success
+            ? ''
+            : `<br><span style="color: #c44536; font-size: 0.85em;">⚠ ${backendResp.failReason}</span>`;
 
         if (won === true) {
             ModalUI.show(
                 '推演成功！',
-                `恭喜你完成了 ${Levels.getLevel(this.currentLevel).name}！<br><br>最终得分（后端重算）：<strong style="font-size: 1.5em; color: #d4a017;">${score} 分</strong><br><br>结算簿已显示详细信息。`
+                `恭喜你完成了 ${Levels.getLevel(this.currentLevel).name}！<br><br>最终得分（${scoreTag}）：<strong style="font-size: 1.5em; color: #d4a017;">${score} 分</strong>${failNotice}<br><br>结算簿已显示详细信息。`
             );
         } else if (won === 'partial') {
             ModalUI.show(
                 '航线达成',
-                `你抵达了终点，但似乎还有未解锁的秘密...<br><br>最终得分（后端重算）：<strong style="font-size: 1.2em; color: #d4a017;">${score} 分</strong><br><br>提示：尝试收集更多归并痕以触发隐藏条件。`
+                `你抵达了终点，但似乎还有未解锁的秘密...<br><br>最终得分（${scoreTag}）：<strong style="font-size: 1.2em; color: #d4a017;">${score} 分</strong>${failNotice}<br><br>提示：尝试收集更多归并痕以触发隐藏条件。`
             );
         } else {
             ModalUI.show(
                 '推演失败',
-                `这次推演失败了...<br><br>最终得分（后端重算）：<strong style="font-size: 1.2em; color: #c44536;">${score} 分</strong><br><br>不要气馁，再试一次吧！`
+                `这次推演失败了...<br><br>最终得分（${scoreTag}）：<strong style="font-size: 1.2em; color: #c44536;">${score} 分</strong>${failNotice}<br><br>不要气馁，再试一次吧！`
             );
         }
     },
 
     async showSettlement() {
-        const result = await this.fetchBackendSettlement();
-        
-        if (result && result.valid) {
-            ResultUI.render(this.convertBackendResult(result));
+        const backendResp = await this.fetchBackendSettlement();
+
+        if (backendResp.success) {
+            ResultUI.render(this.convertBackendResult(backendResp.result));
         } else {
-            const details = GameEngine.getSettlementDetails();
-            ResultUI.render(details);
+            ResultUI.render(this.makeFrontendResult(backendResp.failReason));
         }
     },
 
     async fetchBackendSettlement() {
         try {
             const steps = GameEngine.steps.map(s => ({ toNode: s.toNode }));
-            
+
             const response = await fetch('/api/settle', {
                 method: 'POST',
                 headers: {
@@ -324,14 +331,30 @@ const GameMain = {
                 })
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                return result;
+            if (!response.ok) {
+                return {
+                    success: false,
+                    failReason: `HTTP ${response.status} ${response.statusText}`
+                };
             }
-            return null;
+
+            const result = await response.json();
+            if (result && result.valid) {
+                return {
+                    success: true,
+                    result: result
+                };
+            } else {
+                return {
+                    success: false,
+                    failReason: (result && result.error) ? result.error : '后端返回数据无效'
+                };
+            }
         } catch (e) {
-            console.log('后端结算不可用，使用前端结算');
-            return null;
+            return {
+                success: false,
+                failReason: `网络连接失败：${e.message || '无法连接服务器'}`
+            };
         }
     },
 
@@ -345,6 +368,13 @@ const GameMain = {
             details: backendResult.details,
             isBackendCalculated: true
         };
+    },
+
+    makeFrontendResult(backendFailReason) {
+        const details = GameEngine.getSettlementDetails();
+        details.isBackendCalculated = false;
+        details.backendFailReason = backendFailReason;
+        return details;
     },
 
     renderAll() {
