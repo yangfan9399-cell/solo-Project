@@ -200,92 +200,135 @@ const api = {
 
   rollbackDrafts: {
     list: async (packageId: string): Promise<RollbackDraft[]> => {
-      return request('GET', `/rollback?packageId=${packageId}`, undefined, () =>
+      return request('GET', `/packages/${packageId}/rollback-draft`, undefined, () =>
         mockRollbackDrafts.filter(r => r.packageId === packageId)
-      );
+      ).then((data: unknown) => {
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          return [(data as { data?: RollbackDraft; success?: boolean }).data || (data as RollbackDraft)];
+        }
+        return Array.isArray(data) ? data : [];
+      });
     },
 
     get: async (id: string): Promise<RollbackDraft | undefined> => {
-      return request('GET', `/rollback/${id}`, undefined, () =>
+      return request('GET', `/packages/${id}/rollback-draft`, undefined, () =>
         mockRollbackDrafts.find(r => r.id === id)
-      );
+      ).then((data: unknown) => {
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          return (data as { data?: RollbackDraft }).data || (data as RollbackDraft);
+        }
+        return undefined;
+      });
     },
 
     generate: async (packageId: string, opts?: { reason?: string }): Promise<RollbackDraft | undefined> => {
-      return request('POST', `/rollback/${packageId}/generate-rollback-draft`, opts, () => {
+      return request('POST', `/packages/${packageId}/generate-rollback-draft`, opts, () => {
         const pkg = mockPackages.find(p => p.id === packageId);
         if (!pkg) return undefined;
+        const now = new Date().toISOString();
+        const rollbackVer = pkg.currentVersion.replace(/(\d+)$/, (m) => String(Math.max(0, parseInt(m) - 1)));
+        const affectedCount = pkg.affectedSampleCount || 50;
         const newDraft: RollbackDraft = {
           id: `rb-${packageId}-${Date.now()}`,
           packageId,
-          targetVersion: pkg.nextVersion,
-          rollbackVersion: pkg.currentVersion,
-          reason: opts?.reason || `自动生成：${pkg.name} 发布应急预案（Mock Fallback）`,
+          targetVersion: pkg.currentVersion,
+          rollbackVersion: rollbackVer,
+          reason: opts?.reason || `自动生成的回滚草案：从 ${pkg.currentVersion} 回退至 ${rollbackVer}（Mock Fallback）`,
           steps: [
             {
-              id: 'step-001', order: 1, title: '回滚前数据备份',
-              description: `备份当前${pkg.currentVersion}版本的所有评估数据和模型配置，确保回滚失败时可恢复`,
-              estimatedDuration: 30, status: 'pending'
+              id: `gen-step-${Date.now()}-1`, order: 1, title: '回滚前数据快照备份',
+              description: `对 ${pkg.name} 当前版本 ${pkg.currentVersion} 的所有评估数据、模型参数、配置文件进行完整快照备份，确保回滚失败时可完整恢复。`,
+              estimatedDuration: 25, status: 'pending'
             },
             {
-              id: 'step-002', order: 2, title: '暂停新任务处理',
-              description: `暂停${pkg.name}模块的新任务处理，避免回滚过程中产生不一致数据`,
-              estimatedDuration: 5, status: 'pending'
+              id: `gen-step-${Date.now()}-2`, order: 2, title: '暂停相关任务队列',
+              description: `暂停 ${pkg.dimension} 维度的所有新任务处理，锁定写入操作，避免回滚过程中产生数据不一致。`,
+              estimatedDuration: 8, status: 'pending'
             },
             {
-              id: 'step-003', order: 3, title: '模型版本切换',
-              description: `将生产环境模型从${pkg.nextVersion}切换至${pkg.currentVersion}，更新配置文件`,
+              id: `gen-step-${Date.now()}-3`, order: 3, title: `模型版本切换至 ${rollbackVer}`,
+              description: `将生产环境的模型版本从当前 ${pkg.currentVersion} 切换至目标版本 ${rollbackVer}，同步更新配置中心和缓存。`,
               estimatedDuration: 15, status: 'pending'
             },
             {
-              id: 'step-004', order: 4, title: '受影响样本重算',
-              description: `对${pkg.nextVersion}版本发布后处理过的${pkg.affectedSampleCount}个样本使用${pkg.currentVersion}重新评估`,
-              estimatedDuration: 120, status: 'pending'
+              id: `gen-step-${Date.now()}-4`, order: 4, title: `受影响样本批量重算`,
+              description: `对 ${pkg.currentVersion} 发布后处理过的约 ${affectedCount} 个样本，使用 ${rollbackVer} 模型重新评估计算。`,
+              estimatedDuration: Math.max(15, Math.min(120, Math.round(affectedCount * 0.8))), status: 'pending'
             },
             {
-              id: 'step-005', order: 5, title: '数据一致性校验',
-              description: '校验回滚后的数据与历史数据的一致性，确保无异常',
-              estimatedDuration: 20, status: 'pending'
+              id: `gen-step-${Date.now()}-5`, order: 5, title: '数据一致性抽样校验',
+              description: '随机抽取10%样本进行人工比对校验，确认回滚后数据与历史记录一致，无异常波动。',
+              estimatedDuration: 25, status: 'pending'
             },
             {
-              id: 'step-006', order: 6, title: '恢复服务并通知',
-              description: `恢复${pkg.name}服务正常运行，通知相关团队回滚完成`,
-              estimatedDuration: 10, status: 'pending'
+              id: `gen-step-${Date.now()}-6`, order: 6, title: '恢复服务并通知相关方',
+              description: '恢复任务队列正常运行，通过邮件和站内信通知考古研究员、数据管理员回滚完成，同步更新发布看板状态。',
+              estimatedDuration: 12, status: 'pending'
             }
           ],
           status: 'draft',
           createdBy: '系统自动生成',
-          createdAt: new Date().toISOString()
+          createdAt: now
         };
         mockRollbackDrafts.unshift(newDraft);
         mockAuditLogs.unshift({
           id: `log-rollback-draft-${Date.now()}`,
           packageId,
-          action: '回滚草案生成',
-          description: `自动生成 ${pkg.name} ${pkg.nextVersion} → ${pkg.currentVersion} 回滚预案（Mock Fallback）`,
+          action: '回滚草案创建',
+          description: `自动生成 ${pkg.name} 回滚草案（${pkg.currentVersion} → ${rollbackVer}）（Mock Fallback）`,
           operator: '系统',
-          timestamp: new Date().toISOString(),
-          details: { draftId: newDraft.id, targetVersion: pkg.nextVersion, rollbackVersion: pkg.currentVersion }
+          timestamp: now,
+          details: {
+            rollbackId: newDraft.id,
+            targetVersion: rollbackVer,
+            reason: newDraft.reason,
+            stepsCount: newDraft.steps.length
+          }
         });
         return newDraft;
+      }).then((data: unknown) => {
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          return (data as { data?: RollbackDraft; success?: boolean }).data || (data as RollbackDraft);
+        }
+        return data as RollbackDraft | undefined;
       });
     }
   },
 
   auditLogs: {
     list: async (packageId?: string): Promise<AuditLog[]> => {
-      let url = '/audit';
-      if (packageId) url += `?packageId=${packageId}`;
+      let url = '/audit-logs';
+      const params = new URLSearchParams();
+      if (packageId) params.set('packageId', packageId);
+      params.set('pageSize', '100');
+      if (params.toString()) url += `?${params.toString()}`;
       return request('GET', url, undefined, () => {
         if (packageId) return mockAuditLogs.filter(a => a.packageId === packageId);
         return mockAuditLogs;
+      }).then((data: unknown) => {
+        if (data && typeof data === 'object' && 'logs' in data) {
+          return (data as { logs: AuditLog[] }).logs;
+        }
+        if (data && typeof data === 'object' && 'data' in data) {
+          const inner = (data as { data: unknown }).data;
+          if (inner && typeof inner === 'object' && 'logs' in inner) {
+            return (inner as { logs: AuditLog[] }).logs;
+          }
+          if (Array.isArray(inner)) return inner as AuditLog[];
+        }
+        return Array.isArray(data) ? data : [] as AuditLog[];
       });
     },
 
     get: async (id: string): Promise<AuditLog | undefined> => {
-      return request('GET', `/audit/${id}`, undefined, () =>
+      return request('GET', `/audit-logs/${id}`, undefined, () =>
         mockAuditLogs.find(a => a.id === id)
-      );
+      ).then((data: unknown) => {
+        if (data && typeof data === 'object' && 'data' in data) {
+          return (data as { data?: AuditLog }).data;
+        }
+        return data as AuditLog | undefined;
+      });
     },
   },
 

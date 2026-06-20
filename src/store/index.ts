@@ -199,11 +199,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const updated = await api.packages.publish(id);
       if (updated) {
+        await Promise.all([
+          get().fetchPackages(),
+          get().fetchPackageAuditLogs(id),
+          get().fetchPackageVersions(id),
+        ]);
         const auditLog: AuditLog = {
-          id: `log-publish-${Date.now()}`,
+          id: `log-publish-local-${Date.now()}`,
           packageId: id,
           action: '版本发布',
-          description: `发布包【${updated.name}】${updated.nextVersion} 正式发布`,
+          description: `发布包【${updated.name}】${updated.nextVersion} 正式发布（前端状态同步）`,
           operator: '系统管理员',
           timestamp: new Date().toISOString(),
           details: {
@@ -215,7 +220,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         };
         set(state => ({
           packages: state.packages.map(p => p.id === id ? updated : p),
-          auditLogs: [auditLog, ...state.auditLogs],
+          auditLogs: [auditLog, ...state.auditLogs.filter(a => !a.id.startsWith('log-publish-local-'))],
           loading: false,
         }));
         return true;
@@ -233,11 +238,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const updated = await api.packages.rollback(id);
       if (updated) {
+        await Promise.all([
+          get().fetchPackages(),
+          get().fetchPackageAuditLogs(id),
+          get().fetchPackageRollbackDrafts(id),
+        ]);
         const auditLog: AuditLog = {
-          id: `log-rollback-${Date.now()}`,
+          id: `log-rollback-local-${Date.now()}`,
           packageId: id,
           action: '版本回滚',
-          description: `发布包【${updated.name}】已回滚至前一稳定版`,
+          description: `发布包【${updated.name}】已回滚至前一稳定版（前端状态同步）`,
           operator: '系统管理员',
           timestamp: new Date().toISOString(),
           details: {
@@ -247,7 +257,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         };
         set(state => ({
           packages: state.packages.map(p => p.id === id ? updated : p),
-          auditLogs: [auditLog, ...state.auditLogs],
+          auditLogs: [auditLog, ...state.auditLogs.filter(a => !a.id.startsWith('log-rollback-local-'))],
           loading: false,
         }));
         return true;
