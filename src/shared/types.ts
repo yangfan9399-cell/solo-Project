@@ -97,3 +97,30 @@ export interface AuditLog {
   timestamp: string;
   details?: Record<string, unknown>;
 }
+
+export interface RecalcBatch {
+  id: string;
+  packageId: string;
+  name: string;
+  description: string;
+  sampleCount: number;
+  estimatedTimeMinutes: number;
+  exportFormat: 'pdf' | 'excel' | 'json' | 'csv';
+  batchType: 'report' | 'heatmap' | 'dataset' | 'annotation';
+  priority: 'high' | 'medium' | 'low';
+  createdAt: string;
+}
+
+export interface ImpactDetailResponse {
+  samples: AffectedSample[];
+  stats: {
+    total: number;
+    locked: number;
+    conflict: number;
+    recalc_needed: number;
+    normal: number;
+  };
+  recalcBatches: RecalcBatch[];
+  lockedSampleIds: string[];
+  conflictSampleIds: string[];
+}

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ReleasePackage, VersionRecord, AffectedSample, BlockerItem, RollbackDraft, AuditLog } from '../shared/types';
+import type { ReleasePackage, VersionRecord, AffectedSample, BlockerItem, RollbackDraft, AuditLog, RecalcBatch, ImpactDetailResponse } from '../shared/types';
 import { ReleaseStatus } from '../shared/types';
 import api from '../services/api';
 
@@ -11,6 +11,8 @@ interface AppState {
   blockers: BlockerItem[];
   rollbackDrafts: RollbackDraft[];
   auditLogs: AuditLog[];
+  recalcBatches: RecalcBatch[];
+  impactCache: Record<string, ImpactDetailResponse>;
   loading: boolean;
   error: string | null;
   sidebarCollapsed: boolean;
@@ -22,8 +24,10 @@ interface AppState {
   fetchPackageBlockers: (packageId: string) => Promise<void>;
   fetchPackageRollbackDrafts: (packageId: string) => Promise<void>;
   fetchPackageAuditLogs: (packageId: string) => Promise<void>;
-  publishPackage: (id: string) => Promise<void>;
-  rollbackPackage: (id: string) => Promise<void>;
+  fetchPackageImpact: (packageId: string) => Promise<ImpactDetailResponse | null>;
+  fetchPackageRecalcBatches: (packageId: string) => Promise<void>;
+  publishPackage: (id: string) => Promise<boolean>;
+  rollbackPackage: (id: string) => Promise<boolean>;
   resolveBlocker: (id: string, resolution: string) => Promise<void>;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -48,6 +52,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   blockers: [],
   rollbackDrafts: [],
   auditLogs: [],
+  recalcBatches: [],
+  impactCache: {},
   loading: false,
   error: null,
   sidebarCollapsed: false,
@@ -146,18 +152,79 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  fetchPackageImpact: async (packageId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const impact = await api.impact.get(packageId);
+      set(state => ({
+        samples: [
+          ...state.samples.filter(s => s.packageId !== packageId),
+          ...impact.samples
+        ],
+        recalcBatches: [
+          ...state.recalcBatches.filter(b => b.packageId !== packageId),
+          ...impact.recalcBatches
+        ],
+        impactCache: {
+          ...state.impactCache,
+          [packageId]: impact
+        },
+        loading: false,
+      }));
+      return impact;
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      return null;
+    }
+  },
+
+  fetchPackageRecalcBatches: async (packageId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await api.recalcBatches.list(packageId);
+      set(state => ({
+        recalcBatches: [
+          ...state.recalcBatches.filter(b => b.packageId !== packageId),
+          ...data
+        ],
+        loading: false,
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+    }
+  },
+
   publishPackage: async (id: string) => {
     set({ loading: true, error: null });
     try {
       const updated = await api.packages.publish(id);
       if (updated) {
+        const auditLog: AuditLog = {
+          id: `log-publish-${Date.now()}`,
+          packageId: id,
+          action: '版本发布',
+          description: `发布包【${updated.name}】${updated.nextVersion} 正式发布`,
+          operator: '系统管理员',
+          timestamp: new Date().toISOString(),
+          details: {
+            fromVersion: updated.currentVersion,
+            toVersion: updated.nextVersion,
+            affectedSamples: updated.affectedSampleCount,
+            publishedAt: updated.publishedAt
+          }
+        };
         set(state => ({
           packages: state.packages.map(p => p.id === id ? updated : p),
+          auditLogs: [auditLog, ...state.auditLogs],
           loading: false,
         }));
+        return true;
       }
+      set({ loading: false });
+      return false;
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+      return false;
     }
   },
 
@@ -166,13 +233,30 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const updated = await api.packages.rollback(id);
       if (updated) {
+        const auditLog: AuditLog = {
+          id: `log-rollback-${Date.now()}`,
+          packageId: id,
+          action: '版本回滚',
+          description: `发布包【${updated.name}】已回滚至前一稳定版`,
+          operator: '系统管理员',
+          timestamp: new Date().toISOString(),
+          details: {
+            rollbackFrom: updated.nextVersion,
+            rollbackTo: updated.currentVersion
+          }
+        };
         set(state => ({
           packages: state.packages.map(p => p.id === id ? updated : p),
+          auditLogs: [auditLog, ...state.auditLogs],
           loading: false,
         }));
+        return true;
       }
+      set({ loading: false });
+      return false;
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+      return false;
     }
   },
 

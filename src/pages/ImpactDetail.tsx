@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Filter, Lock, RefreshCw, AlertTriangle, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Filter, Lock, RefreshCw, AlertTriangle, ChevronRight, FileText, Database, Edit3, MapPin } from 'lucide-react';
 import { ScrollCard, StatusTag, SealBadge, BambooDivider } from '../components/common';
 import { useAppStore } from '../store';
 import { formatDate, dimensionTextMap } from '../utils/format';
 import { cn } from '../lib/utils';
+import type { RecalcBatch } from '../shared/types';
 
 type TabType = 'samples' | 'locked' | 'recalc';
 type FilterType = 'all' | 'recalc_needed' | 'locked' | 'conflict';
@@ -68,6 +69,23 @@ const mockOldNewValues: Record<string, { old: string; new: string }> = {
   'smp-rust-019': { old: '锈蚀级别：1级', new: '锈蚀级别：1级' },
   'smp-rust-020': { old: '锈蚀级别：2级', new: '锈蚀级别：2级' },
   'smp-rust-021': { old: '锈蚀级别：2级', new: '锈蚀级别：2级' },
+  'smp-ins-001': { old: '姓名：文 / 表字：士（旧释文）', new: '姓名：文远 / 表字：士弘（补读新释）' },
+  'smp-ins-002': { old: '口径：三尺（实测）', new: '口径：三尺五寸（铭文补读）' },
+  'smp-ins-003': { old: '位置：州署东', new: '位置：州署东偏（补读建议）' },
+  'smp-ins-004': { old: '残缺3处（已释读）', new: '残缺3处（释读一致）' },
+  'smp-ins-005': { old: '待二次审核（锁定）', new: '残缺6处，置信度82%' },
+  'smp-ins-006': { old: '置信度评分：72/100', new: '置信度评分：85/100（算法更新）' },
+  'smp-ins-007': { old: '纪年：五凤二年', new: '纪年：五凤三年（补读修正）' },
+  'smp-ins-008': { old: '与《金石补正》一致', new: '与《金石补正》一致' },
+  'smp-ins-009': { old: '残缺7处，北魏对照样本18', new: '残缺7处，北魏对照样本45' },
+  'smp-ins-010': { old: '藏文残缺待审批（锁定）', new: '含疑似梵文题记2处' },
+  'smp-ins-011': { old: '纪年：淳祐十年', new: '纪年：淳祐十一年（补读修正）' },
+  'smp-ins-012': { old: '残缺4处（稳定）', new: '残缺4处（稳定）' },
+  'smp-ins-013': { old: '特级文物锁定中', new: '残缺铭文15处待专家审核' },
+  'smp-ins-014': { old: '置信度：68/100（旧算法）', new: '置信度：79/100（新算法）' },
+  'smp-ins-015': { old: '古越文字：南海（旧释）', new: '古越文字：番禺（模型补读）' },
+  'smp-ins-016': { old: '与《闽中金石志》一致', new: '与《闽中金石志》一致' },
+  'smp-ins-017': { old: '纪年：上元二年', new: '纪年：上元三年（补读修正，影响王勃序考证）' },
   'smp-orient-001': { old: '方位：北偏东15°', new: '方位：北偏东20°' },
   'smp-orient-002': { old: '方位：正北', new: '方位：正北' },
   'smp-orient-003': { old: '方位：南偏西10°', new: '方位：南偏西10°' },
@@ -82,28 +100,57 @@ const mockOldNewValues: Record<string, { old: string; new: string }> = {
   'smp-orient-012': { old: '方位：东偏北6°', new: '方位：东偏北9°' },
 };
 
-const mockRecalcBatches = [
-  { id: 'batch-001', name: '清晰度评估报告-2025Q2', sampleCount: 12, estimatedTime: '约2小时30分' },
-  { id: 'batch-002', name: '局部清晰度热力图生成', sampleCount: 8, estimatedTime: '约1小时15分' },
-  { id: 'batch-003', name: '低光照增强对比报告', sampleCount: 5, estimatedTime: '约45分钟' },
-];
+const formatEstimatedTime = (minutes: number): string => {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const parts: string[] = [];
+  if (h > 0) parts.push(`约${h}小时`);
+  if (m > 0) parts.push(`${m}分`);
+  return parts.length ? parts.join('') : '即时';
+};
+
+const batchTypeIcon = (t: RecalcBatch['batchType']) => {
+  switch (t) {
+    case 'report': return FileText;
+    case 'heatmap': return MapPin;
+    case 'dataset': return Database;
+    case 'annotation': return Edit3;
+    default: return RefreshCw;
+  }
+};
+
+const batchTypeText: Record<string, string> = {
+  report: '评估报告',
+  heatmap: '热力图生成',
+  dataset: '数据集导出',
+  annotation: '标注更新',
+};
+
+const formatPriority = (p: RecalcBatch['priority']) => {
+  switch (p) {
+    case 'high': return { label: '高优', cls: 'bg-cinnabar-100 text-cinnabar-700 border-cinnabar-200' };
+    case 'medium': return { label: '中优', cls: 'bg-ochre-100 text-ochre-700 border-ochre-200' };
+    case 'low': return { label: '普通', cls: 'bg-stoneBlue-100 text-stoneBlue-700 border-stoneBlue-200' };
+  }
+};
 
 export default function ImpactDetail() {
   const { packageId } = useParams<{ packageId: string }>();
   const navigate = useNavigate();
-  const { packages, samples, fetchPackages, fetchPackageSamples } = useAppStore();
+  const { packages, samples, recalcBatches, fetchPackages, fetchPackageImpact } = useAppStore();
   const [activeTab, setActiveTab] = useState<TabType>('samples');
   const [filterStatus, setFilterStatus] = useState<FilterType>('all');
 
   useEffect(() => {
     if (packageId) {
       fetchPackages();
-      fetchPackageSamples(packageId);
+      fetchPackageImpact(packageId);
     }
-  }, [packageId, fetchPackages, fetchPackageSamples]);
+  }, [packageId, fetchPackages, fetchPackageImpact]);
 
   const pkg = packages.find(p => p.id === packageId);
   const packageSamples = samples.filter(s => s.packageId === packageId);
+  const packageBatches = recalcBatches.filter(b => b.packageId === packageId);
 
   const filteredSamples = packageSamples.filter(s => {
     if (filterStatus === 'all') return true;
@@ -377,39 +424,63 @@ export default function ImpactDetail() {
           {activeTab === 'recalc' && (
             <div className="space-y-4">
               <p className="text-sm text-ochre-600 font-song mb-4">
-                以下批次因样本数据更新需要重新计算导出
+                以下导出批次因 {pkg?.name} 样本数据更新需要重新计算
               </p>
-              {mockRecalcBatches.map(batch => (
-                <div
-                  key={batch.id}
-                  className="p-4 bg-stoneBlue-50 rounded-lg border border-stoneBlue-200 
-                             hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-stoneBlue-100 flex items-center justify-center">
-                        <RefreshCw size={18} className="text-stoneBlue-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-song font-medium text-stoneBlue-800">
-                          {batch.name}
-                        </h4>
-                        <p className="text-xs text-stoneBlue-500 font-song mt-0.5">
-                          关联 {batch.sampleCount} 个样本
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-song text-stoneBlue-700">
-                        {batch.estimatedTime}
-                      </div>
-                      <div className="text-xs text-stoneBlue-500 font-song mt-0.5">
-                        预计重算时间
-                      </div>
-                    </div>
-                  </div>
+              {packageBatches.length === 0 ? (
+                <div className="py-12 text-center text-ochre-400 font-song">
+                  暂无需重算的导出批次
                 </div>
-              ))}
+              ) : (
+                packageBatches.map(batch => {
+                  const Icon = batchTypeIcon(batch.batchType);
+                  const prio = formatPriority(batch.priority);
+                  return (
+                    <div
+                      key={batch.id}
+                      className="p-4 bg-stoneBlue-50 rounded-lg border border-stoneBlue-200
+                                 hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-stoneBlue-100 flex items-center justify-center">
+                            <Icon size={18} className="text-stoneBlue-600" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-song font-medium text-stoneBlue-800">
+                                {batch.name}
+                              </h4>
+                              <span className={cn(
+                                'px-2 py-0.5 text-xs rounded border font-song',
+                                prio.cls
+                              )}>
+                                {prio.label}
+                              </span>
+                            </div>
+                            <p className="text-xs text-stoneBlue-500 font-song mt-0.5">
+                              {batchTypeText[batch.batchType]} · 关联 {batch.sampleCount} 个样本 · {batch.exportFormat.toUpperCase()}
+                            </p>
+                            <p className="text-xs text-stoneBlue-400 font-song mt-1">
+                              {batch.description}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-song text-stoneBlue-700">
+                            {formatEstimatedTime(batch.estimatedTimeMinutes)}
+                          </div>
+                          <div className="text-xs text-stoneBlue-500 font-song mt-0.5">
+                            预计重算时间
+                          </div>
+                          <div className="text-xs text-stoneBlue-400 font-song mt-1">
+                            {formatDate(batch.createdAt, 'date')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           )}
         </ScrollCard>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SealBadge, ScrollCard, StatusTag, BambooDivider, Timeline } from '../components/common';
 import type { TimelineItem } from '../components/common';
@@ -6,7 +6,7 @@ import { useAppStore } from '../store';
 import { ReleaseStatus, PackageDimension } from '../shared/types';
 import { dimensionTextMap, formatDate, formatNumber, statusTextMap } from '../utils/format';
 import { cn } from '../lib/utils';
-import { CheckCircle2, RotateCcw, Send } from 'lucide-react';
+import { CheckCircle2, RotateCcw, Send, Loader2, X as XIcon, AlertTriangle } from 'lucide-react';
 
 const statsConfig = [
   { key: 'total', label: '总发布包', color: 'ochre', icon: '📜' },
@@ -26,8 +26,34 @@ const statusFilterOptions = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { packages, versions, blockers, getStats, fetchPackages, fetchPackageVersions, fetchPackageBlockers } = useAppStore();
+  const { packages, versions, blockers, getStats, fetchPackages, fetchPackageVersions, fetchPackageBlockers, publishPackage } = useAppStore();
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [publishDialog, setPublishDialog] = useState<{ show: boolean; packageId: string | null }>({ show: false, packageId: null });
+  const [publishState, setPublishState] = useState<'idle' | 'publishing' | 'success' | 'failed'>('idle');
+
+  const handlePublishClick = async (pkgId: string) => {
+    setPublishDialog({ show: true, packageId: pkgId });
+    setPublishState('idle');
+  };
+
+  const handleConfirmPublish = async () => {
+    if (!publishDialog.packageId) return;
+    setPublishState('publishing');
+    try {
+      const ok = await publishPackage(publishDialog.packageId);
+      if (ok) {
+        setPublishState('success');
+        setTimeout(() => {
+          setPublishDialog({ show: false, packageId: null });
+          setPublishState('idle');
+        }, 1600);
+      } else {
+        setPublishState('failed');
+      }
+    } catch (e) {
+      setPublishState('failed');
+    }
+  };
 
   useEffect(() => {
     fetchPackages();
@@ -225,7 +251,7 @@ export default function Dashboard() {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (pkg.status === ReleaseStatus.pending && blockerCount === 0) {
-                            useAppStore.getState().publishPackage(pkg.id);
+                            handlePublishClick(pkg.id);
                           }
                         }}
                         disabled={pkg.status !== ReleaseStatus.pending || blockerCount > 0}
@@ -339,6 +365,97 @@ export default function Dashboard() {
             <Timeline items={timelineItems} />
           </ScrollCard>
         </div>
+
+        {publishDialog.show && publishDialog.packageId && (() => {
+          const targetPkg = packages.find(p => p.id === publishDialog.packageId);
+          if (!targetPkg) return null;
+          return (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+              <ScrollCard className="max-w-md w-full relative">
+                <button
+                  onClick={() => publishState === 'idle' && setPublishDialog({ show: false, packageId: null })}
+                  className="absolute top-3 right-3 p-1 text-ochre-400 hover:text-ochre-600 transition-colors"
+                  disabled={publishState !== 'idle'}
+                >
+                  <XIcon size={18} />
+                </button>
+                <div className="text-center">
+                  <div className={cn(
+                    'inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 border-2',
+                    publishState === 'success'
+                      ? 'bg-bronze-50 border-bronze-300'
+                      : publishState === 'failed'
+                      ? 'bg-cinnabar-50 border-cinnabar-300'
+                      : 'bg-ochre-50 border-ochre-300'
+                  )}>
+                    {publishState === 'success' ? (
+                      <CheckCircle2 className="w-8 h-8 text-bronze-500" />
+                    ) : publishState === 'failed' ? (
+                      <AlertTriangle className="w-8 h-8 text-cinnabar-500" />
+                    ) : publishState === 'publishing' ? (
+                      <Loader2 className="w-8 h-8 text-ochre-500 animate-spin" />
+                    ) : (
+                      <Send className="w-8 h-8 text-ochre-500" />
+                    )}
+                  </div>
+                  <h3 className="font-song font-bold text-xl text-ochre-800 mb-2">
+                    {publishState === 'success' ? '发布成功' : publishState === 'failed' ? '发布失败' : '确认发布版本'}
+                  </h3>
+                  <p className="text-ochre-500 text-sm mb-6 leading-relaxed">
+                    {publishState === 'success' ? (
+                      <>
+                        发布包【{targetPkg.name}】{targetPkg.nextVersion} 已发布，<br />
+                        操作已写入审计日志。
+                      </>
+                    ) : publishState === 'failed' ? (
+                      <>发布执行失败，请稍后重试或联系管理员。</>
+                    ) : (
+                      <>
+                        将发布 <span className="font-bold text-ochre-700">{targetPkg.name}</span> 版本
+                        <span className="font-bold text-ochre-700"> {targetPkg.nextVersion}</span>
+                        <br />
+                        将影响 <span className="font-bold text-ochre-700">{targetPkg.affectedSampleCount}</span> 个样本，
+                        此操作不可撤销。
+                      </>
+                    )}
+                  </p>
+                  <div className="flex items-center justify-center gap-3">
+                    <button
+                      onClick={() => setPublishDialog({ show: false, packageId: null })}
+                      disabled={publishState === 'publishing'}
+                      className={cn(
+                        'px-5 py-2 rounded border font-song transition-colors',
+                        publishState === 'success' || publishState === 'failed'
+                          ? 'border-ochre-300 text-ochre-700 bg-ochre-50 hover:bg-ochre-100'
+                          : 'border-ochre-300 text-ochre-700 hover:bg-ochre-50 disabled:opacity-50'
+                      )}
+                    >
+                      {publishState === 'success' || publishState === 'failed' ? '关闭' : '取消'}
+                    </button>
+                    {publishState === 'idle' && (
+                      <button
+                        onClick={handleConfirmPublish}
+                        className="px-5 py-2 rounded bg-bronze-500 text-white font-song hover:bg-bronze-400 transition-colors border border-bronze-600 shadow-seal flex items-center gap-2"
+                      >
+                        <Send size={14} />
+                        确认发布
+                      </button>
+                    )}
+                    {publishState === 'publishing' && (
+                      <button
+                        disabled
+                        className="px-5 py-2 rounded bg-ochre-500 text-white font-song border border-ochre-600 flex items-center gap-2"
+                      >
+                        <Loader2 size={14} className="animate-spin" />
+                        发布中...
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </ScrollCard>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

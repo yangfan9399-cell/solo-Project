@@ -1,4 +1,4 @@
-import type { ReleasePackage, VersionRecord, AffectedSample, BlockerItem, RollbackDraft, AuditLog } from '../shared/types';
+import type { ReleasePackage, VersionRecord, AffectedSample, BlockerItem, RollbackDraft, AuditLog, RecalcBatch, ImpactDetailResponse } from '../shared/types';
 import { PackageDimension, ReleaseStatus } from '../shared/types';
 import { packages as mockPackages } from '../api/data/packages';
 import { versions as mockVersions } from '../api/data/versions';
@@ -6,6 +6,7 @@ import { samples as mockSamples } from '../api/data/samples';
 import { blockers as mockBlockers } from '../api/data/blockers';
 import { rollbackDrafts as mockRollbackDrafts } from '../api/data/rollback-drafts';
 import { auditLogs as mockAuditLogs } from '../api/data/audit-logs';
+import { recalcBatches as mockRecalcBatches } from '../api/data/recalc-batches';
 
 export const api = {
   packages: {
@@ -140,6 +141,45 @@ export const api = {
       return Promise.resolve(mockAuditLogs.find(a => a.id === id));
     },
   },
+
+  impact: {
+    get: (packageId: string): Promise<ImpactDetailResponse> => {
+      const pkgSamples = mockSamples.filter(s => s.packageId === packageId);
+      const pkgBatches = mockRecalcBatches.filter(b => b.packageId === packageId);
+
+      const stats = {
+        total: pkgSamples.length,
+        locked: pkgSamples.filter(s => s.status === 'locked').length,
+        conflict: pkgSamples.filter(s => s.status === 'conflict').length,
+        recalc_needed: pkgSamples.filter(s => s.status === 'recalc_needed').length,
+        normal: pkgSamples.filter(s => s.status === 'normal').length,
+      };
+
+      mockAuditLogs.push({
+        id: `log-impact-${Date.now()}`,
+        packageId,
+        action: '影响分析查询',
+        description: '前端发起影响明细查询',
+        operator: '系统用户',
+        timestamp: new Date().toISOString(),
+        details: { stats, batchCount: pkgBatches.length }
+      });
+
+      return Promise.resolve({
+        samples: pkgSamples,
+        stats,
+        recalcBatches: pkgBatches,
+        lockedSampleIds: pkgSamples.filter(s => s.status === 'locked').map(s => s.id),
+        conflictSampleIds: pkgSamples.filter(s => s.status === 'conflict').map(s => s.id),
+      });
+    }
+  },
+
+  recalcBatches: {
+    list: (packageId: string): Promise<RecalcBatch[]> => {
+      return Promise.resolve(mockRecalcBatches.filter(b => b.packageId === packageId));
+    }
+  }
 };
 
 export default api;

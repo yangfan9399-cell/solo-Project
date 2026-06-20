@@ -26,16 +26,39 @@ const stepStatusMap = {
 const RollbackDraft: React.FC = () => {
   const navigate = useNavigate();
   const { packageId } = useParams<{ packageId: string }>();
-  const { packages, rollbackDrafts, fetchPackages, fetchPackageRollbackDrafts } = useAppStore();
+  const { packages, rollbackDrafts, auditLogs, fetchPackages, fetchPackageRollbackDrafts, rollbackPackage, fetchPackageAuditLogs } = useAppStore();
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isRollingBack, setIsRollingBack] = useState(false);
+  const [rollbackSuccess, setRollbackSuccess] = useState(false);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
 
   useEffect(() => {
     if (packageId) {
       fetchPackages();
       fetchPackageRollbackDrafts(packageId);
+      fetchPackageAuditLogs(packageId);
     }
-  }, [packageId, fetchPackages, fetchPackageRollbackDrafts]);
+  }, [packageId, fetchPackages, fetchPackageRollbackDrafts, fetchPackageAuditLogs]);
+
+  const handleRollbackExecute = async () => {
+    if (!packageId) return;
+    setIsRollingBack(true);
+    try {
+      const ok = await rollbackPackage(packageId);
+      setIsRollingBack(false);
+      if (ok) {
+        setRollbackSuccess(true);
+        setTimeout(() => {
+          navigate(-1);
+        }, 1800);
+      } else {
+        alert('回滚执行失败，请重试');
+      }
+    } catch (e) {
+      setIsRollingBack(false);
+      alert('回滚执行失败');
+    }
+  };
 
   const pkg = packages.find(p => p.id === packageId);
   const draft = rollbackDrafts.find(d => d.packageId === packageId && d.status === 'draft');
@@ -307,20 +330,30 @@ const RollbackDraft: React.FC = () => {
                 <div className="flex items-center justify-center gap-3">
                   <button
                     onClick={() => setShowConfirm(false)}
-                    className="px-5 py-2 rounded border border-ochre-300 text-ochre-700 font-song hover:bg-ochre-50 transition-colors"
+                    disabled={isRollingBack}
+                    className="px-5 py-2 rounded border border-ochre-300 text-ochre-700 font-song hover:bg-ochre-50 transition-colors disabled:opacity-50"
                   >
                     取消
                   </button>
                   <button
-                    onClick={() => {
-                      setShowConfirm(false);
-                      navigate(-1);
-                    }}
-                    className="px-5 py-2 rounded bg-cinnabar-500 text-white font-song hover:bg-cinnabar-400 transition-colors border border-cinnabar-600"
+                    onClick={handleRollbackExecute}
+                    disabled={isRollingBack || rollbackSuccess}
+                    className={cn(
+                      'px-5 py-2 rounded text-white font-song transition-colors border flex items-center gap-2',
+                      rollbackSuccess
+                        ? 'bg-bronze-500 border-bronze-600'
+                        : 'bg-cinnabar-500 hover:bg-cinnabar-400 border-cinnabar-600'
+                    )}
                   >
-                    确认执行
+                    {isRollingBack && <Loader2 size={16} className="animate-spin" />}
+                    {rollbackSuccess ? '回滚成功' : isRollingBack ? '回滚执行中...' : '确认执行'}
                   </button>
                 </div>
+                {rollbackSuccess && (
+                  <div className="mt-4 p-3 bg-bronze-50 rounded border border-bronze-200 text-sm text-bronze-700 font-song">
+                    ✅ 回滚操作已记录至审计日志，正在返回...
+                  </div>
+                )}
               </div>
             </ScrollCard>
           </div>
