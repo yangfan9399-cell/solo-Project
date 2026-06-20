@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, Clock, Users, ChevronDown, ChevronUp, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Clock, Users, ChevronDown, ChevronUp, CheckCircle2, XCircle, Loader2, FileText, Sparkles } from 'lucide-react';
 import ScrollCard from '../components/common/ScrollCard';
 import SealBadge from '../components/common/SealBadge';
 import StatusTag from '../components/common/StatusTag';
 import BambooDivider from '../components/common/BambooDivider';
 import { useAppStore } from '../store';
 import { formatDate, formatNumber } from '../utils/format';
-import { ReleaseStatus } from '../shared/types';
+import { ReleaseStatus, RollbackDraft as RollbackDraftType } from '../shared/types';
+import api from '../services/api';
 import { cn } from '../lib/utils';
 
 const riskLevelMap = {
@@ -31,6 +32,11 @@ const RollbackDraft: React.FC = () => {
   const [isRollingBack, setIsRollingBack] = useState(false);
   const [rollbackSuccess, setRollbackSuccess] = useState(false);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedDraft, setGeneratedDraft] = useState<RollbackDraftType | null>(null);
+  const [generateReason, setGenerateReason] = useState('');
+  const [generateSuccess, setGenerateSuccess] = useState(false);
 
   useEffect(() => {
     if (packageId) {
@@ -60,10 +66,50 @@ const RollbackDraft: React.FC = () => {
     }
   };
 
-  const pkg = packages.find(p => p.id === packageId);
-  const draft = rollbackDrafts.find(d => d.packageId === packageId && d.status === 'draft');
+  const handleGenerateDraft = async () => {
+    if (!packageId) return;
+    setIsGenerating(true);
+    setGenerateSuccess(false);
+    setGeneratedDraft(null);
+    try {
+      const result = await api.rollbackDrafts.generate(packageId, { reason: generateReason || undefined });
+      setIsGenerating(false);
+      if (result) {
+        setGeneratedDraft(result);
+        setGenerateSuccess(true);
+        await fetchPackageRollbackDrafts(packageId);
+        await fetchPackageAuditLogs(packageId);
+      } else {
+        alert('回滚草案生成失败');
+      }
+    } catch (e) {
+      setIsGenerating(false);
+      alert('回滚草案生成失败');
+    }
+  };
 
-  const getRiskLevel = (steps: typeof draft['steps']) => {
+  const pkg = packages.find(p => p.id === packageId);
+  const effectiveDraft = generatedDraft || rollbackDrafts.find(d => d.packageId === packageId && d.status === 'draft');
+  const recentAuditLogs = auditLogs.filter(a => a.packageId === packageId).slice(0, 5);
+
+  if (!pkg) {
+    return (
+      <div className="min-h-screen bg-paper-100 p-8">
+        <div className="max-w-4xl mx-auto">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-ochre-600 hover:text-ochre-800 transition-colors mb-6 font-song"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>返回</span>
+          </button>
+          <div className="text-center py-16 text-ochre-500 font-song">加载中...</div>
+        </div>
+      </div>
+    );
+  }
+
+  const getRiskLevel = (steps: RollbackDraftType['steps']) => {
     const totalDuration = steps.reduce((sum, s) => sum + s.estimatedDuration, 0);
     if (totalDuration > 100) return 'high';
     if (totalDuration > 50) return 'medium';
@@ -71,7 +117,7 @@ const RollbackDraft: React.FC = () => {
   };
 
   const getAffectedCount = () => pkg?.affectedSampleCount || 0;
-  const getTotalDuration = () => draft?.steps.reduce((sum, s) => sum + s.estimatedDuration, 0) || 0;
+  const getTotalDuration = (steps?: RollbackDraftType['steps']) => steps?.reduce((sum, s) => sum + s.estimatedDuration, 0) || 0;
 
   const StepSeal: React.FC<{ num: number; status: string }> = ({ num, status }) => {
     const statusConfig = stepStatusMap[status as keyof typeof stepStatusMap];
@@ -101,10 +147,12 @@ const RollbackDraft: React.FC = () => {
     );
   };
 
-  if (!pkg || !draft) {
+  const displayDraft = generatedDraft || effectiveDraft;
+
+  if (!displayDraft) {
     return (
       <div className="min-h-screen bg-paper-100 p-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-ochre-600 hover:text-ochre-800 transition-colors mb-6 font-song"
@@ -112,13 +160,115 @@ const RollbackDraft: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
             <span>返回</span>
           </button>
-          <div className="text-center py-16 text-ochre-500 font-song">加载中...</div>
+          <ScrollCard>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-ochre-50 border-2 border-ochre-300 flex items-center justify-center">
+                <FileText size={18} className="text-ochre-600" />
+              </div>
+              <div>
+                <h2 className="font-song font-bold text-xl text-ochre-800">生成回滚草案</h2>
+                <p className="text-xs text-ochre-500 font-song">发布包：{pkg.name}（{pkg.currentVersion} → {pkg.nextVersion}）</p>
+              </div>
+            </div>
+            <BambooDivider variant="default" withText={true} text="系统自动推演" />
+            <div className="mt-6 space-y-5">
+              <label className="block">
+                <span className="text-sm text-ochre-700 font-song mb-2 block">回滚原因（可选）</span>
+                <textarea
+                  value={generateReason}
+                  onChange={e => setGenerateReason(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-3 rounded border border-ochre-300 bg-paper-100 text-ochre-800 font-song text-sm focus:outline-none focus:ring-2 focus:ring-ochre-400 focus:border-transparent resize-none"
+                  placeholder="例如：发现部分铭文识别准确率下降、存在阻断项无法解决、需临时回滚至稳定版……"
+                />
+              </label>
+              <div className="p-4 bg-ochre-50 rounded-lg border border-ochre-200">
+                <h4 className="font-song font-medium text-ochre-800 text-sm mb-2 flex items-center gap-2">
+                  <Sparkles size={14} />
+                  自动推演内容
+                </h4>
+                <ul className="space-y-1 text-xs text-ochre-600 font-song">
+                  <li>• 将自动定位回滚目标版本（上一稳定版：{pkg.currentVersion}）</li>
+                  <li>• 生成 6 步标准回滚流程（备份/暂停/切换/重算/校验/通知）</li>
+                  <li>• 预计影响 {pkg.affectedSampleCount} 个样本</li>
+                  <li>• 生成完成后立即写入审计日志</li>
+                </ul>
+              </div>
+              {generateSuccess && generatedDraft && (
+                <div className="p-4 bg-bronze-50 rounded-lg border border-bronze-200 animate-pulse">
+                  <div className="flex items-center gap-2 text-bronze-700 font-song text-sm">
+                    <CheckCircle2 size={16} />
+                    <span>
+                      草案已生成：<b>{generatedDraft.id}</b>（{generatedDraft.steps.length} 步，
+                      预计 {getTotalDuration(generatedDraft.steps)} 分钟），审计日志已记录
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="px-5 py-2 rounded border border-ochre-300 text-ochre-700 font-song hover:bg-ochre-50 transition-colors"
+                >
+                  返回
+                </button>
+                <button
+                  onClick={handleGenerateDraft}
+                  disabled={isGenerating}
+                  className={cn(
+                    'px-5 py-2 rounded font-song border flex items-center gap-2 transition-colors',
+                    generateSuccess
+                      ? 'bg-bronze-500 text-white border-bronze-600'
+                      : 'bg-ochre-500 text-white hover:bg-ochre-400 border-ochre-600'
+                  )}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      生成中...
+                    </>
+                  ) : generateSuccess ? (
+                    <>
+                      <CheckCircle2 size={14} />
+                      已生成
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} />
+                      调用后端生成
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+            {recentAuditLogs.length > 0 && (
+              <>
+                <BambooDivider variant="default" withText={true} text="审计记录" className="my-6" />
+                <div className="space-y-2">
+                  {recentAuditLogs.map(log => (
+                    <div key={log.id} className="flex items-start gap-3 p-2 border-l-2 border-ochre-300">
+                      <div className="text-xs text-ochre-400 font-song whitespace-nowrap">
+                        {formatDate(log.timestamp, 'full')}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm text-ochre-700 font-song font-medium">
+                          {log.action}
+                        </div>
+                        <div className="text-xs text-ochre-500 font-song">{log.description}</div>
+                      </div>
+                      <div className="text-xs text-ochre-400 font-song">{log.operator}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </ScrollCard>
         </div>
       </div>
     );
   }
 
-  const riskLevel = getRiskLevel(draft.steps);
+  const riskLevel = getRiskLevel(displayDraft.steps);
   const riskConfig = riskLevelMap[riskLevel as keyof typeof riskLevelMap];
 
   return (
@@ -142,11 +292,33 @@ const RollbackDraft: React.FC = () => {
                 <span className="text-ochre-600 font-song text-lg">{pkg.name}</span>
                 <span className="text-ochre-400">|</span>
                 <span className="text-ochre-500 text-sm">
-                  {draft.targetVersion} → {draft.rollbackVersion}
+                  {displayDraft.targetVersion} → {displayDraft.rollbackVersion}
                 </span>
               </div>
+              {generateSuccess && generatedDraft && (
+                <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-bronze-50 border border-bronze-200 text-xs text-bronze-700 font-song animate-pulse">
+                  <CheckCircle2 size={12} />
+                  刚刚生成 · 审计日志已记录
+                </div>
+              )}
             </div>
-            <SealBadge status={ReleaseStatus.draft} size="md" />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleGenerateDraft}
+                disabled={isGenerating}
+                className={cn(
+                  'px-4 py-2 rounded font-song text-sm border flex items-center gap-2 transition-colors',
+                  generateSuccess
+                    ? 'bg-bronze-50 text-bronze-700 border-bronze-300'
+                    : 'bg-ochre-50 text-ochre-700 border-ochre-300 hover:bg-ochre-100'
+                )}
+                title="调用后端 POST /rollback/:id/generate-rollback-draft"
+              >
+                {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                {generateSuccess ? '重新生成草案' : isGenerating ? '生成中...' : '生成新草案'}
+              </button>
+              <SealBadge status={ReleaseStatus.draft} size="md" />
+            </div>
           </div>
         </div>
 
@@ -200,7 +372,7 @@ const RollbackDraft: React.FC = () => {
               <div className="font-song font-medium text-ochre-700 mb-2">评估说明</div>
               <p className="text-ochre-500 text-xs leading-relaxed">
                 回滚操作将影响 {formatNumber(getAffectedCount())} 个已处理样本，
-                预计耗时约 {Math.floor(getTotalDuration() / 60)}小时{getTotalDuration() % 60}分钟。
+                预计耗时约 {Math.floor(getTotalDuration(displayDraft.steps) / 60)}小时{getTotalDuration(displayDraft.steps) % 60}分钟。
                 回滚过程中服务将短暂不可用，请选择业务低峰期执行。
               </p>
             </div>
@@ -210,10 +382,10 @@ const RollbackDraft: React.FC = () => {
         <BambooDivider withText={true} text="回滚步骤" />
 
         <div className="space-y-4 mb-8">
-          {draft.steps.map((step, index) => {
+          {displayDraft.steps.map((step, index) => {
             const statusConfig = stepStatusMap[step.status as keyof typeof stepStatusMap];
             const isExpanded = expandedStep === step.id;
-            const isLast = index === draft.steps.length - 1;
+            const isLast = index === displayDraft.steps.length - 1;
 
             return (
               <div key={step.id} className="relative">
@@ -323,7 +495,7 @@ const RollbackDraft: React.FC = () => {
                   确认执行回滚？
                 </h3>
                 <p className="text-ochre-500 text-sm mb-6 leading-relaxed">
-                  回滚操作将把 {pkg.name} 从 {draft.targetVersion} 回退至 {draft.rollbackVersion}。
+                  回滚操作将把 {pkg.name} 从 {displayDraft.targetVersion} 回退至 {displayDraft.rollbackVersion}。
                   <br />
                   此操作不可撤销，确定要继续吗？
                 </p>
@@ -358,6 +530,45 @@ const RollbackDraft: React.FC = () => {
             </ScrollCard>
           </div>
         )}
+
+        <BambooDivider withText={true} text="操作审计记录" />
+        <div className="space-y-2 mt-6">
+          {recentAuditLogs.length === 0 ? (
+            <div className="text-center py-8 text-ochre-400 font-song">暂无审计记录</div>
+          ) : (
+            recentAuditLogs.map(log => (
+              <div key={log.id} className="flex items-start gap-3 p-3 bg-paper-100 rounded border border-ochre-200 hover:bg-ochre-50 transition-colors">
+                <div className="text-xs text-ochre-400 font-song whitespace-nowrap w-40">
+                  {formatDate(log.timestamp, 'full')}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-ochre-800 font-song font-medium flex items-center gap-2">
+                    {log.action}
+                    {(log.action === '回滚草案生成' || log.action.includes('草案')) && (
+                      <span className="px-1.5 py-0.5 rounded text-xs bg-ochre-100 text-ochre-700 border border-ochre-200">
+                        生成
+                      </span>
+                    )}
+                    {log.action === '版本回滚' && (
+                      <span className="px-1.5 py-0.5 rounded text-xs bg-cinnabar-100 text-cinnabar-700 border border-cinnabar-200">
+                        回滚
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-ochre-500 font-song mt-0.5 truncate">{log.description}</div>
+                  {log.details && (
+                    <div className="mt-1 p-2 bg-ochre-50 rounded text-xs text-ochre-600 font-song font-mono break-all">
+                      {JSON.stringify(log.details)}
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-ochre-400 font-song whitespace-nowrap w-20 text-right">
+                  {log.operator}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ export interface ReleasePackage {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+  rolledBackAt?: string;
   author: string;
 }
 
