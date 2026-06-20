@@ -1,0 +1,116 @@
+/** @type {import('tailwindcss').Config} */
+
+export default {
+  darkMode: "class",
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    container: {
+      center: true,
+    },
+    extend: {
+      colors: {
+        ochre: {
+          50: "#FBF5EC",
+          100: "#F5E6D3",
+          200: "#E9D0B2",
+          300: "#D9B083",
+          400: "#C98E55",
+          500: "#B56D32",
+          600: "#8B4513",
+          700: "#6E3610",
+          800: "#50260C",
+          900: "#331808",
+        },
+        bronze: {
+          50: "#EEF5F0",
+          100: "#D6E7DC",
+          200: "#AED0BB",
+          300: "#7DB391",
+          400: "#559670",
+          500: "#4A7C59",
+          600: "#3A6347",
+          700: "#2D4B37",
+          800: "#1F3325",
+          900: "#121E16",
+        },
+        cinnabar: {
+          50: "#FBE9E6",
+          100: "#F5CDC6",
+          200: "#E99B8E",
+          300: "#DC6B58",
+          400: "#D04A33",
+          500: "#C23B22",
+          600: "#9C2F1B",
+          700: "#762415",
+          800: "#50180E",
+          900: "#2E0E08",
+        },
+        stoneBlue: {
+          50: "#E8EEF5",
+          100: "#CFDBEB",
+          200: "#9FB8D7",
+          300: "#6F93C0",
+          400: "#4774A8",
+          500: "#2C5F8C",
+          600: "#234B6F",
+          700: "#1A3852",
+          800: "#122637",
+          900: "#0A151D",
+        },
+        paper: {
+          50: "#FDF9F3",
+          100: "#FAF2E6",
+          200: "#F5E6D3",
+          300: "#EDD9BE",
+          400: "#E3C7A0",
+          500: "#D4AE7C",
+        },
+        ink: {
+          50: "#F2F2F2",
+          100: "#D9D9D9",
+          200: "#BFBFBF",
+          300: "#999999",
+          400: "#666666",
+          500: "#333333",
+          600: "#1A1A1A",
+          700: "#0D0D0D",
+        },
+      },
+      fontFamily: {
+        song: ["Noto Serif SC", "STSong", "SimSun", "serif"],
+        kai: ["STKaiti", "KaiTi", "serif"],
+        heiti: ["Noto Sans SC", "PingFang SC", "Microsoft YaHei", "sans-serif"],
+      },
+      boxShadow: {
+        "rubbing": "0 4px 20px rgba(139, 69, 19, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
+        "seal": "0 2px 8px rgba(194, 59, 34, 0.3), 0 4px 16px rgba(194, 59, 34, 0.15)",
+        "scroll": "0 8px 32px rgba(139, 69, 19, 0.12), 0 2px 8px rgba(139, 69, 19, 0.08)",
+      },
+      backgroundImage: {
+        "paper-texture": "linear-gradient(135deg, #FAF2E6 0%, #F5E6D3 50%, #EDD9BE 100%)",
+        "rubbing-pattern": "radial-gradient(circle at 20% 30%, rgba(139, 69, 19, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 69, 19, 0.05) 0%, transparent 50%)",
+      },
+      animation: {
+        "seal-stamp": "sealStamp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "scroll-reveal": "scrollReveal 0.6s ease-out",
+        "pulse-glow": "pulseGlow 2s ease-in-out infinite",
+      },
+      keyframes: {
+        sealStamp: {
+          "0%": { transform: "scale(1.5) rotate(-10deg)", opacity: "0" },
+          "50%": { transform: "scale(0.95) rotate(2deg)", opacity: "1" },
+          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
+        },
+        scrollReveal: {
+          "0%": { transform: "translateY(-20px)", opacity: "0", clipPath: "inset(0 0 100% 0)" },
+          "100%": { transform: "translateY(0)", opacity: "1", clipPath: "inset(0 0 0 0)" },
+        },
+        pulseGlow: {
+          "0%, 100%": { boxShadow: "0 0 0 0 rgba(194, 59, 34, 0.4)" },
+          "50%": { boxShadow: "0 0 0 8px rgba(194, 59, 34, 0)" },
+        },
+      },
+    },
+  },
+  plugins: [],
+};

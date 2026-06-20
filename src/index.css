@@ -1,0 +1,167 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background-color: #FAF2E6;
+    color: #333333;
+    min-height: 100vh;
+  }
+  
+  ::selection {
+    background-color: rgba(139, 69, 19, 0.2);
+    color: #502608;
+  }
+}
+
+@layer components {
+  .scroll-card {
+    @apply relative bg-paper-100 rounded-lg border border-ochre-200 shadow-scroll overflow-hidden;
+    background-image: 
+      radial-gradient(circle at 20% 20%, rgba(139, 69, 19, 0.02) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(139, 69, 19, 0.03) 0%, transparent 40%);
+  }
+  
+  .scroll-card::before {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-1;
+    background: linear-gradient(90deg, transparent, #8B4513, transparent);
+    opacity: 0.3;
+  }
+  
+  .scroll-card::after {
+    content: '';
+    @apply absolute bottom-0 left-0 right-0 h-1;
+    background: linear-gradient(90deg, transparent, #8B4513, transparent);
+    opacity: 0.3;
+  }
+  
+  .seal-badge {
+    @apply inline-flex items-center justify-center px-3 py-1 rounded-full font-song text-sm font-semibold;
+    border: 2px solid currentColor;
+    transform: rotate(-2deg);
+    position: relative;
+  }
+  
+  .seal-badge::before {
+    content: '';
+    @apply absolute inset-0 rounded-full;
+    background: currentColor;
+    opacity: 0.08;
+  }
+  
+  .timeline-dot {
+    @apply w-4 h-4 rounded-full border-2 relative z-10;
+  }
+  
+  .timeline-line {
+    @apply absolute left-2 top-4 bottom-0 w-0.5;
+  }
+  
+  .bamboo-divider {
+    @apply relative h-px my-4;
+    background: linear-gradient(90deg, transparent, #D9B083, transparent);
+  }
+  
+  .bamboo-divider::before,
+  .bamboo-divider::after {
+    content: '';
+    @apply absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full;
+    background-color: #B56D32;
+  }
+  
+  .bamboo-divider::before {
+    @apply left-0;
+  }
+  
+  .bamboo-divider::after {
+    @apply right-0;
+  }
+  
+  .btn-ancient {
+    @apply relative px-6 py-2 font-song font-medium rounded transition-all duration-300;
+    border: 1px solid;
+    overflow: hidden;
+  }
+  
+  .btn-ancient::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: currentColor;
+  }
+  
+  .btn-ancient:hover::before {
+    opacity: 0.1;
+  }
+  
+  .btn-primary {
+    @apply btn-ancient bg-ochre-600 text-paper-50 border-ochre-700 hover:bg-ochre-500;
+  }
+  
+  .btn-secondary {
+    @apply btn-ancient bg-transparent text-ochre-700 border-ochre-400 hover:bg-ochre-50;
+  }
+  
+  .btn-danger {
+    @apply btn-ancient bg-cinnabar-500 text-white border-cinnabar-600 hover:bg-cinnabar-400;
+  }
+  
+  .table-ancient {
+    @apply w-full border-collapse;
+  }
+  
+  .table-ancient th {
+    @apply px-4 py-3 text-left font-song font-semibold text-ochre-800 bg-ochre-50 border-b-2 border-ochre-200;
+  }
+  
+  .table-ancient td {
+    @apply px-4 py-3 border-b border-ochre-100;
+  }
+  
+  .table-ancient tr:hover td {
+    @apply bg-ochre-50/50;
+  }
+  
+  .tag-ancient {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium;
+    border: 1px solid;
+  }
+  
+  .conflict-highlight {
+    @apply relative;
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  .text-shadow-rubbing {
+    text-shadow: 1px 1px 2px rgba(139, 69, 19, 0.2);
+  }
+  
+  .scrollbar-ancient::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .scrollbar-ancient::-webkit-scrollbar-track {
+    background: #F5E6D3;
+    border-radius: 4px;
+  }
+  
+  .scrollbar-ancient::-webkit-scrollbar-thumb {
+    background: #D9B083;
+    border-radius: 4px;
+  }
+  
+  .scrollbar-ancient::-webkit-scrollbar-thumb:hover {
+    background: #C98E55;
+  }
+}
