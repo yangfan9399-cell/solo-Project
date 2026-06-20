@@ -76,7 +76,7 @@ const api = {
     },
 
     publish: async (id: string): Promise<ReleasePackage | undefined> => {
-      return request('POST', `/packages/${id}/publish`, undefined, () => {
+      return request<unknown>('POST', `/packages/${id}/publish`, undefined, () => {
         const pkg = mockPackages.find(p => p.id === id);
         if (pkg) {
           const now = new Date().toISOString();
@@ -99,11 +99,16 @@ const api = {
           return updated;
         }
         return undefined;
+      }).then((data: unknown) => {
+        if (data && typeof data === 'object' && 'id' in data && 'dimension' in data) {
+          return data as ReleasePackage;
+        }
+        return undefined;
       });
     },
 
     rollback: async (id: string): Promise<ReleasePackage | undefined> => {
-      return request('POST', `/packages/${id}/rollback`, undefined, () => {
+      return request<unknown>('POST', `/packages/${id}/rollback`, undefined, () => {
         const pkg = mockPackages.find(p => p.id === id);
         if (pkg) {
           const now = new Date().toISOString();
@@ -124,6 +129,16 @@ const api = {
             details: { rollbackFrom: pkg.nextVersion, rollbackTo: pkg.currentVersion }
           });
           return updated;
+        }
+        return undefined;
+      }).then((data: unknown) => {
+        if (data && typeof data === 'object') {
+          if ('package' in data) {
+            return (data as { package: ReleasePackage }).package;
+          }
+          if ('id' in data && 'dimension' in data) {
+            return data as ReleasePackage;
+          }
         }
         return undefined;
       });

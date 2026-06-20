@@ -204,23 +204,11 @@ export const useAppStore = create<AppState>((set, get) => ({
           get().fetchPackageAuditLogs(id),
           get().fetchPackageVersions(id),
         ]);
-        const auditLog: AuditLog = {
-          id: `log-publish-local-${Date.now()}`,
-          packageId: id,
-          action: '版本发布',
-          description: `发布包【${updated.name}】${updated.nextVersion} 正式发布（前端状态同步）`,
-          operator: '系统管理员',
-          timestamp: new Date().toISOString(),
-          details: {
-            fromVersion: updated.currentVersion,
-            toVersion: updated.nextVersion,
-            affectedSamples: updated.affectedSampleCount,
-            publishedAt: updated.publishedAt
-          }
-        };
         set(state => ({
-          packages: state.packages.map(p => p.id === id ? updated : p),
-          auditLogs: [auditLog, ...state.auditLogs.filter(a => !a.id.startsWith('log-publish-local-'))],
+          packages: state.packages.map(p => p.id === id
+            ? (state.packages.find(fp => fp.id === id) || updated)
+            : p
+          ),
           loading: false,
         }));
         return true;
@@ -243,21 +231,11 @@ export const useAppStore = create<AppState>((set, get) => ({
           get().fetchPackageAuditLogs(id),
           get().fetchPackageRollbackDrafts(id),
         ]);
-        const auditLog: AuditLog = {
-          id: `log-rollback-local-${Date.now()}`,
-          packageId: id,
-          action: '版本回滚',
-          description: `发布包【${updated.name}】已回滚至前一稳定版（前端状态同步）`,
-          operator: '系统管理员',
-          timestamp: new Date().toISOString(),
-          details: {
-            rollbackFrom: updated.nextVersion,
-            rollbackTo: updated.currentVersion
-          }
-        };
         set(state => ({
-          packages: state.packages.map(p => p.id === id ? updated : p),
-          auditLogs: [auditLog, ...state.auditLogs.filter(a => !a.id.startsWith('log-rollback-local-'))],
+          packages: state.packages.map(p => p.id === id
+            ? (state.packages.find(fp => fp.id === id) || updated)
+            : p
+          ),
           loading: false,
         }));
         return true;
