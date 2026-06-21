@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #102a43;
+  background: #f0f4f8;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-industrial-800 hover:bg-industrial-700 text-white px-5 py-2.5 rounded font-medium transition-all duration-200 border-2 border-industrial-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0;
+  }
+  .btn-secondary {
+    @apply bg-white hover:bg-industrial-50 text-industrial-800 px-5 py-2.5 rounded font-medium transition-all duration-200 border-2 border-industrial-300 hover:border-industrial-500 hover:shadow;
+  }
+  .btn-danger {
+    @apply bg-white hover:bg-red-50 text-safety-red px-5 py-2.5 rounded font-medium transition-all duration-200 border-2 border-safety-red/60 hover:border-safety-red;
+  }
+  .btn-success {
+    @apply bg-safety-green hover:bg-green-600 text-white px-5 py-2.5 rounded font-medium transition-all duration-200 border-2 border-safety-green hover:shadow-lg;
+  }
+  .btn-warning {
+    @apply bg-safety-orange hover:bg-orange-600 text-white px-5 py-2.5 rounded font-medium transition-all duration-200 border-2 border-safety-orange hover:shadow-lg;
+  }
+  .card {
+    @apply bg-white rounded-lg border border-industrial-200 shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+  .input-field {
+    @apply w-full px-4 py-2.5 border-2 border-industrial-200 rounded bg-white focus:border-industrial-500 focus:outline-none transition-colors;
+  }
+  .label-field {
+    @apply block text-sm font-semibold text-industrial-700 mb-1.5;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold;
+  }
+  .section-title {
+    @apply text-lg font-bold text-industrial-900 border-l-4 border-safety-orange pl-3 mb-4;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-area {
+    padding: 0;
+    box-shadow: none;
+    border: none;
+  }
+}
