@@ -1,0 +1,518 @@
+{
+  "cases": [
+    {
+      "id": "case-001",
+      "name": "案例一：正常修订",
+      "type": "normal",
+      "description": "印泥配方微调，结论保持一致，属于正常修订流程",
+      "currentVersionId": "v2",
+      "versions": [
+        {
+          "id": "v1",
+          "versionName": "V1.0 初检版",
+          "createTime": "2024-03-15 10:30:00",
+          "operator": "张检验员",
+          "sealSample": "sample_a_v1",
+          "formulaBatch": "PF-2024-003-A",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 68.5,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 2.1,
+              "unit": "mg/cm²",
+              "conclusion": "正常"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 92,
+              "unit": "分",
+              "conclusion": "优秀"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 22,
+              "unit": "℃",
+              "conclusion": "适宜"
+            }
+          },
+          "overallConclusion": "符合标准",
+          "isLocked": false,
+          "comments": []
+        },
+        {
+          "id": "v2",
+          "versionName": "V1.1 修订版",
+          "createTime": "2024-03-16 14:20:00",
+          "operator": "李检验员",
+          "sealSample": "sample_a_v2",
+          "formulaBatch": "PF-2024-003-B",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 69.2,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 2,
+              "unit": "mg/cm²",
+              "conclusion": "正常"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 93,
+              "unit": "分",
+              "conclusion": "优秀"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 22,
+              "unit": "℃",
+              "conclusion": "适宜"
+            }
+          },
+          "overallConclusion": "符合标准",
+          "isLocked": false,
+          "comments": [
+            {
+              "id": "c1",
+              "author": "王审核员",
+              "content": "配方微调后朱砂比例略有上升，但仍在合格范围内，结论不变。",
+              "time": "2024-03-16 15:00:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "case-002",
+      "name": "案例二：证据误换",
+      "type": "mistake",
+      "description": "压印样张被错误替换，配方批号不一致，需警惕证据混淆",
+      "currentVersionId": "v2",
+      "versions": [
+        {
+          "id": "v1",
+          "versionName": "V1.0 原始版",
+          "createTime": "2024-04-01 09:00:00",
+          "operator": "赵检验员",
+          "sealSample": "sample_b_v1",
+          "formulaBatch": "PF-2024-010-A",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 65,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 3.5,
+              "unit": "mg/cm²",
+              "conclusion": "偏高"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 78,
+              "unit": "分",
+              "conclusion": "良好"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 20,
+              "unit": "℃",
+              "conclusion": "适宜"
+            }
+          },
+          "overallConclusion": "需复检",
+          "isLocked": false,
+          "comments": []
+        },
+        {
+          "id": "v2",
+          "versionName": "V1.1 复检版",
+          "createTime": "2024-04-02 11:30:00",
+          "operator": "赵检验员",
+          "sealSample": "sample_c_v2",
+          "formulaBatch": "PF-2024-015-C",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 72,
+              "unit": "%",
+              "conclusion": "偏高"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 1.8,
+              "unit": "mg/cm²",
+              "conclusion": "正常"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 88,
+              "unit": "分",
+              "conclusion": "优秀"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 24,
+              "unit": "℃",
+              "conclusion": "偏高"
+            }
+          },
+          "overallConclusion": "需复检",
+          "isLocked": false,
+          "comments": [
+            {
+              "id": "c1",
+              "author": "陈主管",
+              "content": "【警告】配方批号从PF-2024-010-A变为PF-2024-015-C，压印样张特征差异明显，疑似证据误换！",
+              "time": "2024-04-02 14:00:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "case-003",
+      "name": "案例三：结论反转",
+      "type": "reversal",
+      "description": "关键指标变化导致整体结论由合格变为不合格",
+      "currentVersionId": "v2",
+      "versions": [
+        {
+          "id": "v1",
+          "versionName": "V1.0 初步检验",
+          "createTime": "2024-05-10 08:45:00",
+          "operator": "孙检验员",
+          "sealSample": "sample_d_v1",
+          "formulaBatch": "PF-2024-022-A",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 67,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 2.5,
+              "unit": "mg/cm²",
+              "conclusion": "正常"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 85,
+              "unit": "分",
+              "conclusion": "良好"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 23,
+              "unit": "℃",
+              "conclusion": "适宜"
+            }
+          },
+          "overallConclusion": "符合标准",
+          "isLocked": false,
+          "comments": []
+        },
+        {
+          "id": "v2",
+          "versionName": "V1.1 深度检验",
+          "createTime": "2024-05-12 16:00:00",
+          "operator": "孙检验员",
+          "sealSample": "sample_d_v2",
+          "formulaBatch": "PF-2024-022-A",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 67,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 5.2,
+              "unit": "mg/cm²",
+              "conclusion": "严重超标"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 62,
+              "unit": "分",
+              "conclusion": "不合格"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 35,
+              "unit": "℃",
+              "conclusion": "严重超标"
+            }
+          },
+          "overallConclusion": "不符合标准",
+          "isLocked": false,
+          "comments": [
+            {
+              "id": "c1",
+              "author": "刘专家",
+              "content": "封存温度从23℃升至35℃，导致油脂严重析出，压印边缘模糊。结论反转：由合格变为不合格。",
+              "time": "2024-05-12 17:30:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "case-004",
+      "name": "案例四：锁定拒改",
+      "type": "locked",
+      "description": "已审定结案的版本被锁定，不允许修改",
+      "currentVersionId": "v2",
+      "versions": [
+        {
+          "id": "v1",
+          "versionName": "V1.0 初版",
+          "createTime": "2024-02-01 10:00:00",
+          "operator": "周检验员",
+          "sealSample": "sample_e_v1",
+          "formulaBatch": "PF-2024-001-A",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 70,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 2,
+              "unit": "mg/cm²",
+              "conclusion": "正常"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 90,
+              "unit": "分",
+              "conclusion": "优秀"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 21,
+              "unit": "℃",
+              "conclusion": "适宜"
+            }
+          },
+          "overallConclusion": "符合标准",
+          "isLocked": true,
+          "comments": [
+            {
+              "id": "c1",
+              "author": "系统",
+              "content": "此版本已通过最终审定，已锁定，不允许修改。",
+              "time": "2024-02-05 09:00:00"
+            }
+          ]
+        },
+        {
+          "id": "v2",
+          "versionName": "V2.0 终审定版",
+          "createTime": "2024-02-10 15:00:00",
+          "operator": "周检验员",
+          "sealSample": "sample_e_v2",
+          "formulaBatch": "PF-2024-001-B",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 69.8,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 1.9,
+              "unit": "mg/cm²",
+              "conclusion": "正常"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 91,
+              "unit": "分",
+              "conclusion": "优秀"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 21,
+              "unit": "℃",
+              "conclusion": "适宜"
+            }
+          },
+          "overallConclusion": "符合标准",
+          "isLocked": true,
+          "comments": [
+            {
+              "id": "c1",
+              "author": "王主任",
+              "content": "同意最终结论，予以锁定归档。",
+              "time": "2024-02-10 16:30:00"
+            },
+            {
+              "id": "c2",
+              "author": "系统",
+              "content": "此版本已通过最终审定，已锁定，不允许修改。",
+              "time": "2024-02-10 17:00:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "case-005",
+      "name": "特殊场景：同配方不同封存温度压印退化",
+      "type": "special",
+      "description": "同一配方批号在不同封存温度下的压印质量退化对比",
+      "currentVersionId": "v3",
+      "versions": [
+        {
+          "id": "v1",
+          "versionName": "常温封存 (22℃)",
+          "createTime": "2024-06-01 08:00:00",
+          "operator": "温研究员",
+          "sealSample": "sample_temp_22",
+          "formulaBatch": "PF-2024-030-TEST",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 68,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 2.2,
+              "unit": "mg/cm²",
+              "conclusion": "正常"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 90,
+              "unit": "分",
+              "conclusion": "优秀"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 22,
+              "unit": "℃",
+              "conclusion": "适宜"
+            }
+          },
+          "overallConclusion": "符合标准",
+          "isLocked": false,
+          "comments": [
+            {
+              "id": "c1",
+              "author": "温研究员",
+              "content": "对照组：常温封存30天后检测，印泥状态良好。",
+              "time": "2024-07-01 10:00:00"
+            }
+          ]
+        },
+        {
+          "id": "v2",
+          "versionName": "高温封存 (35℃)",
+          "createTime": "2024-06-01 08:00:00",
+          "operator": "温研究员",
+          "sealSample": "sample_temp_35",
+          "formulaBatch": "PF-2024-030-TEST",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 68,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 4.8,
+              "unit": "mg/cm²",
+              "conclusion": "超标"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 72,
+              "unit": "分",
+              "conclusion": "合格"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 35,
+              "unit": "℃",
+              "conclusion": "偏高"
+            }
+          },
+          "overallConclusion": "需复检",
+          "isLocked": false,
+          "comments": [
+            {
+              "id": "c1",
+              "author": "温研究员",
+              "content": "高温组：35℃封存30天，油脂析出量翻倍，边缘清晰度下降。",
+              "time": "2024-07-01 11:00:00"
+            }
+          ]
+        },
+        {
+          "id": "v3",
+          "versionName": "极端高温 (45℃)",
+          "createTime": "2024-06-01 08:00:00",
+          "operator": "温研究员",
+          "sealSample": "sample_temp_45",
+          "formulaBatch": "PF-2024-030-TEST",
+          "fields": {
+            "cinnabarRatio": {
+              "label": "朱砂比例",
+              "value": 68,
+              "unit": "%",
+              "conclusion": "正常"
+            },
+            "oilPrecipitation": {
+              "label": "油脂析出",
+              "value": 7.5,
+              "unit": "mg/cm²",
+              "conclusion": "严重超标"
+            },
+            "edgeClarity": {
+              "label": "压印边缘清晰度",
+              "value": 55,
+              "unit": "分",
+              "conclusion": "不合格"
+            },
+            "storageTemp": {
+              "label": "封存温度",
+              "value": 45,
+              "unit": "℃",
+              "conclusion": "严重超标"
+            }
+          },
+          "overallConclusion": "不符合标准",
+          "isLocked": false,
+          "comments": [
+            {
+              "id": "c1",
+              "author": "温研究员",
+              "content": "极端高温组：45℃封存30天，油脂严重析出，压印边缘模糊不清，已不具备证据效力。",
+              "time": "2024-07-01 14:00:00"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

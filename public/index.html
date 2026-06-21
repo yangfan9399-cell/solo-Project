@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手工印泥版本差异册</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-left">
+        <h1>手工印泥版本差异册</h1>
+        <p class="subtitle">手工印泥证据版本审查工具</p>
+      </div>
+      <div class="header-right">
+        <button id="btn-reset" class="btn btn-secondary">重置数据</button>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <aside class="sidebar">
+        <div class="sidebar-title">案例列表</div>
+        <div id="case-list" class="case-list"></div>
+      </aside>
+
+      <main class="content">
+        <div id="case-detail" class="case-detail">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>请从左侧选择一个案例查看版本差异</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
