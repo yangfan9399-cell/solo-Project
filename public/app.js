@@ -377,18 +377,43 @@ function renderAnalysis(analysis) {
 function renderLockSection(version) {
   const container = document.getElementById('lock-section');
 
+  const systemComment = version.comments.find(c => c.author === '系统');
+  const rejectReason = systemComment ? systemComment.content : '此版本已通过最终审定，不允许修改。';
+  const isCurrentVersion = currentV2Id === caseData.currentVersionId;
+  const isLocked = version.isLocked;
+
   container.innerHTML = `
-    <div class="lock-section">
+    <div class="lock-section ${isLocked ? '' : 'unlocked'}">
       <div class="lock-info">
-        <div class="lock-icon">${version.isLocked ? '🔒' : '🔓'}</div>
-        <div class="lock-text">
-          <strong>当前状态：${version.isLocked ? '已锁定' : '未锁定'}</strong>
-          <div>${version.isLocked ? '此版本已锁定，无法添加评论或修改' : '此版本未锁定，可以添加评论'}</div>
+        <div class="lock-icon">${isLocked ? '🔒' : '🔓'}</div>
+        <div class="lock-main">
+          <div class="lock-status">
+            <span class="lock-status-badge ${isLocked ? 'locked' : 'unlocked'}">${isLocked ? '已锁定' : '未锁定'}</span>
+            <strong style="color:${isLocked ? '#8b0000' : '#ad4e00'};">${isLocked ? '版本已锁定，拒绝修改' : '版本未锁定，可正常操作'}</strong>
+          </div>
+          <div class="lock-details ${isLocked ? '' : 'unlocked'}">
+            <div class="lock-detail-row">
+              <span class="lock-detail-label">锁定状态：</span>
+              <span class="lock-detail-value">${isLocked ? '已锁定' : '未锁定'}</span>
+            </div>
+            <div class="lock-detail-row">
+              <span class="lock-detail-label">拒改原因：</span>
+              <span class="lock-detail-value">${rejectReason}</span>
+            </div>
+            <div class="lock-detail-row">
+              <span class="lock-detail-label">评论权限：</span>
+              <span class="lock-detail-value">${isLocked ? '🔒 版本已锁定，无法添加新评论' : '✅ 可以正常添加评论'}</span>
+            </div>
+            <div class="lock-detail-row">
+              <span class="lock-detail-label">操作权限：</span>
+              <span class="lock-detail-value">${isLocked ? '🔒 仅可解锁后修改（需管理员权限）' : '✅ 可进行版本修订和锁定操作'}</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div>
-        ${version.isLocked
-          ? `<button class="btn btn-secondary" id="btn-unlock" ${currentV2Id !== caseData.currentVersionId ? 'disabled' : ''}>解锁版本</button>`
+      <div class="lock-actions">
+        ${isLocked
+          ? `<button class="btn btn-secondary" id="btn-unlock" ${!isCurrentVersion ? 'disabled' : ''}>${!isCurrentVersion ? '仅当前版本可解锁' : '解锁版本'}</button>`
           : `<button class="btn btn-danger" id="btn-lock">锁定版本</button>`
         }
       </div>
@@ -461,15 +486,18 @@ function renderComments(version) {
         </div>
       </div>
     ` : `
-      <div style="text-align:center;color:#8c8c8c;padding:12px;background:#fafafa;border-radius:4px;">
-        🔒 版本已锁定，无法添加评论
+      <div class="comment-disabled-notice" style="margin-top:16px;padding:16px;background:#fff1f0;border:1px dashed #ffccc7;border-radius:6px;text-align:center;">
+        <div style="font-size:16px;margin-bottom:6px;">🔒 版本已锁定，评论功能已关闭</div>
+        <div style="font-size:12px;color:#8c8c8c;">此版本已通过最终审定，不允许添加新评论</div>
       </div>
     `}
   `;
 
-  const submitBtn = document.getElementById('btn-submit-comment');
-  if (submitBtn) {
-    submitBtn.addEventListener('click', submitComment);
+  if (canComment) {
+    const submitBtn = document.getElementById('btn-submit-comment');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', submitComment);
+    }
   }
 }
 

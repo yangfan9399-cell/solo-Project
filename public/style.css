@@ -612,32 +612,109 @@ body {
 
 .lock-section {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 16px 20px;
-  background: #fffbf0;
-  border: 1px solid #ffe58f;
+  padding: 20px;
+  background: #fff1f0;
+  border: 1px solid #ffccc7;
   border-radius: 8px;
   margin-bottom: 16px;
 }
 
+.lock-section.unlocked {
+  background: #fffbf0;
+  border: 1px solid #ffe58f;
+}
+
 .lock-info {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
 }
 
 .lock-icon {
-  font-size: 24px;
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.lock-main {
+  flex: 1;
+}
+
+.lock-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.lock-status-badge {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.lock-status-badge.locked {
+  background: #f5222d;
+  color: #fff;
+}
+
+.lock-status-badge.unlocked {
+  background: #faad14;
+  color: #fff;
 }
 
 .lock-text {
   font-size: 13px;
-  color: #d46b08;
+  color: #a8071a;
 }
 
 .lock-text strong {
-  color: #ad4e00;
+  color: #8b0000;
+}
+
+.lock-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #ffccc7;
+}
+
+.lock-details.unlocked {
+  border-top-color: #ffe58f;
+}
+
+.lock-detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #5c0011;
+}
+
+.lock-details.unlocked .lock-detail-row {
+  color: #873800;
+}
+
+.lock-detail-label {
+  font-weight: 600;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.lock-detail-value {
+  flex: 1;
+}
+
+.lock-actions {
+  flex-shrink: 0;
+  margin-left: 20px;
+}
+
+.lock-actions .btn {
+  white-space: nowrap;
 }
 
 .toast {
