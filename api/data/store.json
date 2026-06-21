@@ -275,6 +275,7 @@
   ],
   "releaseHistory": [
     {
+      "rule_name_snapshot": "",
       "id": "adbc6750-1cea-4bc3-a020-d0b7f29e06a7",
       "rule_id": "ad7182e2-4128-4802-9e00-029769b989db",
       "version": "v1.0",
@@ -283,6 +284,7 @@
       "approval_id": "2307a1bc-a72f-45a8-ab01-daaaeeee7d7f"
     },
     {
+      "rule_name_snapshot": "",
       "id": "a0802d70-8914-42a0-9722-c6f3f3b17385",
       "rule_id": "e4d0084a-e24b-4416-9f4e-49343d3fbff7",
       "version": "v1.1",
@@ -291,6 +293,7 @@
       "approval_id": "3656dec4-3982-4423-be14-ae04117c64c2"
     },
     {
+      "rule_name_snapshot": "",
       "id": "26f9b571-4263-49a8-836a-5aac4bd2020e",
       "rule_id": "69fde8d2-8f2d-4f86-b78c-0d53e667761a",
       "version": "v2.0",

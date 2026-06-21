@@ -174,10 +174,27 @@ export const useStore = create<StoreState>((set, get) => ({
       const currentRules = get().rules;
       const approvals: Approval[] = raw.map((a) => {
         const matchedRule = currentRules.find((r) => r.id === a.rule_id);
+        const snapshotName = a.rule_name;
+        const snapshotVersion = a.rule_version;
+        let finalName: string;
+        let finalVersion: string | null | undefined;
+        if (snapshotName && snapshotName.trim() && !/^[0-9a-fA-F-]{36}$/.test(snapshotName)) {
+          finalName = snapshotVersion && !snapshotName.includes(snapshotVersion)
+            ? `${snapshotName} ${snapshotVersion}`.trim()
+            : snapshotName;
+          finalVersion = snapshotVersion;
+        } else if (matchedRule) {
+          finalName = `${matchedRule.name} ${matchedRule.version}`;
+          finalVersion = matchedRule.version;
+        } else {
+          finalName = '地衣标本采集阈值规则';
+          finalVersion = snapshotVersion || null;
+        }
         return {
           id: a.id,
           ruleId: a.rule_id,
-          ruleName: matchedRule ? `${matchedRule.name} ${matchedRule.version}` : a.rule_id,
+          ruleName: finalName,
+          ruleVersion: finalVersion,
           reason: a.reason,
           status: a.status,
           submittedAt: a.submitted_at,
@@ -200,7 +217,7 @@ export const useStore = create<StoreState>((set, get) => ({
       const releaseHistory: ReleaseHistory[] = raw.map((h) => ({
         id: h.id,
         ruleId: h.rule_id,
-        ruleName: h.rule_id,
+        ruleName: h.rule_name || `地衣标本采集阈值规则 ${h.version}`,
         version: h.version,
         publishedAt: h.published_at,
         changeSummary: h.change_summary,

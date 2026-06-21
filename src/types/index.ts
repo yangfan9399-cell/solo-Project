@@ -109,6 +109,7 @@ export interface Approval {
   id: string;
   ruleId: string;
   ruleName: string;
+  ruleVersion?: string | null;
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: string;

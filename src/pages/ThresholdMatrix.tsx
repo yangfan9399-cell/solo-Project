@@ -329,7 +329,7 @@ export default function ThresholdMatrix() {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={`请输入变更理由（必填，${changeCount > 0 ? `涉及${changeCount}个维度变更` : ''}）...`}
+              placeholder={`请输入变更理由（必填${changeCount > 0 ? `，涉及${changeCount}个维度变更` : ''}）...`}
               rows={3}
               className="w-full rounded-lg px-3 py-2 text-sm resize-none outline-none transition-default"
               style={{

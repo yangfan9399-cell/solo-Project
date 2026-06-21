@@ -135,7 +135,7 @@ router.put('/:id/approve', (req: Request, res: Response): void => {
 
       const summary = JSON.parse(approved.impact_summary || '{}')
       const changeSummary = `发布规则 ${newRule.version}：影响 ${summary.total || 0} 个标本（→警告:${summary.toWarn || 0}, →阻断:${summary.toBlock || 0}, 警告→阻断:${summary.warnToBlock || 0}）`
-      db.addReleaseHistory(newRule.id, newRule.version, changeSummary, approval.id)
+      db.addReleaseHistory(newRule.id, newRule.name, newRule.version, changeSummary, approval.id)
     }
 
     res.json({

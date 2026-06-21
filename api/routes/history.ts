@@ -5,9 +5,27 @@ import { computeImpact, type Thresholds } from '../thresholdEngine.js'
 const router = Router()
 
 router.get('/', (_req: Request, res: Response): void => {
-  const history = db.getReleaseHistory()
-  const result = [...history].sort((a, b) => b.published_at.localeCompare(a.published_at))
-  res.json({ success: true, data: result })
+  try {
+    const history = db.getReleaseHistory()
+    const rules = db.getRules()
+    const ruleMap = new Map(rules.map(r => [r.id, r]))
+    const result = [...history]
+      .map(h => {
+        const rule = ruleMap.get(h.rule_id)
+        const ruleName = h.rule_name_snapshot && h.rule_name_snapshot.trim()
+          ? h.rule_name_snapshot
+          : rule?.name || `地衣标本采集阈值规则 ${h.version}`
+        return {
+          ...h,
+          rule_name: ruleName,
+        }
+      })
+      .sort((a, b) => b.published_at.localeCompare(a.published_at))
+    res.json({ success: true, data: result })
+  } catch (e) {
+    console.error('[history/list]', (e as Error).message)
+    res.status(500).json({ success: false, error: (e as Error).message })
+  }
 })
 
 router.post('/rollback', (req: Request, res: Response): void => {
@@ -102,13 +120,20 @@ router.post('/rollback/:id/execute', (req: Request, res: Response): void => {
 
   const newRule = db.addPublishedRule(targetRule.name, targetRule.version, targetRule.thresholds)
 
-  const approval = db.createApproval(newRule.id, `回滚至规则 ${rollback.target_version}`, JSON.parse(rollback.impact_summary), {
-    from: 'current',
-    to: rollback.target_version,
-  })
+  const approval = db.createApproval(
+    newRule.id,
+    newRule.name,
+    newRule.version,
+    `回滚至规则 ${rollback.target_version}`,
+    JSON.parse(rollback.impact_summary),
+    {
+      from: 'current',
+      to: rollback.target_version,
+    },
+  )
   db.approveApproval(approval.id, comment || '执行回滚')
 
-  db.addReleaseHistory(newRule.id, rollback.target_version, `回滚至规则 ${rollback.target_version}`, approval.id)
+  db.addReleaseHistory(newRule.id, newRule.name, rollback.target_version, `回滚至规则 ${rollback.target_version}`, approval.id)
 
   res.json({ success: true, data: { message: `Rollback to ${rollback.target_version} executed successfully` } })
 })

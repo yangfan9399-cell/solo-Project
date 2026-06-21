@@ -63,6 +63,7 @@ interface ApprovalRow {
 interface ReleaseHistoryRow {
   id: string
   rule_id: string
+  rule_name_snapshot: string
   version: string
   published_at: string
   change_summary: string
@@ -99,6 +100,11 @@ function loadStore(): Store {
         rule_version_snapshot: '',
         ...a,
       }))
+      // Migration: ensure ReleaseHistoryRow has rule_name_snapshot
+      parsed.releaseHistory = parsed.releaseHistory.map((r: any) => ({
+        rule_name_snapshot: '',
+        ...r,
+      }))
       return parsed
     } catch (e) {
       console.error('[DB] Failed to parse store file, re-seeding from backup/seed:', (e as Error).message)
@@ -112,6 +118,10 @@ function loadStore(): Store {
               rule_name_snapshot: '',
               rule_version_snapshot: '',
               ...a,
+            }))
+            tmpParsed.releaseHistory = (tmpParsed.releaseHistory || []).map((r: any) => ({
+              rule_name_snapshot: '',
+              ...r,
             }))
             return tmpParsed
           }
@@ -284,10 +294,11 @@ export function publishDraftRule(): RuleRow {
   return newRule
 }
 
-export function addReleaseHistory(ruleId: string, version: string, changeSummary: string, approvalId: string): ReleaseHistoryRow {
+export function addReleaseHistory(ruleId: string, ruleNameSnapshot: string, version: string, changeSummary: string, approvalId: string): ReleaseHistoryRow {
   const entry: ReleaseHistoryRow = {
     id: crypto.randomUUID(),
     rule_id: ruleId,
+    rule_name_snapshot: ruleNameSnapshot,
     version,
     published_at: new Date().toISOString(),
     change_summary: changeSummary,
@@ -494,6 +505,7 @@ function seedData(): Store {
     {
       id: crypto.randomUUID(),
       rule_id: ruleV10Id,
+      rule_name_snapshot: '地衣标本采集阈值规则 v1.0',
       version: 'v1.0',
       published_at: '2025-03-15T08:00:00Z',
       change_summary: '初始发布地衣标本采集阈值规则 v1.0',
@@ -502,6 +514,7 @@ function seedData(): Store {
     {
       id: crypto.randomUUID(),
       rule_id: ruleV11Id,
+      rule_name_snapshot: '地衣标本采集阈值规则 v1.1',
       version: 'v1.1',
       published_at: '2025-08-20T10:00:00Z',
       change_summary: '收紧各维度阈值参数，提升标本质量标准',

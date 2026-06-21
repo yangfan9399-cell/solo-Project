@@ -285,9 +285,9 @@ function ApprovalCard({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                {/^[0-9a-fA-F-]{36}$/.test(approval.ruleName ?? '')
-                  ? `地衣标本采集阈值规则 ${approval.ruleVersion ? approval.ruleVersion : ''}`.trim()
-                  : approval.ruleName}
+                {approval.ruleName?.trim()
+                  ? approval.ruleName
+                  : `地衣标本采集阈值规则 ${approval.ruleVersion ?? ''}`.trim()}
               </h3>
               <span
                 className="text-xs px-2 py-0.5 rounded-full"
