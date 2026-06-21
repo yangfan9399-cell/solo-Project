@@ -19,7 +19,7 @@
         "id": "op1",
         "type": "import",
         "operator": "系统",
-        "time": 1781629959233,
+        "time": 1781630720310,
         "remark": "批量导入"
       }
     ],
@@ -49,7 +49,7 @@
         "id": "op1",
         "type": "import",
         "operator": "系统",
-        "time": 1781716359233,
+        "time": 1781717120310,
         "remark": "批量导入"
       }
     ],
@@ -79,14 +79,14 @@
         "id": "op1",
         "type": "import",
         "operator": "系统",
-        "time": 1781802759233,
+        "time": 1781803520310,
         "remark": "批量导入"
       },
       {
         "id": "op2",
         "type": "submit",
         "operator": "用户",
-        "time": 1781889159233,
+        "time": 1781889920310,
         "remark": "提交判读队列"
       }
     ],
@@ -158,14 +158,14 @@
         "id": "op1",
         "type": "import",
         "operator": "系统",
-        "time": 1781802759233,
+        "time": 1781803520310,
         "remark": "批量导入"
       },
       {
         "id": "op2",
         "type": "submit",
         "operator": "用户",
-        "time": 1781889159233,
+        "time": 1781889920310,
         "remark": "提交判读队列"
       }
     ],
@@ -235,14 +235,14 @@
         "id": "op1",
         "type": "import",
         "operator": "系统",
-        "time": 1781889159233,
+        "time": 1781889920310,
         "remark": "批量导入"
       },
       {
         "id": "op2",
         "type": "submit",
         "operator": "用户",
-        "time": 1781975559233,
+        "time": 1781976320310,
         "remark": "提交判读队列"
       }
     ],
@@ -310,21 +310,21 @@
         "id": "op1",
         "type": "import",
         "operator": "系统",
-        "time": 1781543559233,
+        "time": 1781544320310,
         "remark": "批量导入"
       },
       {
         "id": "op2",
         "type": "submit",
         "operator": "用户",
-        "time": 1781629959233,
+        "time": 1781630720310,
         "remark": "提交判读队列"
       },
       {
         "id": "op3",
         "type": "manual_judge",
         "operator": "判读员",
-        "time": 1781716359233,
+        "time": 1781717120310,
         "remark": "初次判读：铭文残缺过多需复判"
       }
     ],
@@ -395,26 +395,68 @@
         "id": "op1",
         "type": "import",
         "operator": "系统",
-        "time": 1781457159233,
+        "time": 1781457920310,
         "remark": "批量导入"
       },
       {
         "id": "op2",
         "type": "submit",
         "operator": "用户",
-        "time": 1781543559233,
+        "time": 1781544320310,
         "remark": "提交判读队列"
       },
       {
         "id": "op3",
         "type": "lock",
         "operator": "管理员",
-        "time": 1781802759233,
+        "time": 1781803520310,
         "remark": "待专家进一步考证，临时锁定"
       }
     ],
-    "ruleResults": [],
-    "hitRule": null,
+    "ruleResults": [
+      {
+        "hit": false,
+        "result": "blocked",
+        "resultLabel": "阻断",
+        "reasons": [],
+        "ruleId": "rule_quality_block",
+        "ruleName": "基础质量阻断规则"
+      },
+      {
+        "hit": false,
+        "result": "rejudge",
+        "resultLabel": "需复判",
+        "reasons": [],
+        "ruleId": "rule_inscription_rejudge",
+        "ruleName": "铭文残缺复判规则"
+      },
+      {
+        "hit": true,
+        "result": "passed",
+        "resultLabel": "通过",
+        "reasons": [
+          "拓片清晰度2级（≤2级），图像清晰",
+          "锈蚀级别2级（≤2级），锈蚀轻微",
+          "铭文残缺率8%（≤10%），基本完整",
+          "井圈方位明确，可准确定位"
+        ],
+        "ruleId": "rule_pass_standard",
+        "ruleName": "标准通过规则"
+      }
+    ],
+    "hitRule": {
+      "hit": true,
+      "result": "passed",
+      "resultLabel": "通过",
+      "reasons": [
+        "拓片清晰度2级（≤2级），图像清晰",
+        "锈蚀级别2级（≤2级），锈蚀轻微",
+        "铭文残缺率8%（≤10%），基本完整",
+        "井圈方位明确，可准确定位"
+      ],
+      "ruleId": "rule_pass_standard",
+      "ruleName": "标准通过规则"
+    },
     "locked": true,
     "textConflict": null,
     "rejudgeCount": 1

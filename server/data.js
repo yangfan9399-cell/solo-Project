@@ -208,13 +208,17 @@ function generateSeedData() {
   ];
 
   return records.map((rec, index) => {
-    if (rec.locked) {
-      return rec;
-    }
     if (rec.status === 'staging') {
       return rec;
     }
     const evalResult = evaluateRecord(rec);
+    if (rec.locked) {
+      return {
+        ...rec,
+        ruleResults: evalResult.allRuleResults,
+        hitRule: evalResult.hitRule
+      };
+    }
     return {
       ...rec,
       finalResult: evalResult.finalResult,
