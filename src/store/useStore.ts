@@ -122,18 +122,17 @@ export const useStore = create<StoreState>((set, get) => ({
   fetchImpact: async () => {
     set((s) => ({ loading: { ...s.loading, impact: true } }));
     try {
-      const raw: any[] = await api('/api/impact');
-      const impactResults: ImpactResult[] = raw.map((r) => ({
-        specimenId: r.specimen.id,
-        code: r.specimen.code,
-        collectionPoint: r.specimen.collection_point,
-        season: r.specimen.season,
-        originalStatus: r.oldStatus,
-        newStatus: r.newStatus,
-        changedDimensions: r.changedDimensions,
-        isCrossSeason: r.isCrossSeason,
-      }));
+      const res = await fetch('/api/impact', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json = await res.json();
+      const raw: any[] = json.data || [];
+      const impactResults: ImpactResult[] = raw;
       set({ impactResults });
+    } catch (e) {
+      console.warn('fetchImpact error', e);
+      set({ impactResults: [] });
     } finally {
       set((s) => ({ loading: { ...s.loading, impact: false } }));
     }
@@ -141,10 +140,30 @@ export const useStore = create<StoreState>((set, get) => ({
 
   fetchImpactSummary: async () => {
     try {
-      const impactSummary: ImpactSummary = await api('/api/impact/summary');
-      set({ impactSummary });
+      const res = await fetch('/api/impact/summary', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json = await res.json();
+      const raw: ImpactSummary = json.data || {};
+      set({
+        impactSummary: {
+          toWarn: raw.toWarn ?? 0,
+          toBlock: raw.toBlock ?? 0,
+          warnToBlock: raw.warnToBlock ?? 0,
+          total: raw.total ?? 0,
+          crossSeasonAffected: raw.crossSeasonAffected ?? 0,
+          crossSeasonPairs: raw.crossSeasonPairs ?? [],
+          byDimension: raw.byDimension ?? {},
+        },
+      });
     } catch {
-      set({ impactSummary: { toWarn: 0, toBlock: 0, warnToBlock: 0, total: 0 } });
+      set({
+        impactSummary: {
+          toWarn: 0, toBlock: 0, warnToBlock: 0, total: 0,
+          crossSeasonAffected: 0, crossSeasonPairs: [], byDimension: {},
+        },
+      });
     }
   },
 

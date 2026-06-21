@@ -35,15 +35,46 @@ export interface Specimen {
   linkedSpecimenId?: string;
 }
 
-export interface ImpactResult {
-  specimenId: string;
+export interface CrossSeasonPairSpecimen {
   code: string;
-  collectionPoint: string;
+  collection_point: string;
   season: string;
-  originalStatus: Status;
+  oldStatus: string;
+  newStatus: string;
+  changedDimensions: string[];
+}
+
+export interface CrossSeasonPair {
+  pairId: string;
+  specimens: CrossSeasonPairSpecimen[];
+}
+
+export interface PairInfo {
+  pair_id: string;
+  linked_code: string;
+  linked_season: string;
+  linked_status: string;
+  linked_collection_point: string;
+}
+
+export interface ImpactResult {
+  specimen: {
+    id: string;
+    code: string;
+    collection_point: string;
+    season: string;
+    altitude: number;
+    substrate: number;
+    spore_density: number;
+    humidity_exposure: number;
+    current_status: string;
+    linked_specimen_id: string | null;
+  };
+  oldStatus: Status;
   newStatus: Status;
   changedDimensions: string[];
   isCrossSeason: boolean;
+  pair_info?: PairInfo | null;
 }
 
 export interface ImpactSummary {
@@ -51,6 +82,9 @@ export interface ImpactSummary {
   toBlock: number;
   warnToBlock: number;
   total: number;
+  crossSeasonAffected: number;
+  crossSeasonPairs: CrossSeasonPair[];
+  byDimension: Record<string, number>;
 }
 
 export interface ThresholdDiffChange {
@@ -61,11 +95,13 @@ export interface ThresholdDiffChange {
 export interface ThresholdDiff {
   from: string;
   to: string;
+  changedDimensions?: string[];
   changes: {
-    altitude: ThresholdDiffChange;
-    substrate: ThresholdDiffChange;
-    sporeDensity: ThresholdDiffChange;
-    humidityExposure: ThresholdDiffChange;
+    altitude?: ThresholdDiffChange;
+    substrate?: ThresholdDiffChange;
+    sporeDensity?: ThresholdDiffChange;
+    humidityExposure?: ThresholdDiffChange;
+    [key: string]: ThresholdDiffChange | undefined;
   };
 }
 

@@ -26,6 +26,15 @@
       "status": "draft",
       "created_at": "2025-12-01T00:00:00Z",
       "published_at": null
+    },
+    {
+      "id": "69fde8d2-8f2d-4f86-b78c-0d53e667761a",
+      "name": "地衣标本采集阈值规则",
+      "version": "v2.0",
+      "thresholds": "{\"altitude\":{\"passMax\":2000,\"warnMax\":3500},\"substrate\":{\"passMax\":3,\"warnMax\":6},\"sporeDensity\":{\"passMax\":100,\"warnMax\":300},\"humidityExposure\":{\"passMax\":40,\"warnMax\":65}}",
+      "status": "published",
+      "created_at": "2025-12-01T00:00:00Z",
+      "published_at": "2026-06-21T17:47:26.013Z"
     }
   ],
   "specimens": [
@@ -110,7 +119,7 @@
       "substrate": 3,
       "spore_density": 120,
       "humidity_exposure": 45,
-      "current_status": "pass",
+      "current_status": "warn",
       "linked_specimen_id": null
     },
     {
@@ -122,7 +131,7 @@
       "substrate": 6,
       "spore_density": 350,
       "humidity_exposure": 70,
-      "current_status": "warn",
+      "current_status": "block",
       "linked_specimen_id": null
     },
     {
@@ -134,7 +143,7 @@
       "substrate": 3.8,
       "spore_density": 140,
       "humidity_exposure": 48,
-      "current_status": "pass",
+      "current_status": "warn",
       "linked_specimen_id": null
     },
     {
@@ -182,7 +191,7 @@
       "substrate": 6.5,
       "spore_density": 380,
       "humidity_exposure": 68,
-      "current_status": "warn",
+      "current_status": "block",
       "linked_specimen_id": "0ff94084-4325-4d12-9b82-22a598c4423e"
     },
     {
@@ -194,7 +203,7 @@
       "substrate": 6.2,
       "spore_density": 360,
       "humidity_exposure": 66,
-      "current_status": "warn",
+      "current_status": "block",
       "linked_specimen_id": "806231f6-f2c9-4ab5-bd32-44a39b5cda0f"
     },
     {
@@ -212,6 +221,8 @@
   ],
   "approvals": [
     {
+      "rule_name_snapshot": "",
+      "rule_version_snapshot": "",
       "id": "2307a1bc-a72f-45a8-ab01-daaaeeee7d7f",
       "rule_id": "ad7182e2-4128-4802-9e00-029769b989db",
       "reason": "初始化地衣标本采集阈值规则体系",
@@ -223,6 +234,8 @@
       "threshold_diff": "{\"from\":null,\"to\":\"v1.0\"}"
     },
     {
+      "rule_name_snapshot": "",
+      "rule_version_snapshot": "",
       "id": "3656dec4-3982-4423-be14-ae04117c64c2",
       "rule_id": "e4d0084a-e24b-4416-9f4e-49343d3fbff7",
       "reason": "根据最新研究成果收紧阈值参数",
@@ -234,6 +247,8 @@
       "threshold_diff": "{\"from\":\"v1.0\",\"to\":\"v1.1\",\"changes\":{\"altitude\":{\"passMax\":\"3000→2500\",\"warnMax\":\"4500→4000\"},\"substrate\":{\"passMax\":\"5→4\",\"warnMax\":\"8→7\"},\"sporeDensity\":{\"passMax\":\"200→150\",\"warnMax\":\"500→400\"},\"humidityExposure\":{\"passMax\":\"60→50\",\"warnMax\":\"80→75\"}}}"
     },
     {
+      "rule_name_snapshot": "",
+      "rule_version_snapshot": "",
       "id": "395d6a07-9e14-48ab-8313-fb523821428a",
       "rule_id": "f80fd375-f05f-4545-85e3-0f3f4de7d5e8",
       "reason": "根据2026年最新地衣生态研究报告，进一步收紧阈值以提升标本质量标准",
@@ -243,6 +258,19 @@
       "review_comment": null,
       "impact_summary": "{\"toWarn\":2,\"toBlock\":0,\"warnToBlock\":3,\"total\":5}",
       "threshold_diff": "{\"from\":\"v1.1\",\"to\":\"v2.0\",\"changes\":{\"altitude\":{\"passMax\":\"2500→2000\",\"warnMax\":\"4000→3500\"},\"substrate\":{\"passMax\":\"4→3\",\"warnMax\":\"7→6\"},\"sporeDensity\":{\"passMax\":\"150→100\",\"warnMax\":\"400→300\"},\"humidityExposure\":{\"passMax\":\"50→40\",\"warnMax\":\"75→65\"}}}"
+    },
+    {
+      "rule_name_snapshot": "",
+      "rule_version_snapshot": "",
+      "id": "4f5a2d65-25ca-40fa-9765-a9474218cdf2",
+      "rule_id": "f80fd375-f05f-4545-85e3-0f3f4de7d5e8",
+      "reason": "2026年春季阈值调整：根据最新地衣分布调查数据调整",
+      "status": "approved",
+      "submitted_at": "2026-06-21T17:47:02.638Z",
+      "reviewed_at": "2026-06-21T17:47:26.013Z",
+      "review_comment": "",
+      "impact_summary": "{\"toWarn\":2,\"toBlock\":0,\"warnToBlock\":3,\"total\":5,\"crossSeasonAffected\":2,\"crossSeasonPairs\":[{\"pairId\":\"0ff94084-4325-4d12-9b82-22a598c4423e|806231f6-f2c9-4ab5-bd32-44a39b5cda0f\",\"specimens\":[{\"code\":\"LIC-013\",\"collection_point\":\"天山博格达峰\",\"season\":\"summer\",\"oldStatus\":\"warn\",\"newStatus\":\"block\",\"changedDimensions\":[\"altitude\",\"substrate\",\"spore_density\",\"humidity_exposure\"]},{\"code\":\"LIC-014\",\"collection_point\":\"天山博格达峰\",\"season\":\"spring\",\"oldStatus\":\"warn\",\"newStatus\":\"block\",\"changedDimensions\":[\"altitude\",\"substrate\",\"spore_density\",\"humidity_exposure\"]}]}],\"byDimension\":{\"spore_density\":5,\"humidity_exposure\":5,\"altitude\":3,\"substrate\":3}}",
+      "threshold_diff": "{\"from\":\"v1.1\",\"to\":\"v2.0\",\"changedDimensions\":[\"altitude\",\"substrate\",\"sporeDensity\",\"humidityExposure\"],\"changes\":{\"altitude\":{\"passMax\":\"2500→2000\",\"warnMax\":\"4000→3500\"},\"substrate\":{\"passMax\":\"4→3\",\"warnMax\":\"7→6\"},\"sporeDensity\":{\"passMax\":\"150→100\",\"warnMax\":\"400→300\"},\"humidityExposure\":{\"passMax\":\"50→40\",\"warnMax\":\"75→65\"}}}"
     }
   ],
   "releaseHistory": [
@@ -261,6 +289,14 @@
       "published_at": "2025-08-20T10:00:00Z",
       "change_summary": "收紧各维度阈值参数，提升标本质量标准",
       "approval_id": "3656dec4-3982-4423-be14-ae04117c64c2"
+    },
+    {
+      "id": "26f9b571-4263-49a8-836a-5aac4bd2020e",
+      "rule_id": "69fde8d2-8f2d-4f86-b78c-0d53e667761a",
+      "version": "v2.0",
+      "published_at": "2026-06-21T17:47:26.013Z",
+      "change_summary": "发布规则 v2.0：影响 5 个标本（→警告:2, →阻断:0, 警告→阻断:3）",
+      "approval_id": "4f5a2d65-25ca-40fa-9765-a9474218cdf2"
     }
   ],
   "rollbackDrafts": []

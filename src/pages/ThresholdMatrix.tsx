@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Mountain, Layers, Microscope, Droplets, AlertTriangle, ShieldAlert, ArrowRight, Send } from 'lucide-react';
+import { Mountain, Layers, Microscope, Droplets, AlertTriangle, ShieldAlert, ArrowRight, Send, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import ThresholdCard from '@/components/ThresholdCard';
 import type { ThresholdGroup, ThresholdDimension } from '@/types';
@@ -126,6 +126,7 @@ export default function ThresholdMatrix() {
 
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     fetchRules();
@@ -133,17 +134,35 @@ export default function ThresholdMatrix() {
     fetchImpactSummary();
   }, [fetchRules, fetchImpact, fetchImpactSummary]);
 
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+
   const hasChanges =
     currentDraftRule &&
     currentPublishedRule &&
     hasDiff(currentDraftRule.thresholds, currentPublishedRule.thresholds);
 
+  const changeCount = dimensionKeys.filter((k) =>
+    currentDraftRule && currentPublishedRule
+      ? currentDraftRule.thresholds[k].passMax !== currentPublishedRule.thresholds[k].passMax ||
+        currentDraftRule.thresholds[k].warnMax !== currentPublishedRule.thresholds[k].warnMax
+      : false,
+  ).length;
+
   const handleSubmit = async () => {
     if (!hasChanges || !reason.trim()) return;
     setSubmitting(true);
+    setToast(null);
     try {
       await submitApproval(reason.trim());
       setReason('');
+      setToast({ type: 'success', message: '审批提交成功！可在"审批记录"中查看进度' });
+    } catch (e) {
+      setToast({ type: 'error', message: (e as Error).message || '提交失败，请检查后端状态后重试' });
     } finally {
       setSubmitting(false);
     }
@@ -170,14 +189,49 @@ export default function ThresholdMatrix() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          阈值矩阵
-        </h2>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-          调整各维度阈值参数，实时预览影响范围后提交审批
-        </p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            阈值矩阵
+          </h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+            调整各维度阈值参数，实时预览影响范围后提交审批
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {hasChanges && (
+            <div
+              className="px-3 py-1.5 rounded-lg text-xs inline-flex items-center gap-1.5"
+              style={{
+                background: 'rgba(233, 196, 106, 0.15)',
+                color: 'var(--accent-amber)',
+                border: '1px solid rgba(233, 196, 106, 0.3)',
+              }}
+            >
+              <RefreshCw className="w-3 h-3" />
+              {changeCount} 个维度待发布
+            </div>
+          )}
+        </div>
       </div>
+
+      {toast && (
+        <div
+          className="fixed top-4 right-4 z-50 px-4 py-3 rounded-lg text-sm shadow-lg flex items-center gap-2"
+          style={{
+            background: toast.type === 'success' ? 'rgba(82, 183, 136, 0.95)' : 'rgba(231, 111, 81, 0.95)',
+            color: '#fff',
+            minWidth: '300px',
+          }}
+        >
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          ) : (
+            <XCircle className="w-4 h-4 flex-shrink-0" />
+          )}
+          {toast.message}
+        </div>
+      )}
 
       <div className="flex gap-6">
         <div className="flex-1 min-w-0" style={{ flexBasis: '60%' }}>
@@ -230,6 +284,26 @@ export default function ThresholdMatrix() {
             />
           </div>
 
+          {impactSummary && (impactSummary.crossSeasonAffected ?? 0) > 0 && (
+            <div
+              className="rounded-xl p-3 border text-xs"
+              style={{
+                background: 'rgba(203, 161, 84, 0.08)',
+                borderColor: 'rgba(203, 161, 84, 0.4)',
+                color: 'var(--accent-amber)',
+              }}
+            >
+              <div className="flex items-center gap-2 font-semibold mb-1">
+                <RefreshCw className="w-3.5 h-3.5" />
+                含跨季节复测归属变化
+              </div>
+              <p className="opacity-90">
+                共 {impactSummary.crossSeasonAffected} 个跨季节标本（{impactSummary.crossSeasonPairs?.length ?? 0} 组采集点），
+                请在审批时重点核对
+              </p>
+            </div>
+          )}
+
           <div
             className="rounded-xl p-5 border"
             style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
@@ -237,10 +311,25 @@ export default function ThresholdMatrix() {
             <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
               提交审批
             </h3>
+
+            {!hasChanges && (
+              <div
+                className="mb-3 p-2 rounded text-xs flex items-start gap-2"
+                style={{
+                  background: 'var(--bg-primary)',
+                  color: 'var(--text-muted)',
+                  border: '1px dashed var(--border)',
+                }}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'var(--accent-green)' }} />
+                当前草稿与 v{currentPublishedRule.version} 已发布版本完全一致，请先调整阈值再提交。
+              </div>
+            )}
+
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="请输入变更原因..."
+              placeholder={`请输入变更理由（必填，${changeCount > 0 ? `涉及${changeCount}个维度变更` : ''}）...`}
               rows={3}
               className="w-full rounded-lg px-3 py-2 text-sm resize-none outline-none transition-default"
               style={{
@@ -249,13 +338,21 @@ export default function ThresholdMatrix() {
                 color: 'var(--text-primary)',
               }}
             />
+            <div className="flex items-center justify-between mt-2 mb-1">
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                理由必填：{reason.trim().length}/50
+              </span>
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                影响总计：{impactSummary?.total ?? 0} 个标本
+              </span>
+            </div>
             <button
               onClick={handleSubmit}
               disabled={!hasChanges || !reason.trim() || submitting}
-              className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-default disabled:opacity-40 disabled:cursor-not-allowed"
+              className="mt-1 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-default disabled:opacity-40 disabled:cursor-not-allowed"
               style={{
-                background: hasChanges ? 'var(--accent-green)' : 'var(--border)',
-                color: hasChanges ? '#0D1B16' : 'var(--text-muted)',
+                background: hasChanges && reason.trim() ? 'var(--accent-green)' : 'var(--border)',
+                color: hasChanges && reason.trim() ? '#0D1B16' : 'var(--text-muted)',
               }}
             >
               <Send className="w-4 h-4" />

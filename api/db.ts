@@ -1,14 +1,19 @@
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs'
+import { mkdirSync, readFileSync, writeFileSync, existsSync, renameSync, unlinkSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import crypto from 'crypto'
-import { computeSpecimenStatus, type Thresholds, type Specimen } from './thresholdEngine.js'
+import { computeSpecimenStatus, computeImpact, type Thresholds, type Specimen, type ImpactResult } from './thresholdEngine.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const DATA_DIR = join(__dirname, 'data')
 const DB_PATH = join(DATA_DIR, 'store.json')
+const TMP_PATH = join(DATA_DIR, 'store.json.tmp')
+
+let saveQueue: Promise<void> = Promise.resolve()
+let saveRetryCount = 0
+const MAX_SAVE_RETRIES = 3
 
 interface Store {
   rules: RuleRow[]
@@ -44,6 +49,8 @@ interface SpecimenRow {
 interface ApprovalRow {
   id: string
   rule_id: string
+  rule_name_snapshot: string
+  rule_version_snapshot: string
   reason: string
   status: string
   submitted_at: string
@@ -75,20 +82,85 @@ let store: Store
 
 function loadStore(): Store {
   if (existsSync(DB_PATH)) {
-    const raw = readFileSync(DB_PATH, 'utf-8')
-    return JSON.parse(raw)
+    try {
+      const raw = readFileSync(DB_PATH, 'utf-8')
+      if (!raw.trim()) {
+        console.warn('[DB] Empty store file found, re-seeding...')
+        return seedData()
+      }
+      const parsed = JSON.parse(raw)
+      if (!parsed.rules || !parsed.specimens || !parsed.approvals || !parsed.releaseHistory || !parsed.rollbackDrafts) {
+        console.warn('[DB] Corrupted store structure detected, re-seeding...')
+        return seedData()
+      }
+      // Migration: ensure ApprovalRow has rule_name_snapshot and rule_version_snapshot
+      parsed.approvals = parsed.approvals.map((a: any) => ({
+        rule_name_snapshot: '',
+        rule_version_snapshot: '',
+        ...a,
+      }))
+      return parsed
+    } catch (e) {
+      console.error('[DB] Failed to parse store file, re-seeding from backup/seed:', (e as Error).message)
+      if (existsSync(TMP_PATH)) {
+        try {
+          const tmpRaw = readFileSync(TMP_PATH, 'utf-8')
+          const tmpParsed = JSON.parse(tmpRaw)
+          if (tmpParsed.rules && tmpParsed.specimens && tmpParsed.approvals) {
+            console.warn('[DB] Recovered from tmp file')
+            tmpParsed.approvals = tmpParsed.approvals.map((a: any) => ({
+              rule_name_snapshot: '',
+              rule_version_snapshot: '',
+              ...a,
+            }))
+            return tmpParsed
+          }
+        } catch (e2) {
+          console.warn('[DB] Tmp file also unreadable:', (e2 as Error).message)
+        }
+      }
+      return seedData()
+    }
   }
   return seedData()
 }
 
-function saveStore(): void {
+function doSaveStoreSync(): void {
   mkdirSync(DATA_DIR, { recursive: true })
-  writeFileSync(DB_PATH, JSON.stringify(store, null, 2), 'utf-8')
+  const content = JSON.stringify(store, null, 2)
+  writeFileSync(TMP_PATH, content, 'utf-8')
+  renameSync(TMP_PATH, DB_PATH)
+}
+
+function saveStore(): void {
+  saveQueue = saveQueue.then(async () => {
+    for (let attempt = 0; attempt < MAX_SAVE_RETRIES; attempt++) {
+      try {
+        doSaveStoreSync()
+        saveRetryCount = 0
+        return
+      } catch (e) {
+        saveRetryCount++
+        console.warn(`[DB] Save attempt ${attempt + 1}/${MAX_SAVE_RETRIES} failed:`, (e as Error).message)
+        if (attempt < MAX_SAVE_RETRIES - 1) {
+          await new Promise(r => setTimeout(r, 50 * (attempt + 1)))
+        }
+      }
+    }
+    console.error('[DB] All save attempts failed! Data may be inconsistent.')
+  }).catch(e => {
+    console.error('[DB] Save queue fatal error:', (e as Error).message)
+  })
 }
 
 export function initDb(): void {
+  mkdirSync(DATA_DIR, { recursive: true })
   store = loadStore()
-  saveStore()
+  try {
+    doSaveStoreSync()
+  } catch (e) {
+    console.warn('[DB] Initial save failed, continuing with in-memory store:', (e as Error).message)
+  }
 }
 
 export function getRules(): RuleRow[] {
@@ -143,10 +215,19 @@ export function getApprovals(): ApprovalRow[] {
   return store.approvals
 }
 
-export function createApproval(ruleId: string, reason: string, impactSummary: object, thresholdDiff: object): ApprovalRow {
+export function createApproval(
+  ruleId: string,
+  ruleNameSnapshot: string,
+  ruleVersionSnapshot: string,
+  reason: string,
+  impactSummary: object,
+  thresholdDiff: object,
+): ApprovalRow {
   const approval: ApprovalRow = {
     id: crypto.randomUUID(),
     rule_id: ruleId,
+    rule_name_snapshot: ruleNameSnapshot,
+    rule_version_snapshot: ruleVersionSnapshot,
     reason,
     status: 'pending',
     submitted_at: new Date().toISOString(),
@@ -375,6 +456,8 @@ function seedData(): Store {
     {
       id: approvalV10Id,
       rule_id: ruleV10Id,
+      rule_name_snapshot: '地衣标本采集阈值规则 v1.0',
+      rule_version_snapshot: 'v1.0',
       reason: '初始化地衣标本采集阈值规则体系',
       status: 'approved',
       submitted_at: '2025-03-14T10:00:00Z',
@@ -386,6 +469,8 @@ function seedData(): Store {
     {
       id: approvalV11Id,
       rule_id: ruleV11Id,
+      rule_name_snapshot: '地衣标本采集阈值规则 v1.1',
+      rule_version_snapshot: 'v1.1',
       reason: '根据最新研究成果收紧阈值参数',
       status: 'approved',
       submitted_at: '2025-08-18T09:00:00Z',
@@ -425,4 +510,104 @@ function seedData(): Store {
   ]
 
   return { rules, specimens, approvals, releaseHistory, rollbackDrafts: [] }
+}
+
+export interface ThresholdDiff {
+  changedDimensions: string[]
+  detail: Record<string, { passMax?: { from: number; to: number }; warnMax?: { from: number; to: number } }>
+}
+
+export function computeThresholdDiff(oldT: Thresholds, newT: Thresholds): ThresholdDiff {
+  const dims: (keyof Thresholds)[] = ['altitude', 'substrate', 'sporeDensity', 'humidityExposure']
+  const result: ThresholdDiff = { changedDimensions: [], detail: {} }
+  for (const d of dims) {
+    const oldD = oldT[d]
+    const newD = newT[d]
+    const detail: { passMax?: { from: number; to: number }; warnMax?: { from: number; to: number } } = {}
+    if (oldD.passMax !== newD.passMax) {
+      detail.passMax = { from: oldD.passMax, to: newD.passMax }
+      if (!result.changedDimensions.includes(d)) result.changedDimensions.push(d)
+    }
+    if (oldD.warnMax !== newD.warnMax) {
+      detail.warnMax = { from: oldD.warnMax, to: newD.warnMax }
+      if (!result.changedDimensions.includes(d)) result.changedDimensions.push(d)
+    }
+    if (detail.passMax || detail.warnMax) {
+      result.detail[d] = detail
+    }
+  }
+  return result
+}
+
+export interface EnhancedImpactSummary {
+  toWarn: number
+  toBlock: number
+  warnToBlock: number
+  total: number
+  crossSeasonAffected: number
+  crossSeasonPairs: Array<{
+    pairId: string
+    specimens: Array<{
+      code: string
+      collection_point: string
+      season: string
+      oldStatus: string
+      newStatus: string
+      changedDimensions: string[]
+    }>
+  }>
+  byDimension: Record<string, number>
+}
+
+export function computeEnhancedImpactSummary(impacts: ImpactResult[]): EnhancedImpactSummary {
+  const summary: EnhancedImpactSummary = {
+    toWarn: 0,
+    toBlock: 0,
+    warnToBlock: 0,
+    total: impacts.length,
+    crossSeasonAffected: 0,
+    crossSeasonPairs: [],
+    byDimension: {},
+  }
+
+  const pairMap = new Map<string, typeof summary.crossSeasonPairs[0]>()
+
+  for (const imp of impacts) {
+    if (imp.oldStatus === 'pass' && imp.newStatus === 'warn') summary.toWarn++
+    else if (imp.oldStatus === 'pass' && imp.newStatus === 'block') summary.toBlock++
+    else if (imp.oldStatus === 'warn' && imp.newStatus === 'block') summary.warnToBlock++
+
+    for (const dim of imp.changedDimensions) {
+      summary.byDimension[dim] = (summary.byDimension[dim] || 0) + 1
+    }
+
+    if (imp.isCrossSeason && imp.specimen.linked_specimen_id) {
+      summary.crossSeasonAffected++
+      const pairKey = [imp.specimen.id, imp.specimen.linked_specimen_id].sort().join('|')
+      if (!pairMap.has(pairKey)) {
+        pairMap.set(pairKey, { pairId: pairKey, specimens: [] })
+      }
+      pairMap.get(pairKey)!.specimens.push({
+        code: imp.specimen.code,
+        collection_point: imp.specimen.collection_point,
+        season: imp.specimen.season,
+        oldStatus: imp.oldStatus,
+        newStatus: imp.newStatus,
+        changedDimensions: [...imp.changedDimensions],
+      })
+    }
+  }
+
+  summary.crossSeasonPairs = Array.from(pairMap.values())
+
+  return summary
+}
+
+export function computeImpactFromRuleIds(oldRuleId: string, newRuleId: string): ImpactResult[] {
+  const oldRule = store.rules.find(r => r.id === oldRuleId)
+  const newRule = store.rules.find(r => r.id === newRuleId)
+  if (!oldRule || !newRule) return []
+  const oldT: Thresholds = JSON.parse(oldRule.thresholds)
+  const newT: Thresholds = JSON.parse(newRule.thresholds)
+  return computeImpact(store.specimens as unknown as Specimen[], oldT, newT)
 }
