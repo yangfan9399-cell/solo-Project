@@ -1,0 +1,267 @@
+{
+  "rules": [
+    {
+      "id": "ad7182e2-4128-4802-9e00-029769b989db",
+      "name": "地衣标本采集阈值规则",
+      "version": "v1.0",
+      "thresholds": "{\"altitude\":{\"passMax\":3000,\"warnMax\":4500},\"substrate\":{\"passMax\":5,\"warnMax\":8},\"sporeDensity\":{\"passMax\":200,\"warnMax\":500},\"humidityExposure\":{\"passMax\":60,\"warnMax\":80}}",
+      "status": "published",
+      "created_at": "2025-03-15T06:00:00Z",
+      "published_at": "2025-03-15T08:00:00Z"
+    },
+    {
+      "id": "e4d0084a-e24b-4416-9f4e-49343d3fbff7",
+      "name": "地衣标本采集阈值规则",
+      "version": "v1.1",
+      "thresholds": "{\"altitude\":{\"passMax\":2500,\"warnMax\":4000},\"substrate\":{\"passMax\":4,\"warnMax\":7},\"sporeDensity\":{\"passMax\":150,\"warnMax\":400},\"humidityExposure\":{\"passMax\":50,\"warnMax\":75}}",
+      "status": "published",
+      "created_at": "2025-08-20T08:00:00Z",
+      "published_at": "2025-08-20T10:00:00Z"
+    },
+    {
+      "id": "f80fd375-f05f-4545-85e3-0f3f4de7d5e8",
+      "name": "地衣标本采集阈值规则",
+      "version": "v2.0",
+      "thresholds": "{\"altitude\":{\"passMax\":2000,\"warnMax\":3500},\"substrate\":{\"passMax\":3,\"warnMax\":6},\"sporeDensity\":{\"passMax\":100,\"warnMax\":300},\"humidityExposure\":{\"passMax\":40,\"warnMax\":65}}",
+      "status": "draft",
+      "created_at": "2025-12-01T00:00:00Z",
+      "published_at": null
+    }
+  ],
+  "specimens": [
+    {
+      "id": "de5cac7d-230f-4f2a-9739-de370a472b6f",
+      "code": "LIC-001",
+      "collection_point": "华山北峰",
+      "season": "spring",
+      "altitude": 1800,
+      "substrate": 2.5,
+      "spore_density": 80,
+      "humidity_exposure": 30,
+      "current_status": "pass",
+      "linked_specimen_id": "ee2d2061-808e-4e12-b3e0-6dfb6a15d05d"
+    },
+    {
+      "id": "ee2d2061-808e-4e12-b3e0-6dfb6a15d05d",
+      "code": "LIC-002",
+      "collection_point": "华山北峰",
+      "season": "autumn",
+      "altitude": 1850,
+      "substrate": 2.8,
+      "spore_density": 90,
+      "humidity_exposure": 35,
+      "current_status": "pass",
+      "linked_specimen_id": "de5cac7d-230f-4f2a-9739-de370a472b6f"
+    },
+    {
+      "id": "6288b2b4-ee96-429f-8b31-346d62da5c84",
+      "code": "LIC-003",
+      "collection_point": "秦岭太白山",
+      "season": "summer",
+      "altitude": 3200,
+      "substrate": 5.5,
+      "spore_density": 250,
+      "humidity_exposure": 65,
+      "current_status": "warn",
+      "linked_specimen_id": "0257dd04-a71d-4c24-908f-e722ed392593"
+    },
+    {
+      "id": "0257dd04-a71d-4c24-908f-e722ed392593",
+      "code": "LIC-004",
+      "collection_point": "秦岭太白山",
+      "season": "winter",
+      "altitude": 3100,
+      "substrate": 5.2,
+      "spore_density": 230,
+      "humidity_exposure": 60,
+      "current_status": "warn",
+      "linked_specimen_id": "6288b2b4-ee96-429f-8b31-346d62da5c84"
+    },
+    {
+      "id": "55178cff-bec6-4f49-a25a-8ab43382be57",
+      "code": "LIC-005",
+      "collection_point": "黄山光明顶",
+      "season": "spring",
+      "altitude": 2600,
+      "substrate": 4.5,
+      "spore_density": 160,
+      "humidity_exposure": 52,
+      "current_status": "warn",
+      "linked_specimen_id": null
+    },
+    {
+      "id": "d27a9ec0-571b-42de-8953-a14068d63ea7",
+      "code": "LIC-006",
+      "collection_point": "峨眉山金顶",
+      "season": "summer",
+      "altitude": 2800,
+      "substrate": 4.8,
+      "spore_density": 180,
+      "humidity_exposure": 55,
+      "current_status": "warn",
+      "linked_specimen_id": null
+    },
+    {
+      "id": "b212b057-4366-4146-8b17-afe76377214b",
+      "code": "LIC-007",
+      "collection_point": "武夷山天游峰",
+      "season": "autumn",
+      "altitude": 1500,
+      "substrate": 3,
+      "spore_density": 120,
+      "humidity_exposure": 45,
+      "current_status": "pass",
+      "linked_specimen_id": null
+    },
+    {
+      "id": "df30a7a0-4ab6-4567-8603-c418863bde35",
+      "code": "LIC-008",
+      "collection_point": "长白山天池",
+      "season": "winter",
+      "altitude": 3500,
+      "substrate": 6,
+      "spore_density": 350,
+      "humidity_exposure": 70,
+      "current_status": "warn",
+      "linked_specimen_id": null
+    },
+    {
+      "id": "dd968548-9887-4e45-866b-937cd59601cc",
+      "code": "LIC-009",
+      "collection_point": "神农架",
+      "season": "spring",
+      "altitude": 2200,
+      "substrate": 3.8,
+      "spore_density": 140,
+      "humidity_exposure": 48,
+      "current_status": "pass",
+      "linked_specimen_id": null
+    },
+    {
+      "id": "79107aba-7db4-4b2b-8ee3-3cd76b357811",
+      "code": "LIC-010",
+      "collection_point": "神农架",
+      "season": "summer",
+      "altitude": 2400,
+      "substrate": 4.2,
+      "spore_density": 155,
+      "humidity_exposure": 53,
+      "current_status": "warn",
+      "linked_specimen_id": null
+    },
+    {
+      "id": "fa10ad0f-f41f-4765-a1a8-804fcb14a5aa",
+      "code": "LIC-011",
+      "collection_point": "横断山脉",
+      "season": "autumn",
+      "altitude": 4200,
+      "substrate": 7.5,
+      "spore_density": 450,
+      "humidity_exposure": 78,
+      "current_status": "block",
+      "linked_specimen_id": null
+    },
+    {
+      "id": "c96d8406-ce08-4f9b-8eb2-6b5fc7a88f49",
+      "code": "LIC-012",
+      "collection_point": "横断山脉",
+      "season": "winter",
+      "altitude": 4100,
+      "substrate": 7.2,
+      "spore_density": 420,
+      "humidity_exposure": 76,
+      "current_status": "block",
+      "linked_specimen_id": null
+    },
+    {
+      "id": "806231f6-f2c9-4ab5-bd32-44a39b5cda0f",
+      "code": "LIC-013",
+      "collection_point": "天山博格达峰",
+      "season": "summer",
+      "altitude": 3800,
+      "substrate": 6.5,
+      "spore_density": 380,
+      "humidity_exposure": 68,
+      "current_status": "warn",
+      "linked_specimen_id": "0ff94084-4325-4d12-9b82-22a598c4423e"
+    },
+    {
+      "id": "0ff94084-4325-4d12-9b82-22a598c4423e",
+      "code": "LIC-014",
+      "collection_point": "天山博格达峰",
+      "season": "spring",
+      "altitude": 3700,
+      "substrate": 6.2,
+      "spore_density": 360,
+      "humidity_exposure": 66,
+      "current_status": "warn",
+      "linked_specimen_id": "806231f6-f2c9-4ab5-bd32-44a39b5cda0f"
+    },
+    {
+      "id": "eae397ff-048b-4e2c-8bd2-68941e19e36a",
+      "code": "LIC-015",
+      "collection_point": "喜马拉雅南坡",
+      "season": "summer",
+      "altitude": 4800,
+      "substrate": 9,
+      "spore_density": 550,
+      "humidity_exposure": 85,
+      "current_status": "block",
+      "linked_specimen_id": null
+    }
+  ],
+  "approvals": [
+    {
+      "id": "2307a1bc-a72f-45a8-ab01-daaaeeee7d7f",
+      "rule_id": "ad7182e2-4128-4802-9e00-029769b989db",
+      "reason": "初始化地衣标本采集阈值规则体系",
+      "status": "approved",
+      "submitted_at": "2025-03-14T10:00:00Z",
+      "reviewed_at": "2025-03-15T07:30:00Z",
+      "review_comment": "审核通过，阈值设定合理",
+      "impact_summary": "{\"toWarn\":0,\"toBlock\":0,\"warnToBlock\":0,\"total\":0}",
+      "threshold_diff": "{\"from\":null,\"to\":\"v1.0\"}"
+    },
+    {
+      "id": "3656dec4-3982-4423-be14-ae04117c64c2",
+      "rule_id": "e4d0084a-e24b-4416-9f4e-49343d3fbff7",
+      "reason": "根据最新研究成果收紧阈值参数",
+      "status": "approved",
+      "submitted_at": "2025-08-18T09:00:00Z",
+      "reviewed_at": "2025-08-20T09:30:00Z",
+      "review_comment": "收紧合理，影响可控",
+      "impact_summary": "{\"toWarn\":3,\"toBlock\":0,\"warnToBlock\":0,\"total\":3}",
+      "threshold_diff": "{\"from\":\"v1.0\",\"to\":\"v1.1\",\"changes\":{\"altitude\":{\"passMax\":\"3000→2500\",\"warnMax\":\"4500→4000\"},\"substrate\":{\"passMax\":\"5→4\",\"warnMax\":\"8→7\"},\"sporeDensity\":{\"passMax\":\"200→150\",\"warnMax\":\"500→400\"},\"humidityExposure\":{\"passMax\":\"60→50\",\"warnMax\":\"80→75\"}}}"
+    },
+    {
+      "id": "395d6a07-9e14-48ab-8313-fb523821428a",
+      "rule_id": "f80fd375-f05f-4545-85e3-0f3f4de7d5e8",
+      "reason": "根据2026年最新地衣生态研究报告，进一步收紧阈值以提升标本质量标准",
+      "status": "pending",
+      "submitted_at": "2026-06-21T17:25:06.912Z",
+      "reviewed_at": null,
+      "review_comment": null,
+      "impact_summary": "{\"toWarn\":2,\"toBlock\":0,\"warnToBlock\":3,\"total\":5}",
+      "threshold_diff": "{\"from\":\"v1.1\",\"to\":\"v2.0\",\"changes\":{\"altitude\":{\"passMax\":\"2500→2000\",\"warnMax\":\"4000→3500\"},\"substrate\":{\"passMax\":\"4→3\",\"warnMax\":\"7→6\"},\"sporeDensity\":{\"passMax\":\"150→100\",\"warnMax\":\"400→300\"},\"humidityExposure\":{\"passMax\":\"50→40\",\"warnMax\":\"75→65\"}}}"
+    }
+  ],
+  "releaseHistory": [
+    {
+      "id": "adbc6750-1cea-4bc3-a020-d0b7f29e06a7",
+      "rule_id": "ad7182e2-4128-4802-9e00-029769b989db",
+      "version": "v1.0",
+      "published_at": "2025-03-15T08:00:00Z",
+      "change_summary": "初始发布地衣标本采集阈值规则 v1.0",
+      "approval_id": "2307a1bc-a72f-45a8-ab01-daaaeeee7d7f"
+    },
+    {
+      "id": "a0802d70-8914-42a0-9722-c6f3f3b17385",
+      "rule_id": "e4d0084a-e24b-4416-9f4e-49343d3fbff7",
+      "version": "v1.1",
+      "published_at": "2025-08-20T10:00:00Z",
+      "change_summary": "收紧各维度阈值参数，提升标本质量标准",
+      "approval_id": "3656dec4-3982-4423-be14-ae04117c64c2"
+    }
+  ],
+  "rollbackDrafts": []
+}
