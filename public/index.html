@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>古井铭牌判读工作流</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-title">
+      <h1>古井铭牌判读工作台</h1>
+      <span class="header-subtitle">古旧井圈铭文拓片智能判读系统</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" id="btn-reset">重置数据</button>
+      <div class="stats-bar" id="stats-bar"></div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <nav class="sidebar">
+      <div class="nav-item active" data-view="staging">
+        <span class="nav-icon">📥</span>
+        <span class="nav-label">导入暂存区</span>
+        <span class="nav-badge" id="badge-staging">0</span>
+      </div>
+      <div class="nav-item" data-view="queue">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">判读队列</span>
+        <span class="nav-badge" id="badge-queue">0</span>
+      </div>
+      <div class="nav-item" data-view="detail">
+        <span class="nav-icon">🔍</span>
+        <span class="nav-label">详情比对</span>
+        <span class="nav-badge" id="badge-detail">-</span>
+      </div>
+      <div class="nav-item" data-view="rules">
+        <span class="nav-icon">📏</span>
+        <span class="nav-label">规则命中说明</span>
+        <span class="nav-badge" id="badge-rules">-</span>
+      </div>
+      <div class="nav-item" data-view="export">
+        <span class="nav-icon">📤</span>
+        <span class="nav-label">导出清单</span>
+        <span class="nav-badge" id="badge-export">0</span>
+      </div>
+    </nav>
+
+    <main class="main-content">
+      <section class="panel" id="panel-staging">
+        <div class="panel-header">
+          <h2>导入暂存区</h2>
+          <div class="panel-actions">
+            <button class="btn btn-primary" id="btn-import-mock">模拟导入</button>
+            <button class="btn btn-success" id="btn-submit-queue">提交判读</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <p class="panel-tip">暂存区的记录尚未进入判读流程，可编辑后提交至判读队列。</p>
+          <div class="record-list" id="staging-list"></div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-queue">
+        <div class="panel-header">
+          <h2>判读队列</h2>
+          <div class="panel-actions">
+            <div class="filter-group">
+              <button class="filter-btn active" data-filter="all">全部</button>
+              <button class="filter-btn" data-filter="passed">通过</button>
+              <button class="filter-btn" data-filter="warning">警告</button>
+              <button class="filter-btn" data-filter="blocked">阻断</button>
+              <button class="filter-btn" data-filter="rejudge">需复判</button>
+              <button class="filter-btn" data-filter="locked">已锁定</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="record-list" id="queue-list"></div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-detail">
+        <div class="panel-header">
+          <h2>详情比对</h2>
+          <div class="panel-actions">
+            <button class="btn btn-secondary" id="btn-prev">上一条</button>
+            <button class="btn btn-secondary" id="btn-next">下一条</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="detail-empty" id="detail-empty">
+            <p>请从判读队列选择一条记录查看详情</p>
+          </div>
+          <div class="detail-content hidden" id="detail-content">
+            <div class="detail-top">
+              <div class="detail-main">
+                <div class="detail-title">
+                  <h3 id="detail-name"></h3>
+                  <span class="result-badge" id="detail-result"></span>
+                </div>
+                <div class="detail-meta">
+                  <span>编号：<strong id="detail-code"></strong></span>
+                  <span>方位：<strong id="detail-orientation"></strong></span>
+                </div>
+              </div>
+              <div class="detail-actions">
+                <button class="btn btn-warning" id="btn-judge-pass">人工通过</button>
+                <button class="btn btn-danger" id="btn-judge-block">人工阻断</button>
+                <button class="btn btn-info" id="btn-lock">锁定</button>
+                <button class="btn btn-success" id="btn-add-export">加入导出</button>
+              </div>
+            </div>
+
+            <div class="detail-compare">
+              <div class="compare-col">
+                <h4>拓片图像</h4>
+                <div class="rubbing-display" id="detail-rubbing"></div>
+                <div class="quality-metrics">
+                  <div class="metric">
+                    <label>清晰度</label>
+                    <div class="metric-bar">
+                      <div class="metric-fill" id="metric-clarity"></div>
+                    </div>
+                    <span id="metric-clarity-val"></span>
+                  </div>
+                  <div class="metric">
+                    <label>锈蚀度</label>
+                    <div class="metric-bar">
+                      <div class="metric-fill rust" id="metric-rust"></div>
+                    </div>
+                    <span id="metric-rust-val"></span>
+                  </div>
+                  <div class="metric">
+                    <label>残缺率</label>
+                    <div class="metric-bar">
+                      <div class="metric-fill incomplete" id="metric-incomplete"></div>
+                    </div>
+                    <span id="metric-incomplete-val"></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="compare-col">
+                <h4>释文比对</h4>
+                <div class="text-compare">
+                  <div class="text-block">
+                    <label>旧释文</label>
+                    <div class="text-content old" id="detail-old-text"></div>
+                  </div>
+                  <div class="text-block">
+                    <label>当前释文（可编辑）</label>
+                    <textarea class="text-edit" id="detail-current-text" rows="4"></textarea>
+                    <div class="text-actions">
+                      <button class="btn btn-primary btn-sm" id="btn-save-text">保存释文</button>
+                      <span class="conflict-warning hidden" id="text-conflict-warning">⚠ 检测到释文冲突</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="conflict-detail hidden" id="conflict-detail">
+                  <h4>释文冲突详情</h4>
+                  <div class="conflict-list" id="conflict-list"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-history">
+              <h4>操作历史</h4>
+              <div class="history-timeline" id="history-timeline"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-rules">
+        <div class="panel-header">
+          <h2>规则命中说明</h2>
+        </div>
+        <div class="panel-body">
+          <div class="rules-container" id="rules-container"></div>
+          <div class="rule-hits" id="rule-hits">
+            <h3>当前记录命中详情</h3>
+            <div class="hit-detail" id="hit-detail">
+              <p class="panel-tip">请选择一条记录查看规则命中情况</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-export">
+        <div class="panel-header">
+          <h2>导出清单</h2>
+          <div class="panel-actions">
+            <button class="btn btn-primary" id="btn-recalculate">重新计算</button>
+            <button class="btn btn-success" id="btn-export">导出 CSV</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <p class="panel-tip">导出清单中的记录会在导出前进行规则重算，确保结果最新。</p>
+          <div class="export-summary" id="export-summary"></div>
+          <div class="record-list" id="export-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
