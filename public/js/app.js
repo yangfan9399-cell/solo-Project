@@ -382,22 +382,103 @@ function renderRuleHits() {
     return;
   }
   
-  const hitRule = rec.hitRule;
-  if (!hitRule) {
-    hitDetail.innerHTML = '<p class="panel-tip">该记录未命中任何规则</p>';
-    return;
+  const ruleResults = rec.ruleResults || [];
+  const priorityLabels = {
+    rule_quality_block: '优先级 1',
+    rule_inscription_rejudge: '优先级 2',
+    rule_pass_standard: '优先级 3'
+  };
+  
+  let rulesHtml = '';
+  ruleResults.forEach((rr, idx) => {
+    const hitClass = rr.hit ? 'rule-hit-yes' : 'rule-hit-no';
+    const hitIcon = rr.hit ? '✓' : '✗';
+    const hitLabel = rr.hit ? '命中' : '未命中';
+    
+    let reasonsHtml = '';
+    if (rr.reasons && rr.reasons.length > 0) {
+      reasonsHtml = rr.reasons.map(r => `<div class="hit-reason">${r}</div>`).join('');
+    } else if (!rr.hit) {
+      reasonsHtml = `<div class="hit-reason miss">各项指标未满足触发条件</div>`;
+    }
+    
+    rulesHtml += `
+      <div class="rule-result-card ${hitClass}">
+        <div class="rule-result-header">
+          <span class="rule-result-icon ${hitClass}">${hitIcon}</span>
+          <div class="rule-result-title">
+            <h5>${rr.ruleName} <span class="rule-priority">${priorityLabels[rr.ruleId] || ''}</span></h5>
+            <span class="rule-result-status">${hitLabel} · ${rr.resultLabel}</span>
+          </div>
+        </div>
+        <div class="rule-result-reasons">
+          ${reasonsHtml}
+        </div>
+      </div>
+    `;
+  });
+  
+  const finalRule = rec.hitRule;
+  let finalHtml = '';
+  if (finalRule) {
+    finalHtml = `
+      <div class="final-result-section">
+        <h4>最终判定结果</h4>
+        <div class="final-result-card">
+          <div class="final-rule-name">${finalRule.ruleName}</div>
+          <div class="hit-reasons">
+            ${finalRule.reasons.map(r => `<div class="hit-reason">${r}</div>`).join('')}
+          </div>
+          <div class="hit-result">
+            <span>判定结果：</span>
+            <span class="result-badge ${getResultClass(rec.finalResult)}">${rec.finalResultLabel}</span>
+          </div>
+          ${rec.rejudgeCount ? `<p style="margin-top:10px; font-size:12px; color:#666;">复判次数：${rec.rejudgeCount}次</p>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  if (rec.finalResult === 'locked') {
+    rulesHtml += `
+      <div class="rule-result-card rule-hit-locked">
+        <div class="rule-result-header">
+          <span class="rule-result-icon rule-hit-locked">🔒</span>
+          <div class="rule-result-title">
+            <h5>记录锁定</h5>
+            <span class="rule-result-status">已锁定 · 规则不生效</span>
+          </div>
+        </div>
+        <div class="rule-result-reasons">
+          <div class="hit-reason">该记录已被管理员锁定，规则判定暂不生效</div>
+        </div>
+      </div>
+    `;
+    
+    finalHtml = `
+      <div class="final-result-section">
+        <h4>当前状态</h4>
+        <div class="final-result-card">
+          <div class="final-rule-name">已锁定</div>
+          <div class="hit-reasons">
+            <div class="hit-reason">管理员已锁定此记录，待进一步考证</div>
+          </div>
+          <div class="hit-result">
+            <span>状态：</span>
+            <span class="result-badge result-locked">已锁定</span>
+          </div>
+          ${rec.rejudgeCount ? `<p style="margin-top:10px; font-size:12px; color:#666;">复判次数：${rec.rejudgeCount}次</p>` : ''}
+        </div>
+      </div>
+    `;
   }
   
   hitDetail.innerHTML = `
-    <div class="hit-rule-name">${hitRule.ruleName}</div>
-    <div class="hit-reasons">
-      ${hitRule.reasons.map(r => `<div class="hit-reason">${r}</div>`).join('')}
+    <div class="all-rule-results">
+      <h4>三条规则逐条判定结果</h4>
+      ${rulesHtml}
     </div>
-    <div class="hit-result">
-      <span>判定结果：</span>
-      <span class="result-badge ${getResultClass(rec.finalResult)}">${rec.finalResultLabel}</span>
-    </div>
-    ${rec.rejudgeCount ? `<p style="margin-top:10px; font-size:12px; color:#666;">复判次数：${rec.rejudgeCount}次</p>` : ''}
+    ${finalHtml}
   `;
 }
 
