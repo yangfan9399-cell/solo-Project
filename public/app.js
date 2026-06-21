@@ -311,30 +311,67 @@ function renderDiffTable(diffs) {
 function renderAnalysis(analysis) {
   const container = document.getElementById('analysis-content');
 
-  if (analysis.length === 0) {
-    container.innerHTML = '<div class="no-diff">无显著结论变化</div>';
-    return;
-  }
-
   const icons = {
     info: 'ℹ️',
     warning: '⚠️',
-    danger: '🚨'
+    danger: '🚨',
+    success: '✅'
   };
 
-  container.innerHTML = `
-    <div class="analysis-list">
-      ${analysis.map(a => `
-        <div class="analysis-item ${a.level}">
-          <div class="analysis-icon">${icons[a.level] || 'ℹ️'}</div>
-          <div class="analysis-content">
-            <div class="analysis-field">${a.field}</div>
-            <div class="analysis-message">${a.message}</div>
+  const fieldItems = analysis.filter(a => a.type === 'field');
+  const otherItems = analysis.filter(a => a.type !== 'field');
+
+  let html = '<div class="analysis-list">';
+
+  fieldItems.forEach(a => {
+    const valueClass = a.valueChanged ? 'analysis-value-new' : 'analysis-value-same';
+    const oldValueClass = a.valueChanged ? 'analysis-value-old' : 'analysis-value-same';
+    const oldConclusionClass = a.conclusionChanged ? 'analysis-value-old' : 'analysis-value-same';
+    const newConclusionClass = a.conclusionChanged ? 'analysis-value-new' : 'analysis-value-same';
+
+    html += `
+      <div class="analysis-item ${a.level}">
+        <div class="analysis-icon">${icons[a.level] || 'ℹ️'}</div>
+        <div class="analysis-content" style="flex:1;">
+          <div class="analysis-field">${a.field}</div>
+          <div class="analysis-message">${a.message}</div>
+          <div class="analysis-values">
+            <div class="analysis-value-item">
+              <span class="analysis-value-label">版本 A 数值</span>
+              <span class="${oldValueClass}">${a.oldValue}${a.oldUnit}</span>
+            </div>
+            <div class="analysis-value-item">
+              <span class="analysis-value-label">版本 B 数值</span>
+              <span class="${valueClass}">${a.newValue}${a.newUnit}</span>
+            </div>
+            <div class="analysis-value-item">
+              <span class="analysis-value-label">版本 A 结论</span>
+              <span class="${oldConclusionClass}">${a.oldConclusion}</span>
+            </div>
+            <div class="analysis-value-item">
+              <span class="analysis-value-label">版本 B 结论</span>
+              <span class="${newConclusionClass}">${a.newConclusion}</span>
+            </div>
           </div>
         </div>
-      `).join('')}
-    </div>
-  `;
+      </div>
+    `;
+  });
+
+  otherItems.forEach(a => {
+    html += `
+      <div class="analysis-item ${a.level}">
+        <div class="analysis-icon">${icons[a.level] || 'ℹ️'}</div>
+        <div class="analysis-content">
+          <div class="analysis-field">${a.field}</div>
+          <div class="analysis-message">${a.message}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 function renderLockSection(version) {

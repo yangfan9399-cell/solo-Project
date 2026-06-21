@@ -414,6 +414,45 @@ body {
   border-left-color: #f5222d;
 }
 
+.analysis-item.success {
+  background: #f6ffed;
+  border-left-color: #52c41a;
+}
+
+.analysis-values {
+  display: flex;
+  gap: 20px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.analysis-value-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.analysis-value-label {
+  color: #8c8c8c;
+  font-size: 11px;
+}
+
+.analysis-value-old {
+  color: #f5222d;
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.analysis-value-new {
+  color: #52c41a;
+  font-weight: 500;
+}
+
+.analysis-value-same {
+  color: #595959;
+  font-weight: 500;
+}
+
 .analysis-icon {
   font-size: 18px;
   flex-shrink: 0;

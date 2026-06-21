@@ -77,37 +77,62 @@ function computeDifferences(v1, v2) {
   return diffs;
 }
 
-function analyzeConclusionChanges(diffs) {
+function analyzeConclusionChanges(diffs, v1, v2) {
   const analysis = [];
-  const fieldDiffs = diffs.filter(d => d.type === 'field');
 
-  fieldDiffs.forEach(diff => {
-    if (diff.conclusionChanged) {
-      let level = 'info';
-      let message = '';
-      if (diff.key === 'cinnabarRatio') {
-        level = 'warning';
-        message = `朱砂比例结论由"${diff.oldConclusion}"变为"${diff.newConclusion}"，可能影响印泥真伪判定。`;
-      } else if (diff.key === 'oilPrecipitation') {
-        level = 'warning';
-        message = `油脂析出结论由"${diff.oldConclusion}"变为"${diff.newConclusion}"，提示印泥保存状态变化。`;
-      } else if (diff.key === 'edgeClarity') {
-        level = 'warning';
-        message = `压印边缘结论由"${diff.oldConclusion}"变为"${diff.newConclusion}"，影响证据清晰度评估。`;
-      } else if (diff.key === 'storageTemp') {
-        level = 'warning';
-        message = `封存温度结论由"${diff.oldConclusion}"变为"${diff.newConclusion}"，可能加速印泥退化。`;
-      }
-      analysis.push({ field: diff.label, level, message });
+  const fieldKeys = [
+    { key: 'cinnabarRatio', label: '朱砂比例', changeDesc: '影响印泥真伪判定' },
+    { key: 'oilPrecipitation', label: '油脂析出', changeDesc: '提示印泥保存状态变化' },
+    { key: 'edgeClarity', label: '压印边缘清晰度', changeDesc: '影响证据清晰度评估' },
+    { key: 'storageTemp', label: '封存温度', changeDesc: '可能加速印泥退化' }
+  ];
+
+  fieldKeys.forEach(fk => {
+    const f1 = v1.fields[fk.key];
+    const f2 = v2.fields[fk.key];
+    const valueChanged = f1.value !== f2.value;
+    const conclusionChanged = f1.conclusion !== f2.conclusion;
+
+    let level = 'success';
+    let message = '';
+
+    if (conclusionChanged) {
+      level = 'danger';
+      message = `${fk.label}结论由"${f1.conclusion}"变为"${f2.conclusion}"，${fk.changeDesc}。`;
+    } else if (valueChanged) {
+      level = 'warning';
+      message = `${fk.label}数值有变化，但结论仍为"${f2.conclusion}"。`;
+    } else {
+      level = 'success';
+      message = `${fk.label}无变化，保持"${f2.conclusion}"。`;
     }
+
+    analysis.push({
+      type: 'field',
+      fieldKey: fk.key,
+      field: fk.label,
+      level,
+      message,
+      oldValue: f1.value,
+      oldUnit: f1.unit,
+      oldConclusion: f1.conclusion,
+      newValue: f2.value,
+      newUnit: f2.unit,
+      newConclusion: f2.conclusion,
+      valueChanged,
+      conclusionChanged
+    });
   });
 
   const overallDiff = diffs.find(d => d.key === 'overallConclusion');
   if (overallDiff) {
     analysis.push({
+      type: 'overall',
       field: '整体结论',
       level: 'danger',
-      message: `整体结论发生反转：由"${overallDiff.oldValue}"变为"${overallDiff.newValue}"！`
+      message: `整体结论发生反转：由"${overallDiff.oldValue}"变为"${overallDiff.newValue}"！`,
+      oldValue: overallDiff.oldValue,
+      newValue: overallDiff.newValue
     });
   }
 
@@ -115,15 +140,25 @@ function analyzeConclusionChanges(diffs) {
   const formulaDiff = diffs.find(d => d.key === 'formulaBatch');
   if (sampleDiff && formulaDiff) {
     analysis.push({
+      type: 'evidence',
       field: '证据一致性',
       level: 'danger',
-      message: '压印样张和配方批号均发生变更，需警惕证据替换风险！'
+      message: '压印样张和配方批号均发生变更，需警惕证据替换风险！',
+      oldSample: sampleDiff.oldValue,
+      newSample: sampleDiff.newValue,
+      oldFormula: formulaDiff.oldValue,
+      newFormula: formulaDiff.newValue
     });
   } else if (sampleDiff || formulaDiff) {
     analysis.push({
+      type: 'evidence',
       field: '证据标识',
       level: 'warning',
-      message: sampleDiff ? '压印样张已更换，请确认是否为正常修订。' : '配方批号已变更，请确认是否为正常修订。'
+      message: sampleDiff ? '压印样张已更换，请确认是否为正常修订。' : '配方批号已变更，请确认是否为正常修订。',
+      oldSample: sampleDiff ? sampleDiff.oldValue : null,
+      newSample: sampleDiff ? sampleDiff.newValue : null,
+      oldFormula: formulaDiff ? formulaDiff.oldValue : null,
+      newFormula: formulaDiff ? formulaDiff.newValue : null
     });
   }
 
@@ -177,7 +212,7 @@ app.get('/api/cases/:caseId/diff/:v1Id/:v2Id', (req, res) => {
     return res.status(404).json({ error: '版本不存在' });
   }
   const diffs = computeDifferences(v1, v2);
-  const analysis = analyzeConclusionChanges(diffs);
+  const analysis = analyzeConclusionChanges(diffs, v1, v2);
   res.json({
     version1: { id: v1.id, name: v1.versionName },
     version2: { id: v2.id, name: v2.versionName },
