@@ -3,6 +3,7 @@ import type { WorkTicket, User, CreateTicketDto, ApproveTicketDto, RejectTicketD
 
 interface TicketState {
   tickets: WorkTicket[];
+  allTickets: WorkTicket[];
   users: User[];
   currentUser: User | null;
   loading: boolean;
@@ -35,6 +36,7 @@ async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const useTicketStore = create<TicketState>((set, get) => ({
   tickets: [],
+  allTickets: [],
   users: [],
   currentUser: null,
   loading: false,
@@ -43,12 +45,13 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   fetchTickets: async (status, keyword) => {
     set({ loading: true });
     try {
+      const allTickets = await apiRequest<WorkTicket[]>('/tickets');
       const params = new URLSearchParams();
       if (status) params.set('status', status);
       if (keyword) params.set('keyword', keyword);
       const qs = params.toString() ? `?${params.toString()}` : '';
       const tickets = await apiRequest<WorkTicket[]>(`/tickets${qs}`);
-      set({ tickets, loading: false, error: null });
+      set({ tickets, allTickets, loading: false, error: null });
     } catch (e) {
       set({ loading: false, error: (e as Error).message });
     }

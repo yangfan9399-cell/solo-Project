@@ -15,7 +15,7 @@ const STATUS_TABS: { key: TicketStatus | 'all'; label: string; icon: typeof Plus
 ];
 
 export default function TicketList() {
-  const { tickets, fetchTickets, loading, currentUser } = useTicketStore();
+  const { tickets, allTickets, fetchTickets, loading, currentUser } = useTicketStore();
   const [status, setStatus] = useState<TicketStatus | 'all'>('all');
   const [keyword, setKeyword] = useState('');
 
@@ -31,7 +31,7 @@ export default function TicketList() {
     high_risk_incomplete: 0,
     locked: 0,
   };
-  tickets.forEach((t) => {
+  allTickets.forEach((t) => {
     counts.all++;
     counts[t.status]++;
   });
